@@ -22,7 +22,7 @@ rmarkdown::render('Analysis.Rmd', quiet = TRUE)
 ```
 
 ```{r render.site, include=FALSE, eval=FALSE}
-rmarkdown::render_site()
+rmarkdown::render_site(quiet = TRUE)
 rmarkdown::clean_site()
 ```
 
@@ -421,13 +421,13 @@ my.corona %>%
     datatable()
 ```
 
-## Visualizations in last `r params$last.days` days {.tabset .tabset-fade .tabset-pills}
+# Last `r params$last.days` days {.tabset .tabset-fade .tabset-pills}
 
 Instead of showing the evolution of the cases/deaths since a country exceeded 100/10 cases, it insteads shows the last 12 days.
 
 The first data point is the number of new cases that day.
 
-### Confirmed cases 
+## Confirmed cases 
 
 ```{r confirmed.last12.days, echo=FALSE}
 my.corona.after.100 %>%
@@ -468,7 +468,7 @@ my.corona.after.100 %>%
         theme(legend.position = 'none', legend.title = element_blank())
 ```
 
-### Deaths
+## Deaths
 
 ```{r death.last12.days, echo=FALSE}
 my.corona.after.100 %>%
@@ -508,7 +508,7 @@ my.corona.after.100 %>%
         theme(legend.position = 'none', legend.title = element_blank())
 ```
 
-## Confirmed cases / Deaths of previous 4 days *(how it tracks over time)* {.tabset .tabset-fade .tabset-pills}
+# Cumulative cases of previous 4 days *(how it tracks over time)* {.tabset .tabset-fade .tabset-pills}
 
 **Warning**: This visualization is not very intuitive, use it to see the trend over the last days.
 
@@ -583,7 +583,7 @@ last.week <-
            ratio.deaths.per.confirmed = last.week.cases.death / last.week.cases.confirmed) 
 ```
 
-### Confirmed cases
+## Confirmed cases
 
 ```{r confirmed.lastweek.cumulative, echo=FALSE}
 p <- last.week %>% 
@@ -619,7 +619,7 @@ p
 # p + scale_y_continuous('Number of cases confirmed in previous 4 days (log2 scale)', trans = 'log2')
 ```
 
-### Deaths
+## Deaths
 
 ```{r death.lastweek.cumulative, echo=FALSE}
 p <- last.week %>% 
@@ -655,7 +655,7 @@ p
 # p + scale_y_continuous('Number of cases confirmed in previous 4 days (log2 scale)', trans = 'log2')
 ```
 
-## Confirmed cases vs. Death visualizations *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
+# Confirmed cases vs. Death visualizations *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
 
 This visualization shows the number of cases/deaths per 100k of the population.
 
@@ -700,33 +700,31 @@ plot.death.vs.cases <- function(country.filter, always.include = countries.alway
 }
 ```
 
-### EU
+## EU
 
 ```{r eu, echo=FALSE}
 plot.death.vs.cases(countries.eu)
 ```
 
-### Non-EU Europe
+## Non-EU Europe
 
 ```{r non.eu.europe, echo=FALSE}
 plot.death.vs.cases(countries.europe.non.eu)
 ```
 
-### Non-Europe
+## Non-Europe
 
 ```{r non.europe, echo=FALSE}
 plot.death.vs.cases(countries.non.europe)
 ```
 
-### CPLP
+## CPLP
 
 ```{r cplp, echo=FALSE}
 plot.death.vs.cases(countries.cplp)
 ```
 
-### Data for the countries in *Confirmed cases vs. Deaths*
-
-#### Confirmed Cases
+## Data for Confirmed Cases
 
 ```{r death.vs.cases.data.confirmed, echo=FALSE}
 my.corona.original %>%
@@ -750,7 +748,7 @@ my.corona.original %>%
         theme(legend.position = 'none')
 ```
 
-#### Deaths
+## Data for Deaths
 
 ```{r death.vs.cases.data.death, echo=FALSE}
 my.corona.original %>%
@@ -774,7 +772,7 @@ my.corona.original %>%
         theme(legend.position = 'none')
 ```
 
-## Hospital beds vs. Cases *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
+# Hospital beds vs. Cases *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
 
 This visualization shows the number of cases/deaths per 100k of the population.
 
@@ -864,31 +862,31 @@ plot.beds.vs.cases <- function(...) {
 }
 ```
 
-### EU
+## EU
 
 ```{r eu.beds, echo=FALSE}
 plot.beds.vs.cases(countries.eu)
 ```
 
-### Non-EU Europe
+## Non-EU Europe
 
 ```{r non.eu.europe.beds, echo=FALSE}
 plot.beds.vs.cases(countries.europe.non.eu)
 ```
 
-### Non-Europe
+## Non-Europe
 
 ```{r non.europe.beds, echo=FALSE}
 plot.beds.vs.cases(countries.non.europe)
 ```
 
-### CPLP
+## CPLP
 
 ```{r cplp.beds, echo=FALSE}
 plot.beds.vs.cases(countries.cplp)
 ```
 
-### Data
+## Data
 
 ```{r beds.vs.cases, echo=FALSE}
 beds.vs.cases %>% 
@@ -913,7 +911,7 @@ beds.vs.cases %>%
     datatable()
 ```
 
-## Nurses and Midwifes *(per 100k population)*  {.tabset .tabset-fade .tabset-pills}
+# Nurses and Midwifes *(per 100k population)*  {.tabset .tabset-fade .tabset-pills}
 
 ```{r nurses, echo=FALSE}
 nurses.vs.cases <- wb.indicator('SH.MED.NUMW.P3', 'Nurses and midwives')
@@ -923,32 +921,32 @@ nurses.vs.cases <- wb.indicator('SH.MED.NUMW.P3', 'Nurses and midwives')
 plot.nurses.vs.cases <- function(...) { plot.what.vs.cases(..., data = nurses.vs.cases, what = 'Nurses and Midwifes') }
 ```
 
-### EU
+## EU
 
 ```{r eu.nurses, echo=FALSE}
 plot.nurses.vs.cases(countries.eu)
 ```
 
-### Non-EU Europe
+## Non-EU Europe
 
 ```{r non.eu.europe.nurses, echo=FALSE}
 plot.nurses.vs.cases(countries.europe.non.eu)
 ```
 
-### Non-Europe
+## Non-Europe
 
 ```{r non.europe.nurses, echo=FALSE}
 plot.nurses.vs.cases(countries.non.europe)
 ```
 
-### CPLP
+## CPLP
 
 ```{r cplp.nurses, echo=FALSE}
 plot.nurses.vs.cases(countries.cplp)
 ```
 
 
-### Data
+## Data
 
 ```{r nurses.vs.cases, echo=FALSE}
 nurses.vs.cases %>% 
@@ -973,7 +971,7 @@ nurses.vs.cases %>%
     datatable()
 ```
 
-## Physicians *(per 100k population)*  {.tabset .tabset-fade .tabset-pills}
+# Physicians *(per 100k population)*  {.tabset .tabset-fade .tabset-pills}
 
 
 ```{r physicians, echo=FALSE}
@@ -984,31 +982,31 @@ physicians.vs.cases <- wb.indicator('SH.MED.PHYS.ZS', 'Physicians')
 plot.physicians.vs.cases <- function(...) { plot.what.vs.cases(..., data = physicians.vs.cases, what = 'Physicians') }
 ```
 
-### EU
+## EU
 
 ```{r eu.physicians, echo=FALSE}
 plot.physicians.vs.cases(countries.eu)
 ```
 
-### Non-EU Europe
+## Non-EU Europe
 
 ```{r non.eu.europe.physicians, echo=FALSE}
 plot.physicians.vs.cases(countries.europe.non.eu)
 ```
 
-### Non-Europe
+## Non-Europe
 
 ```{r non.europe.physicians, echo=FALSE}
 plot.physicians.vs.cases(countries.non.europe)
 ```
 
-### CPLP
+## CPLP
 
 ```{r cplp.physicians, echo=FALSE}
 plot.physicians.vs.cases(countries.cplp)
 ```
 
-### Data
+## Data
 
 ```{r physicians.vs.cases, echo=FALSE}
 physicians.vs.cases %>% 
