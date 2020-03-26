@@ -48,7 +48,7 @@ Data was retrieved from *'RamiKrispin/coronavirus'* R data package which is upda
 
 It's not realtime data and data presented may have 1 or more days of difference from real-time data. Check the caption on the figures to check when was the last data point.
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r reinstall.data.package, echo=FALSE, message=FALSE, warning=FALSE}
 BiocManager::install('RamiKrispin/coronavirus', ask = FALSE)
 
 library(coronavirus)
@@ -148,7 +148,7 @@ my.corona.original %>%
 
 ## Data confirmed
 
-```{r}
+```{r data.confirmed}
 my.corona.original %>%
     filter(type == 'confirmed') %>%
     group_by(country, type) %>%
@@ -164,7 +164,7 @@ my.corona.original %>%
 
 ## Data death
 
-```{r}
+```{r data.death}
 my.corona.original %>%
     filter(type == 'death') %>%
     group_by(country, type) %>%
@@ -252,7 +252,7 @@ If you do not understand logarythm scale, I recommend this [video](https://www.y
 
 ### Confirmed cases  
 
-```{r, echo=FALSE}
+```{r corfirmed.cases.after.100, echo=FALSE}
 my.corona.after.100 %>%
     filter(country %in% countries) %>%
     filter(type == 'confirmed') %>%
@@ -291,7 +291,7 @@ my.corona.after.100 %>%
 
 ### Patient deaths
 
-```{r, echo=FALSE}
+```{r death.after.100, echo=FALSE}
 my.corona.after.100 %>%
     filter(country %in% countries) %>%
     filter(type == 'death') %>%
@@ -333,7 +333,7 @@ Showing population for plotted countries. This becomes relevant for the next plo
 
 ### Confirmed cases
 
-```{r, echo=FALSE}
+```{r confirmed.after.100.per100k, echo=FALSE}
 my.corona.after.100 %>%
     filter(country %in% countries) %>%
     filter(type %in% c('confirmed')) %>%
@@ -371,7 +371,7 @@ my.corona.after.100 %>%
 
 ### Deaths 
 
-```{r, echo=FALSE}
+```{r death.after.100.per.100k, echo=FALSE}
 my.corona.after.100 %>%
     filter(country %in% countries) %>%
     filter(type %in% c('death')) %>%
@@ -409,7 +409,7 @@ my.corona.after.100 %>%
 
 ### Population data
 
-```{r, echo=FALSE}
+```{r population.data, echo=FALSE}
 my.corona %>% 
     filter(country %in% countries) %>% 
     ungroup %>% 
@@ -428,7 +428,7 @@ The first data point is the number of new cases that day.
 
 ### Confirmed cases 
 
-```{r, echo=FALSE}
+```{r confirmed.last12.days, echo=FALSE}
 my.corona.after.100 %>%
     filter(country %in% countries) %>%
     filter(type == 'confirmed') %>%
@@ -469,7 +469,7 @@ my.corona.after.100 %>%
 
 ### Deaths
 
-```{r, echo=FALSE}
+```{r death.last12.days, echo=FALSE}
 my.corona.after.100 %>%
     filter(country %in% countries) %>%
     filter(type == 'death') %>%
@@ -511,7 +511,7 @@ my.corona.after.100 %>%
 
 **Warning**: This visualization is not very intuitive, use it to see the trend over the last days.
 
-```{r, echo=FALSE}
+```{r countries.more, echo=FALSE}
 countries.eu <- c('Italy', 'Spain','Germany', 'Portugal', 'France',  
                   'United Kingdom', 'Poland', 'Greece', 'Croatia', 'Slovenia', 
                   'Hungary', 'Slovakia', 'Ireland', 'Luxembourg', 'Finland', 
@@ -530,6 +530,8 @@ countries.europe.non.eu <- c('Norway', 'Switzerland', 'Ukraine', 'Serbia', 'Russ
 countries.non.europe <- c('US', 'China', 'Canada', 
                           'Australia', 'New Zealand', 
                           'Korea, South', 'Japan', 'Argentina', 'Chile', 'Thailand')
+
+countries.always.include <- c('Portugal', 'Iran', 'Germany', 'Spain', 'Italy', 'Korea, South')
 
 countries.extended <- c(countries.eu, countries.europe.non.eu, countries.cplp, countries.non.europe) %>%
     unique
@@ -582,7 +584,7 @@ last.week <-
 
 ### Confirmed cases
 
-```{r, echo=FALSE}
+```{r confirmed.lastweek.cumulative, echo=FALSE}
 p <- last.week %>% 
     filter(country %in% countries) %>%
     group_by(country) %>% {
@@ -618,7 +620,7 @@ p
 
 ### Deaths
 
-```{r, echo=FALSE}
+```{r death.lastweek.cumulative, echo=FALSE}
 p <- last.week %>% 
     filter(country %in% countries) %>%
     group_by(country) %>% {
@@ -663,7 +665,7 @@ This visualization shows the number of cases/deaths per 100k of the population.
 
 *note*: It always shows Portugal, Spain, Italy, South Korea, Iran and Germany.
 
-```{r, echo=FALSE}
+```{r death.vs.cases.function.and.data, echo=FALSE}
 death.vs.cases <- last.week %>%
     group_by(country, population) %>%
     summarise(ratio = max(cumul.death) / max(cumul.confirmed),
@@ -671,7 +673,7 @@ death.vs.cases <- last.week %>%
               cases.confirmed = max(cumul.confirmed / population * 100000)) %>%
     filter(cases.death > 0)
 
-plot.death.vs.cases <- function(country.filter, always.include = c('Portugal', 'Germany', 'Iran', 'Spain', 'Italy', 'Korea, South')) {
+plot.death.vs.cases <- function(country.filter, always.include = countries.always.include) {
     return(death.vs.cases %>%
         filter(country %in% (c(always.include, country.filter) %>% unique)) %>%
         ggplot(aes(x = cases.confirmed, y = cases.death, color = country)) +
@@ -725,7 +727,7 @@ plot.death.vs.cases(countries.cplp)
 
 #### Confirmed Cases
 
-```{r, echo=FALSE}
+```{r death.vs.cases.data.confirmed, echo=FALSE}
 my.corona.original %>%
     filter(country %in% countries.extended) %>%
     filter(type == 'confirmed') %>%
@@ -749,7 +751,7 @@ my.corona.original %>%
 
 #### Deaths
 
-```{r, echo=FALSE}
+```{r death.vs.cases.data.death, echo=FALSE}
 my.corona.original %>%
     filter(country %in% countries.extended) %>%
     filter(type == 'death') %>%
@@ -782,37 +784,48 @@ This visualization shows the number of cases/deaths per 100k of the population.
 
 *note*: It always shows Portugal, Spain, Italy, South Korea, Iran and Germany.
 
-```{r, echo=FALSE}
-hospital.beds.original <- wb(indicator = "SH.MED.BEDS.ZS") %>%
-    mutate(value = value * 100,
-   indicator = "Hospital beds (per 100,000 people)")
+```{r hospital.beds, echo=FALSE}
 
-hospital.beds.norm <- hospital.beds.original
-for (ix.name in names(convert.names)) {
-    hospital.beds.norm <- hospital.beds.norm %>%
-        arrange(country) %>%
-        ungroup %>%
-        mutate(country = replace(country, country == ix.name, convert.names[[ix.name]]))    
+wb.indicator <- function(indicator, name) {
+    renamed.100k <- glue("{name} (per 100,000 people)")
+    
+    dta.original <- wb(indicator = indicator)
+    
+    dta.norm <- dta.original %>%
+        mutate(value = value * 100, value,
+               indicator = renamed.100k)
+    
+    for (ix.name in names(convert.names)) {
+        dta.norm <- dta.norm %>%
+            arrange(country) %>%
+            ungroup %>%
+            mutate(country = replace(country, country == ix.name, convert.names[[ix.name]]))    
+    }
+    
+    dta <- dta.norm %>% 
+        group_by(country) %>%
+        arrange(desc(date)) %>%
+        summarise(date = first(date),
+                  value = first(value))
+    
+    dta.vs.cases <- left_join(death.vs.cases, dta, by = 'country') %>%
+        mutate(ratio.confirmed = cases.confirmed / value) %>%
+        mutate(ratio.death = cases.death / value)
+    
+    return(dta.vs.cases)
 }
+# death.vs.cases$country[!death.vs.cases$country %in% dta$country]
+# dta.norm$country %>% unique %>% sort
 
-hospital.beds <- hospital.beds.norm %>% 
-    group_by(country) %>%
-    arrange(desc(date)) %>%
-    summarise(date = first(date),
-              value = first(value))
-
-beds.vs.cases <- left_join(death.vs.cases, hospital.beds, by = 'country') %>%
-    mutate(ratio.confirmed = cases.confirmed / value) %>%
-    mutate(ratio.death = cases.death / value) 
-
-# death.vs.cases$country[!death.vs.cases$country %in% hospital.beds$country]
-# hospital.beds.norm$country %>% unique %>% sort
+beds.vs.cases2 <- wb.indicator('SH.MED.BEDS.ZS', 'Hospital beds', per.100k = TRUE)
 ```
 
-
-```{r, echo=FALSE}
-plot.beds.vs.cases <- function(country.filter, always.include = c('Portugal', 'Iran', 'Germany', 'Spain', 'Italy', 'Korea, South')) {
-    my.tbl <- beds.vs.cases %>%
+```{r hospital.beds.func, echo=FALSE}
+plot.what.vs.cases <- function(data,
+                               country.filter = c(), 
+                               always.include = countries.always.include,
+                               what = 'Hospital beds') {
+    my.tbl <- data %>%
         filter(country %in% (c(always.include, country.filter) %>% unique))
     return(
         my.tbl %>%
@@ -834,39 +847,16 @@ plot.beds.vs.cases <- function(country.filter, always.include = c('Portugal', 'I
                     scale_color_viridis(discrete = TRUE, end = .85) +
                     scale_fill_viridis(discrete = TRUE, end = .85) +
                     labs(x = 'Confirmed Cases per 100k population', 
-                         y = 'Hospital beds per 100k population', 
-                         title = 'Hospital beds vs. Cases per 100k population', 
-                         subtitle = 'percentage shows the hospital beds per confirmed cases and deaths, respectively',
+                         y = glue('{what} per 100k population'), 
+                         title = glue('{what} vs. Cases per 100k population'), 
+                         subtitle = glue('percentage shows the {tolower(what)} per confirmed cases and deaths, respectively'),
                          caption = last.date.string) +
                     theme_minimal() +
                     theme(legend.position = 'none')
         )
 }
+plot.beds.vs.cases <- function(...) { plot.what.vs.cases(..., data = beds.vs.cases, what = 'Hospital beds') }
 ```
-
-```{r, echo=FALSE}
-beds.vs.cases %>% 
-    filter(country %in% countries.extended) %>%
-    mutate(Country = country,
-           Population = format(population, big.mark = ','),
-           'Deaths per 100k' = round(cases.death, digits = 2),
-           'Cases per 100k' = round(cases.confirmed, digits = 2),
-           '(source year)' = as.numeric(date),
-           'Beds per 100k' = value,
-           'Cases per Beds' = percent(cases.confirmed / value, accuracy = .01),
-           'Deaths per Beds' = percent(cases.death / value, accuracy = .01)) %>%
-    ungroup %>%
-    select(Country,
-           Population, 
-           'Beds per 100k', 
-           '(source year)' , 
-           'Cases per 100k', 
-           'Deaths per 100k', 
-           'Cases per Beds',
-           'Deaths per Beds') %>%
-    datatable()
-```
-
 
 ### EU
 
@@ -892,19 +882,34 @@ plot.beds.vs.cases(countries.non.europe)
 plot.beds.vs.cases(countries.cplp)
 ```
 
+### Data
 
+```{r beds.vs.cases, echo=FALSE}
+beds.vs.cases %>% 
+    filter(country %in% countries.extended) %>%
+    mutate(Country = country,
+           Population = format(population, big.mark = ','),
+           'Deaths per 100k' = round(cases.death, digits = 2),
+           'Cases per 100k' = round(cases.confirmed, digits = 2),
+           '(source year)' = as.numeric(date),
+           'Beds per 100k' = value,
+           'Cases per Beds' = percent(cases.confirmed / value, accuracy = .01),
+           'Deaths per Beds' = percent(cases.death / value, accuracy = .01)) %>%
+    ungroup %>%
+    select(Country,
+           Population, 
+           'Beds per 100k', 
+           '(source year)' , 
+           'Cases per 100k', 
+           'Deaths per 100k', 
+           'Cases per Beds',
+           'Deaths per Beds') %>%
+    datatable()
+```
 
+## Nurses and Midwifes *(per 100k population)*  {.tabset .tabset-fade .tabset-pills}
 
-
-
-
-
-
-
-## Nurses and Midwifes *(per 100k population)*
-
-
-```{r, echo=FALSE}
+```{r nurses, echo=FALSE}
 nurses.original <- wb(indicator = "SH.MED.NUMW.P3") %>%
     mutate(value = value * 100,
    indicator = "Nurses and midwives (per 100,000 people)")
@@ -931,7 +936,38 @@ nurses.vs.cases <- left_join(death.vs.cases, nurses, by = 'country') %>%
 # hospital.beds.norm$country %>% unique %>% sort
 ```
 
-```{r, echo=FALSE}
+```{r hospital.beds.func, echo=FALSE}
+plot.nurses.vs.cases <- function(...) { plot.what.vs.cases(..., data = nurses.vs.cases, what = 'Nurses and Midwifes') }
+```
+
+### EU
+
+```{r eu.nurses, echo=FALSE}
+plot.nurses.vs.cases(countries.eu)
+```
+
+### Non-EU Europe
+
+```{r non.eu.europe.nurses, echo=FALSE}
+plot.nurses.vs.cases(countries.europe.non.eu)
+```
+
+### Non-Europe
+
+```{r non.europe.nurses, echo=FALSE}
+plot.nurses.vs.cases(countries.non.europe)
+```
+
+### CPLP
+
+```{r cplp.nurses, echo=FALSE}
+plot.nurses.vs.cases(countries.cplp)
+```
+
+
+### Data
+
+```{r nurses.vs.cases, echo=FALSE}
 nurses.vs.cases %>% 
     filter(country %in% countries.extended) %>%
     mutate(Country = country,
@@ -954,10 +990,10 @@ nurses.vs.cases %>%
     datatable()
 ```
 
-## Physicians *(per 100k population)*
+## Physicians *(per 100k population)*  {.tabset .tabset-fade .tabset-pills}
 
 
-```{r, echo=FALSE}
+```{r physicians, echo=FALSE}
 physicians.original <- wb(indicator = "SH.MED.PHYS.ZS") %>%
     mutate(value = value * 100,
    indicator = "Physicians (per 100,000 people)")
@@ -984,7 +1020,37 @@ physicians <- physicians.norm %>%
 # hospital.beds.norm$country %>% unique %>% sort
 ```
 
-```{r, echo=FALSE}
+```{r hospital.beds.func, echo=FALSE}
+plot.physicians.vs.cases <- function(...) { plot.what.vs.cases(..., data = physicians.vs.cases, what = 'Physicians') }
+```
+
+### EU
+
+```{r eu.physicians, echo=FALSE}
+plot.physicians.vs.cases(countries.eu)
+```
+
+### Non-EU Europe
+
+```{r non.eu.europe.physicians, echo=FALSE}
+plot.physicians.vs.cases(countries.europe.non.eu)
+```
+
+### Non-Europe
+
+```{r non.europe.nurses, echo=FALSE}
+plot.physicians.vs.cases(countries.non.europe)
+```
+
+### CPLP
+
+```{r cplp.nurses, echo=FALSE}
+plot.physicians.vs.cases(countries.cplp)
+```
+
+### Data
+
+```{r physicians.vs.cases, echo=FALSE}
 physicians.vs.cases %>% 
     filter(country %in% countries.extended) %>%
     mutate(Country = country,
