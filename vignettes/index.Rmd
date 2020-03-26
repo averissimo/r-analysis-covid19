@@ -17,6 +17,15 @@ This is a personal analysis of the cases of covid-19.
 
 I'm not from the Epidemiology field. I'm currently working on modeling cancer datasets for my PhD thesis.
 
+# Symptom
+
+1. Cefaleias - Dor de cabeça - 2233
+1. Tosse - 1878
+1. Febre - 1701
+1. Fraqueza generalizada - 1311
+1. Dores musculares - 1099
+1. Dificuldade Respiratória - 673
+
 ```{r render.me, include=FALSE, eval=FALSE}
 rmarkdown::render('Analysis.Rmd', quiet = TRUE)
 ```
@@ -36,9 +45,11 @@ library(ggrepel)
 library(zoo)
 library(glue)
 library(DT)
+library(anytime)
 library(scales)
 library(futile.logger)
 library(wbstats) # world bank data
+library(reshape2)
 
 .Last.value <- flog.layout(layout.format('~m'))
 ```
@@ -49,22 +60,58 @@ Data was retrieved from *'RamiKrispin/coronavirus'* R data package which is upda
 
 It's not realtime data and data presented may have 1 or more days of difference from real-time data. Check the caption on the figures to check when was the last data point.
 
-```{r reinstall.data.package, echo=FALSE, message=FALSE, warning=FALSE}
-BiocManager::install('RamiKrispin/coronavirus', ask = FALSE)
+```{r reinstall.data.package, echo=FALSE, eval=FALSE, include=FALSE}
+#
+#
+# EU Data lags a day
+# 
+source.by = ''
 
-library(coronavirus)
+tryCatch({
+    eu.data.raw <- read_csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
+    
+    eu.data <- eu.data.raw %>%
+        mutate(date = anytime(glue('{year}/{month}/{day}')),
+               country = countriesAndTerritories) %>%
+        select(country, date, cases, deaths, countryCode, popData2018) %>%
+        arrange(date) %>%
+        melt(id.vars = c('country', 'countryCode', 'popData2018', 'date'),
+             variable.name = 'type',
+             value.name = 'cases') %>%
+        mutate(type = if_else(type == 'cases', 'confirmed', 'death')) %>%
+        group_by(country, type, date, popData2018, countryCode) %>%
+        summarise(cases = sum(cases)) %>%
+        group_by(country, type) %>%
+        mutate(cumul = cumsum(cases)) %>%
+        ungroup() %>%
+        mutate(country = gsub('_', ' ', country)) %>%
+        select(country, date, type, cases, cumul, countryCode, population = popData2018)
 
-data("coronavirus")
+    source.by = 'EU CDPC'
+})
 ```
 
-```{r buildCorona, include=FALSE}
-my.corona.original <- coronavirus %>% as_tibble() %>%
-    mutate(country = Country.Region) %>%
-    group_by(country, type, date) %>%
-    summarise(cases = sum(cases)) %>%
-    arrange(date) %>%
-    mutate(cumul = cumsum(cases))
+```{r buildCorona, echo=FALSE, message=FALSE, warning=FALSE}
+if (!exists('source.by') || source.by == '') {
+    BiocManager::install('RamiKrispin/coronavirus', ask = FALSE)
+
+    library(coronavirus)
+    
+    data("coronavirus")
+
+    my.corona.original <- coronavirus %>% as_tibble() %>%
+        mutate(country = Country.Region) %>%
+        group_by(country, type, date) %>%
+        summarise(cases = sum(cases)) %>%
+        arrange(date) %>%
+        mutate(cumul = cumsum(cases))   
+    
+    source.by = 'RamiKrispin/coronavirus'
+} else {
+    my.corona.original = eu.data
+}
 ```
+
 
 ```{r summaryCorona, echo=FALSE, collapse=TRUE}
 flog.info('### Summary of data ###')
@@ -72,15 +119,15 @@ flog.info('')
 flog.info('  Countries: %d', my.corona.original %>% filter(cases > 0) %>% pull(country) %>% unique %>% length)
 flog.info('')
 flog.info('      Cases: %d', sum((my.corona.original %>% filter(type == 'confirmed'))$cases))
-flog.info('  Recovered: %d', sum((my.corona.original %>% filter(type == 'recovered'))$cases))
 flog.info('     Deaths: %d', sum((my.corona.original %>% filter(type == 'death'))$cases))
 flog.info('')
 
 last.date <- format(max(my.corona.original$date), '%Y/%m/%d')
-last.date.string <- paste0('Latest date from ', last.date, ' (source: RamiKrispin/coronavirus r package)')
+last.date.string <- paste0('Latest date from ', last.date, ' (source: ', source.by, ' r package)')
 
 flog.info('     Latest: %s', last.date)
 ```
+
 
 ## Countries in visualizations
 
@@ -188,19 +235,21 @@ my.corona.original %>%
 
 # Get data from world bank
 
-populations <- wb(indicator = "SP.POP.TOTL") %>% 
-    group_by(iso3c) %>%
-    filter(date == max(date)) %>%
-    select(population.year = date, population = value, country, iso3c) %>%
-    arrange(country)
-
-# Change some country name to match covid-19 data
-
 convert.names <- list('United States' = 'US',
      'Czech Republic' = 'Czechia',
      'Russian Federation' = 'Russia',
      'Slovak Republic' = 'Slovakia',
      'Korea, Rep.' = 'Korea, South')
+
+if (source.by == 'EU CDPC') {
+
+populations <- wb(indicator = "SP.POP.TOTL") %>% 
+    group_by(iso3c) %>%
+    filter(date == max(date)) %>%
+    select(population = value, country, iso3c) %>%
+    arrange(country)
+
+# Change some country name to match covid-19 data
 
 for (ix.name in names(convert.names)) {
     populations <- populations %>%
@@ -226,6 +275,9 @@ my.corona <- my.corona.original %>%
 my.corona <- mutate(my.corona, 
                     country.data = factor(country, levels = my.corona %>% filter(type == 'confirmed') %>% summarise(cases = max(cumul)) %>% arrange(cases) %>% pull(country))) %>%
     select(-iso3c)
+} else {
+    my.corona <- my.corona.original
+}
 ```
 
 ```{r, echo=FALSE}
@@ -414,7 +466,7 @@ my.corona.after.100 %>%
 my.corona %>% 
     filter(country %in% countries) %>% 
     ungroup %>% 
-    select(country, population, population.year) %>% 
+    select(country, population) %>% 
     distinct(country, .keep_all = TRUE) %>%
     arrange(population) %>%
     mutate(population = format(population, big.mark = ',', trim = FALSE)) %>%
