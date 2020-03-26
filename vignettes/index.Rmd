@@ -160,7 +160,7 @@ my.corona.original %>%
     arrange(-cases) %>%
     mutate(cases = format(cases, big.mark = ',')) %>%
     select(Country = country, 'Cases Confirmed' = cases) %>%
-    rmarkdown::paged_table()
+    datatable()
 ```
 
 ## Data death
@@ -176,7 +176,7 @@ my.corona.original %>%
     arrange(-cases) %>%
     mutate(cases = format(cases, big.mark = ',')) %>%
     select(Country = country, 'Cases Death' = cases) %>%
-    rmarkdown::paged_table()
+    datatable()
 ```
 
 
@@ -508,6 +508,44 @@ my.corona.after.100 %>%
         theme(legend.position = 'none', legend.title = element_blank())
 ```
 
+## Data for confirmed cases
+
+```{r last.12.days.confirmed.data, echo=FALSE}
+my.corona.after.100 %>%
+    filter(country %in% countries) %>%
+    filter(type == 'confirmed') %>%
+    arrange(country) %>%
+    top_n(params$last.days, days.after.100) %>%
+    mutate(days.before.now = days.after.100 - max(days.after.100)) %>%
+    mutate(cumul = cumsum(cases)) %>%
+    ungroup() %>%
+    mutate(Country = country,
+           Date = format(date, '%B %d'),
+           'Confirmed cases' = cases,
+           'Total cases' = cumul) %>%
+    select(Country, Date, 'Confirmed cases', 'Total cases') %>%
+    datatable()
+```
+
+## Data for Deaths
+
+```{r last.12.days.death.data, echo=FALSE}
+my.corona.after.100 %>%
+    filter(country %in% countries) %>%
+    filter(type == 'death') %>%
+    arrange(country) %>%
+    top_n(params$last.days, days.after.100) %>%
+    mutate(days.before.now = days.after.100 - max(days.after.100)) %>%
+    mutate(cumul = cumsum(cases)) %>%
+    ungroup() %>%
+    mutate(Country = country,
+           Date = format(date, '%B %d'),
+           'Deaths' = cases,
+           'Total deaths' = cumul) %>%
+    select(Country, Date, 'Deaths', 'Total deaths') %>%
+    datatable()
+```
+
 # Cumulative cases of previous 4 days *(how it tracks over time)* {.tabset .tabset-fade .tabset-pills}
 
 **Warning**: This visualization is not very intuitive, use it to see the trend over the last days.
@@ -600,6 +638,7 @@ p <- last.week %>%
     #
     ggplot(aes(x = date, y = last.week.cases.confirmed, color = country.data)) +
         geom_line(size = 1.2) +
+        geom_point(size = 1.2) +
                 geom_label_repel(aes(label = label,
                                      fill = country.data), 
                                  na.rm = TRUE,
