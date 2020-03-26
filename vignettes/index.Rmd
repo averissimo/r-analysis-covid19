@@ -510,6 +510,8 @@ my.corona.after.100 %>%
 
 ## Data for confirmed cases
 
+**warning**: sub-total is only for last 12 days
+
 ```{r last.12.days.confirmed.data, echo=FALSE}
 my.corona.after.100 %>%
     filter(country %in% countries) %>%
@@ -522,12 +524,14 @@ my.corona.after.100 %>%
     mutate(Country = country,
            Date = format(date, '%B %d'),
            'Confirmed cases' = cases,
-           'Total cases' = cumul) %>%
+           'Sub-total' = cumul) %>%
     select(Country, Date, 'Confirmed cases', 'Total cases') %>%
     datatable()
 ```
 
 ## Data for Deaths
+
+**warning**: sub-total is only for last 12 days
 
 ```{r last.12.days.death.data, echo=FALSE}
 my.corona.after.100 %>%
@@ -541,7 +545,7 @@ my.corona.after.100 %>%
     mutate(Country = country,
            Date = format(date, '%B %d'),
            'Deaths' = cases,
-           'Total deaths' = cumul) %>%
+           'Sub-total' = cumul) %>%
     select(Country, Date, 'Deaths', 'Total deaths') %>%
     datatable()
 ```
