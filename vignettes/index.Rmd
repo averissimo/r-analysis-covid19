@@ -17,11 +17,11 @@ This is a personal analysis of the cases of covid-19.
 
 I'm not from the Epidemiology field. I'm currently working on modeling cancer datasets for my PhD thesis.
 
-```{r, include=FALSE, eval=FALSE}
+```{r render.me, include=FALSE, eval=FALSE}
 rmarkdown::render('Analysis.Rmd', quiet = TRUE)
 ```
 
-```{r, include=FALSE, eval=FALSE}
+```{r render.site, include=FALSE, eval=FALSE}
 rmarkdown::render_site()
 rmarkdown::clean_site()
 ```
@@ -34,6 +34,7 @@ library(dplyr)
 library(viridis) # color pallete
 library(ggrepel)
 library(zoo)
+library(glue)
 library(DT)
 library(scales)
 library(futile.logger)
@@ -817,13 +818,13 @@ wb.indicator <- function(indicator, name) {
 # death.vs.cases$country[!death.vs.cases$country %in% dta$country]
 # dta.norm$country %>% unique %>% sort
 
-beds.vs.cases2 <- wb.indicator('SH.MED.BEDS.ZS', 'Hospital beds', per.100k = TRUE)
+beds.vs.cases <- wb.indicator('SH.MED.BEDS.ZS', 'Hospital beds')
 ```
 
 ```{r hospital.beds.func, echo=FALSE}
 plot.what.vs.cases <- function(data,
                                country.filter = c(), 
-                               always.include = countries.always.include,
+                               always.include = c(),
                                what = 'Hospital beds') {
     my.tbl <- data %>%
         filter(country %in% (c(always.include, country.filter) %>% unique))
@@ -855,7 +856,12 @@ plot.what.vs.cases <- function(data,
                     theme(legend.position = 'none')
         )
 }
-plot.beds.vs.cases <- function(...) { plot.what.vs.cases(..., data = beds.vs.cases, what = 'Hospital beds') }
+plot.beds.vs.cases <- function(...) { 
+    plot.what.vs.cases(..., 
+                       data = beds.vs.cases, 
+                       what = 'Hospital beds', 
+                       always.include = countries.always.include)
+}
 ```
 
 ### EU
@@ -910,33 +916,10 @@ beds.vs.cases %>%
 ## Nurses and Midwifes *(per 100k population)*  {.tabset .tabset-fade .tabset-pills}
 
 ```{r nurses, echo=FALSE}
-nurses.original <- wb(indicator = "SH.MED.NUMW.P3") %>%
-    mutate(value = value * 100,
-   indicator = "Nurses and midwives (per 100,000 people)")
-
-nurses.norm <- nurses.original
-for (ix.name in names(convert.names)) {
-    nurses.norm <- nurses.norm %>%
-        arrange(country) %>%
-        ungroup %>%
-        mutate(country = replace(country, country == ix.name, convert.names[[ix.name]]))    
-}
-
-nurses <- nurses.norm %>% 
-    group_by(country) %>%
-    arrange(desc(date)) %>%
-    summarise(date = first(date),
-              value = first(value))
-
-nurses.vs.cases <- left_join(death.vs.cases, nurses, by = 'country') %>%
-    mutate(ratio.confirmed = cases.confirmed / value) %>%
-    mutate(ratio.death = cases.death / value) 
-
-# death.vs.cases$country[!death.vs.cases$country %in% hospital.beds$country]
-# hospital.beds.norm$country %>% unique %>% sort
+nurses.vs.cases <- wb.indicator('SH.MED.NUMW.P3', 'Nurses and midwives')
 ```
 
-```{r hospital.beds.func, echo=FALSE}
+```{r nurses.func, echo=FALSE}
 plot.nurses.vs.cases <- function(...) { plot.what.vs.cases(..., data = nurses.vs.cases, what = 'Nurses and Midwifes') }
 ```
 
@@ -994,33 +977,10 @@ nurses.vs.cases %>%
 
 
 ```{r physicians, echo=FALSE}
-physicians.original <- wb(indicator = "SH.MED.PHYS.ZS") %>%
-    mutate(value = value * 100,
-   indicator = "Physicians (per 100,000 people)")
-
-physicians.norm <- physicians.original
-for (ix.name in names(convert.names)) {
-    physicians.norm <- physicians.norm %>%
-        arrange(country) %>%
-        ungroup %>%
-        mutate(country = replace(country, country == ix.name, convert.names[[ix.name]]))    
-}
-
-physicians <- physicians.norm %>% 
-    group_by(country) %>%
-    arrange(desc(date)) %>%
-    summarise(date = first(date),
-              value = first(value))
-
-    physicians.vs.cases <- left_join(death.vs.cases, physicians, by = 'country') %>%
-    mutate(ratio.confirmed = cases.confirmed / value) %>%
-    mutate(ratio.death = cases.death / value) 
-
-# death.vs.cases$country[!death.vs.cases$country %in% hospital.beds$country]
-# hospital.beds.norm$country %>% unique %>% sort
+physicians.vs.cases <- wb.indicator('SH.MED.PHYS.ZS', 'Physicians')
 ```
 
-```{r hospital.beds.func, echo=FALSE}
+```{r physicians.func, echo=FALSE}
 plot.physicians.vs.cases <- function(...) { plot.what.vs.cases(..., data = physicians.vs.cases, what = 'Physicians') }
 ```
 
@@ -1038,13 +998,13 @@ plot.physicians.vs.cases(countries.europe.non.eu)
 
 ### Non-Europe
 
-```{r non.europe.nurses, echo=FALSE}
+```{r non.europe.physicians, echo=FALSE}
 plot.physicians.vs.cases(countries.non.europe)
 ```
 
 ### CPLP
 
-```{r cplp.nurses, echo=FALSE}
+```{r cplp.physicians, echo=FALSE}
 plot.physicians.vs.cases(countries.cplp)
 ```
 
