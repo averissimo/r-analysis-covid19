@@ -1,0 +1,7 @@
+name: "covid-19-analysis"
+output_dir: "../_site"
+navbar:
+  title: "covid-19 Analysis"
+  left:
+    - text: "Home"
+      href: vignettes/Index.html

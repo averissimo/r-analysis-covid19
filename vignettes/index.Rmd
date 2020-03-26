@@ -21,6 +21,11 @@ I'm not from the Epidemiology field. I'm currently working on modeling cancer da
 rmarkdown::render('Analysis.Rmd', quiet = TRUE)
 ```
 
+```{r, include=FALSE, eval=FALSE}
+rmarkdown::render_site()
+```
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.width = 10, fig.height = 8)
 library(tidyverse)
@@ -1002,4 +1007,49 @@ physicians.vs.cases %>%
 ```
 
 
-- - - - - - - - The end. - - - - - - - -
+\- - - - - - - - The end. - - - - - - - -
+
+```{r handle.data, eval=FALSE, include=FALSE}
+anim.confirmed.vs.death <- last.week %>%
+    filter(country %in% c('Italy', 'Portugal')) %>%
+    group_by(country, date) %>%
+    mutate(cases.death = cumulative.cases.death / population * 100000,
+           cases.confirmed = cumulative.cases.confirmed / population * 100000,
+           ratio = if_else(cumulative.cases.confirmed == 0, 0, cumulative.cases.death / cumulative.cases.confirmed)) %>%
+    select(country, date, cases.confirmed, cases.death, cumul.confirmed = cumulative.cases.confirmed, cumul.death = cumulative.cases.death, ratio, population) %>%
+    arrange(desc(date))
+
+anim.confirmed.vs.death
+```
+
+```{r animate, eval=FALSE, include=FALSE}
+anim <- anim.confirmed.vs.death %>%
+    arrange(date) %>%
+    #filter(date == '2020-03-24') %>%
+    ggplot(aes(x = cases.confirmed, y = cases.death, color = country)) +
+        geom_point(aes(size = population), alpha = .4) +
+        geom_label_repel(aes(label = paste0(country, ' (', percent(ratio, accuracy = .1), ')'),
+                     fill = country),
+                     na.rm = TRUE,
+                     alpha = .8,
+                     color = 'white',
+                     size = 3,
+                     segment.alpha = .4,
+                     segment.colour = 'black',
+                     force = 2) +
+        expand_limits(x = ceiling(max(anim.confirmed.vs.death %>% pull(cases.confirmed))),
+                          y = ceiling(max(anim.confirmed.vs.death %>% pull(cases.death)))) +
+            labs(x = 'Confirmed Cases per 100k population', 
+                 y = 'Deaths per 100k population', 
+                 title = 'Deaths vs. Cases per 100k population -- {format(frame_along, \'%B\ %d\')}', 
+                 subtitle = 'percentage is the death rate per confirmed cases and size represents size of country by population',
+                 caption = '??') +
+            theme_minimal() +
+            theme(legend.position = 'none') +
+    transition_time(date) +
+    enter_drift()
+```
+
+```{r show_anim, message=FALSE, eval=FALSE, include=FALSE}
+animate(anim, end_pause = 30)
+```
