@@ -23,6 +23,7 @@ rmarkdown::render('Analysis.Rmd', quiet = TRUE)
 
 ```{r, include=FALSE, eval=FALSE}
 rmarkdown::render_site()
+rmarkdown::clean_site()
 ```
 
 
