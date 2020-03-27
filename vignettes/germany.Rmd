@@ -17,7 +17,7 @@ This is a personal analysis of the cases of covid-19.
 
 I'm not from the Epidemiology field. I'm currently working on modeling cancer datasets for my PhD thesis.
 
-Other analysis:
+# Other covid-19 analysis
 
 * [World](https://averissimo.github.io/covid19-analysis/)
 

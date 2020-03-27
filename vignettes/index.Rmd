@@ -17,9 +17,9 @@ This is a personal analysis of the cases of covid-19.
 
 I'm not from the Epidemiology field. My background is computer science and bioinformatics.
 
-Other analysis:
+# Other covid-19 analysis
 
-* [Germany](https://averissimo.github.io/covid19-analysis/germany.html)
+* [Germany (by state)](https://averissimo.github.io/covid19-analysis/germany.html)
 
 # Symptoms *(count)* for Portugal
 
