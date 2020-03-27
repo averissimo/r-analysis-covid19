@@ -43,6 +43,7 @@ library(wbstats) # world bank data
 library(reshape2)
 library(eurostat)
 
+Sys.setlocale('LC_TIME', 'en_GB.UTF-8')
 .Last.value <- flog.layout(layout.format('~m'))
 ```
 
@@ -79,7 +80,7 @@ source.by = 'Robert Koch Institute'
 ```{r summaryCorona, echo=FALSE, collapse=TRUE}
 flog.info('### Summary of data ###')
 flog.info('')
-flog.info('  Countries: %d', my.corona.original %>% filter(cases > 0) %>% pull(country) %>% unique %>% length)
+flog.info('     States: %d', my.corona.original %>% filter(cases > 0) %>% pull(country) %>% unique %>% length)
 flog.info('')
 flog.info('      Cases: %d', sum((my.corona.original %>% filter(type == 'confirmed'))$cases))
 flog.info('     Deaths: %d', sum((my.corona.original %>% filter(type == 'death'))$cases))
@@ -92,14 +93,14 @@ flog.info('     Latest: %s from %s', last.date, source.by)
 ```
 
 
-## Countries in visualizations
+## States in visualizations
 
-The plots presented get very complex as more countries are added. I'm focusing mainly on Europe and comparing against Portugal and Germany *(where I'm from vs. where I live)*
+The plots presented get very complex as more states are added.
 
-```{r, echo=FALSE, collapse=TRUE}
+```{r, echo=FALSE, collapse=TRUE, include=TRUE}
 countries <- my.corona.original %>% pull(country) %>% unique %>% sort
 
-flog.info('Looking only at the following countries: \n\n  %s' , paste0(countries, collapse = ', '))
+flog.info('Looking only at the following states: \n\n  %s' , paste0(countries, collapse = ', '))
 ```
 
 # Top 30 countries {.tabset .tabset-fade .tabset-pills}
@@ -314,7 +315,7 @@ my.corona.after.100 %>%
 
 ## Starting point after exceeding `r params$confirmed.start` cases or `r params$death.start` deaths *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
 
-Showing population for plotted countries. This becomes relevant for the next plots.
+Showing population for plotted states. This becomes relevant for the next plots.
 
 ### Confirmed cases
 
@@ -380,10 +381,10 @@ my.corona.after.100 %>%
                              size = 3.5,
                              segment.alpha = .4,
                              segment.colour = 'black') +
-        labs(x = 'Number of days since ≥ 10 deaths',
+        labs(x = 'Number of days since ≥ {params$death.start} deaths' %>% glue,
              y = 'Deaths -- per 100k population',
              title = 'Deaths per 100k population',
-             subtitle = 'Only showing after each country had more than 10 deaths',
+             subtitle = 'Only showing after each country had more than {params$death.start} deaths' %>% glue,
              caption = last.date.string) + 
         scale_y_continuous('Deaths -- per 100k population (log2 scale)', trans = 'log2') + 
         scale_color_viridis(discrete = TRUE, end = .85, option = 'C') +
@@ -527,7 +528,7 @@ my.corona.after.100 %>%
     mutate(cumul = cumsum(cases)) %>%
     ungroup() %>%
     mutate(Country = country,
-           Date = format(date, '%B %d'),
+           Date = format(date, '%B %d', tz = 'Europe/London'),
            'Deaths' = cases,
            'Sub-total' = cumul) %>%
     select(Country, Date, 'Deaths', 'Sub-total') %>%
@@ -670,8 +671,6 @@ This visualization shows the number of cases/deaths per 100k of the population.
 * **y axis**: Deaths per 100k population
 * **size of data point**: Total population if the country
 * **label**: Rate of deaths per confirmed cases
-
-*note*: It always shows Portugal, Spain, Italy, South Korea, Iran and Germany.
 
 ```{r death.vs.cases.function.and.data, echo=FALSE}
 death.vs.cases <- last.week %>%

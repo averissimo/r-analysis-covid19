@@ -27,7 +27,7 @@ I'm not from the Epidemiology field. I'm currently working on modeling cancer da
 1. Difficulties breathing - Dificuldade Respiratória - 673
 
 ```{r render.me, include=FALSE, eval=FALSE}
-rmarkdown::render('Analysis.Rmd', quiet = TRUE)
+rmarkdown::render('index.Rmd', quiet = TRUE)
 ```
 
 ```{r render.site, include=FALSE, eval=FALSE}
@@ -87,7 +87,7 @@ if (FALSE) {
             mutate(country = gsub('_', ' ', country)) %>%
             select(country, date, type, cases, cumul, countryCode, population = popData2018)
     
-        source.by = 'EU CDPC'
+        source.by = 'EU CDC'
     })
 }
 ```
@@ -153,7 +153,7 @@ flog.info('')
 last.date <- format(max(my.corona.original$date), '%Y/%m/%d')
 last.date.string <- paste0('Latest date from ', last.date, ' (source: ', source.by, ' r package)')
 
-flog.info('     Latest: %s', last.date)
+flog.info('     Latest: %s from %s', last.date, source.by)
 ```
 
 
