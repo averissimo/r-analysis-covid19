@@ -1,11 +1,11 @@
 ---
-title: "Personal analysis of covid-19 cases"
+title: "Germany analysis of covid-19 cases"
 output: 
     html_document:
         toc: true
         dev: 'svg'
 params:
-    death.start: !r 10
+    death.start: !r 5
     confirmed.start: !r 100
     duplicate.every: !r 2
     last.days: !r 12
@@ -17,17 +17,8 @@ This is a personal analysis of the cases of covid-19.
 
 I'm not from the Epidemiology field. I'm currently working on modeling cancer datasets for my PhD thesis.
 
-# Symptoms for Portugal
-
-1. Headaches - Cefaleias - Dor de cabeça - 2233
-1. Cough - Tosse - 1878
-1. Fever - Febre - 1701
-1. General weakness - Fraqueza generalizada - 1311
-1. Muscular pain - Dores musculares - 1099
-1. Difficulties breathing - Dificuldade Respiratória - 673
-
 ```{r render.me, include=FALSE, eval=FALSE}
-rmarkdown::render('Analysis.Rmd', quiet = TRUE)
+rmarkdown::render('Bavaria.Rmd', quiet = TRUE)
 ```
 
 ```{r render.site, include=FALSE, eval=FALSE}
@@ -37,7 +28,7 @@ rmarkdown::clean_site()
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, fig.width = 10, fig.height = 8)
+knitr::opts_chunk$set(echo = TRUE, collapse = TRUE, fig.width = 10, fig.height = 8)
 library(tidyverse)
 library(dplyr)
 library(viridis) # color pallete
@@ -50,6 +41,7 @@ library(scales)
 library(futile.logger)
 library(wbstats) # world bank data
 library(reshape2)
+library(eurostat)
 
 .Last.value <- flog.layout(layout.format('~m'))
 ```
@@ -60,81 +52,27 @@ Data was retrieved from *'RamiKrispin/coronavirus'* R data package which is upda
 
 It's not realtime data and data presented may have 1 or more days of difference from real-time data. Check the caption on the figures to check when was the last data point.
 
-```{r reinstall.data.package, echo=FALSE, eval=FALSE, include=FALSE}
-#
-#
-# EU Data lags a day
-# 
-source.by = ''
-
-tryCatch({
-    eu.data.raw <- read_csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
-    
-    eu.data <- eu.data.raw %>%
-        mutate(date = anytime(glue('{year}/{month}/{day}')),
-               country = countriesAndTerritories) %>%
-        select(country, date, cases, deaths, countryCode, popData2018) %>%
-        arrange(date) %>%
-        melt(id.vars = c('country', 'countryCode', 'popData2018', 'date'),
-             variable.name = 'type',
-             value.name = 'cases') %>%
-        mutate(type = if_else(type == 'cases', 'confirmed', 'death')) %>%
-        group_by(country, type, date, popData2018, countryCode) %>%
-        summarise(cases = sum(cases)) %>%
-        group_by(country, type) %>%
-        mutate(cumul = cumsum(cases)) %>%
-        ungroup() %>%
-        mutate(country = gsub('_', ' ', country)) %>%
-        select(country, date, type, cases, cumul, countryCode, population = popData2018)
-
-    source.by = 'EU CDPC'
-})
-```
-
-```{r, include=FALSE, eval=FALSE}
-eu.nl.raw <- read_csv('https://github.com/covid19-eu-zh/covid19-eu-data/raw/master/dataset/covid-19-nl.csv')
-
-eu.nl.state <- eu.nl.raw %>% 
-    select(country, state = lau, cases, deaths, date = datetime) %>%
-#    filter(!is.na(state)) %>%
-    mutate(country = 'Netherlands') %>%
-    group_by(country, state) %>% 
-    melt(id.vars = c('country', 'state', 'date'), variable.name = 'type', value.name = 'cases') %>%
-    mutate(type = if_else(type == 'cases', 'confirmed', 'death')) %>%
-    arrange(desc(date)) %>%
-    group_by(country, state, type) %>% 
-    # need to break down differences between days
-    mutate(cases = rollapply(cases, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE)) %>%
-    arrange(date) %>%
-    mutate(cumul = cumsum(cases))
-
-eu.nl <- eu.nl.state %>%
-    group_by(country, type, date) %>%
-    summarize(cases = sum(cases), cumul = sum(cumul)) %>%
-    arrange(date)
-
-eu.nl 
-```
 
 ```{r buildCorona, echo=FALSE, message=FALSE, warning=FALSE}
-if (!exists('source.by') || source.by == '') {
-    BiocManager::install('RamiKrispin/coronavirus', ask = FALSE)
+eu.de.raw <- read_csv('https://github.com/covid19-eu-zh/covid19-eu-data/raw/master/dataset/covid-19-de.csv')
 
-    library(coronavirus)
-    
-    data("coronavirus")
+eu.de <- eu.de.raw %>%
+    mutate(nuts_1 = gsub('[\u00ad]', '', nuts_1)) %>%
+    filter(nuts_1 != 'Repatriierte') %>%
+    select(country = nuts_1, cases, deaths, date = datetime) %>%
+    group_by(country) %>% 
+    melt(id.vars = c('country', 'date'), variable.name = 'type', value.name = 'cases') %>%
+    mutate(type = if_else(type == 'cases', 'confirmed', 'death')) %>%
+    arrange(desc(date)) %>%
+    group_by(country, type) %>% 
+    mutate(date = anydate(format(date, '%Y/%m/%d')),
+           cumul = cases,
+           # need to break down differences between days
+           cases = rollapply(cases, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE))
 
-    my.corona.original <- coronavirus %>% as_tibble() %>%
-        mutate(country = Country.Region) %>%
-        group_by(country, type, date) %>%
-        summarise(cases = sum(cases)) %>%
-        arrange(date) %>%
-        mutate(cumul = cumsum(cases))   
-    
-    source.by = 'RamiKrispin/coronavirus'
-} else {
-    my.corona.original = eu.data
-}
+my.corona.original <- eu.de
+
+source.by = 'Robert Koch Institute'
 ```
 
 
@@ -148,9 +86,9 @@ flog.info('     Deaths: %d', sum((my.corona.original %>% filter(type == 'death')
 flog.info('')
 
 last.date <- format(max(my.corona.original$date), '%Y/%m/%d')
-last.date.string <- paste0('Latest date from ', last.date, ' (source: ', source.by, ' r package)')
+last.date.string <- paste0('Latest date from ', last.date, ' (source: ', source.by, ')')
 
-flog.info('     Latest: %s', last.date)
+flog.info('     Latest: %s from %s', last.date, source.by)
 ```
 
 
@@ -159,9 +97,7 @@ flog.info('     Latest: %s', last.date)
 The plots presented get very complex as more countries are added. I'm focusing mainly on Europe and comparing against Portugal and Germany *(where I'm from vs. where I live)*
 
 ```{r, echo=FALSE, collapse=TRUE}
-countries <- c('Italy', 'Spain','Germany', 'China', 'Portugal', 'US', 'France', 'Switzerland')
-
-countries <- c('Italy', 'Spain','Germany', 'China', 'Portugal', 'US', 'France', 'Switzerland')
+countries <- my.corona.original %>% pull(country) %>% unique %>% sort
 
 flog.info('Looking only at the following countries: \n\n  %s' , paste0(countries, collapse = ', '))
 ```
@@ -251,55 +187,26 @@ my.corona.original %>%
     datatable()
 ```
 
+```{r eurostat}
+eu.population.raw <- get_eurostat('tgs00096')
 
-```{r worldbank, echo=FALSE, collapse=TRUE}
-### Add census data from World Bank
-#
-# Population census data from World Bank
-#
+eu.population.norm <- eu.population.raw %>% 
+    filter(grepl('^DE', geo)) %>%
+    mutate(nuts_1 = substr(geo, 0, 3),
+           nuts_1_label = label_eurostat(nuts_1, dic = 'geo')) %>%
+    group_by(nuts_1, nuts_1_label) %>%
+    filter(time == max(time)) %>%
+    summarize(values = sum(values))
 
-# Get data from world bank
-
-convert.names <- list('United States' = 'US',
-     'Czech Republic' = 'Czechia',
-     'Russian Federation' = 'Russia',
-     'Slovak Republic' = 'Slovakia',
-     'Korea, Rep.' = 'Korea, South')
-
-if (source.by == 'EU CDPC') {
-
-populations <- wb(indicator = "SP.POP.TOTL") %>% 
-    group_by(iso3c) %>%
-    filter(date == max(date)) %>%
-    select(population = value, country, iso3c) %>%
-    arrange(country)
-
-# Change some country name to match covid-19 data
-
-for (ix.name in names(convert.names)) {
-    populations <- populations %>%
-        arrange(country) %>%
-        ungroup %>%
-        mutate(country = replace(country, country == ix.name, convert.names[[ix.name]]))    
-}
-
-# info
-
-#flog.info('Countries with names different in world bank: \n\n  %s',
-#          paste0(unique(populations$country)[!unique(populations$country) %in% levels(my.corona.original$country)], 
-#                 collapse = ', '))
-
-# Join the two together, keeping all of covid-19 original data
+populations <- eu.population.norm %>%
+    ungroup() %>%
+    select(country = nuts_1_label, population = values)
 
 my.corona <- my.corona.original %>% 
     left_join(populations, by = 'country')
 
 my.corona <- mutate(my.corona, 
-                    country.data = factor(country, levels = my.corona %>% filter(type == 'confirmed') %>% summarise(cases = max(cumul)) %>% arrange(cases) %>% pull(country))) %>%
-    select(-iso3c)
-} else {
-    my.corona <- my.corona.original
-}
+                    country.data = factor(country, levels = my.corona %>% filter(type == 'confirmed') %>% summarise(cases = max(cumul)) %>% arrange(cases) %>% pull(country)))
 ```
 
 ```{r, echo=FALSE}
@@ -308,14 +215,17 @@ my.corona.after.100 <- my.corona %>%
     filter((type == 'death' & cumul >= params$death.start ) | 
            (type == 'confirmed' & cumul >= params$confirmed.start) | 
            (type == 'recovered' & cumul >= 0)) %>%
+    arrange(date) %>%
     mutate(days.after.100 = as.numeric(difftime(date, min(date), units = 'days')))
+
+
 ```
 
 # Confirmed cases / Deaths *(ommiting start of epidemic)*
 
-## Starting point after exceeding 100 cases or 10 deaths {.tabset .tabset-fade .tabset-pills}
+## Starting point after exceeding `r params$confirmed.start` cases or `r params$death.start` deaths {.tabset .tabset-fade .tabset-pills}
 
-The visualizations presented below have been time-shifted to the day when each country exceeded 100 cases or 10 deaths *(depending on the visualization)*.
+The visualizations presented below have been time-shifted to the day when each country exceeded `r params$confirmed.start` cases or `r params$death.start` deaths *(depending on the visualization)*.
 
 It is an arbitrary number, but allows to have a more accurate view of the progression as the first cases are quite sporadic and make the plots more complex.
 
@@ -353,9 +263,9 @@ my.corona.after.100 %>%
                          segment.alpha = .4,
                          segment.colour = 'black') +
         labs(y = 'Confirmed cases',
-             x = 'Number of days since ≥ 100 confirmed cases',
+             x = 'Number of days since ≥ {params$confirmed.start} confirmed cases' %>% glue,
              title = 'Confirmed cases over time',
-             subtitle = 'Only showing after each country had more than 100 cases',
+             subtitle = 'Only showing after each country had more than {params$confirmed.start} cases' %>% glue,
              caption = last.date.string) +
         scale_y_continuous('Confirmed cases (log2 scale)', trans = 'log2') + 
         scale_color_viridis(discrete = TRUE, end = .85, option = 'A') +
@@ -391,9 +301,9 @@ my.corona.after.100 %>%
                              segment.alpha = .4,
                              segment.colour = 'black') +
         labs(y = 'Deaths',
-             x = 'Number of days since ≥ 10 deaths',
+             x = glue('Number of days since ≥ {params$death.start} deaths'),
              title = 'Deaths over Time',
-             subtitle = 'Only showing after each country had more than 10 deaths',
+             subtitle = 'Only showing after each country had more than {params$death.start} deaths' %>% glue,
              caption = last.date.string) +
         scale_y_continuous('Deaths (log2 scale)', trans = 'log2') + 
         scale_color_viridis(discrete = TRUE, end = .85, option = 'A') +
@@ -402,7 +312,7 @@ my.corona.after.100 %>%
         theme(legend.position = 'none', legend.title = element_blank())
 ```
 
-## Starting point after exceeding 100 cases or 10 deaths *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
+## Starting point after exceeding `r params$confirmed.start` cases or `r params$death.start` deaths *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
 
 Showing population for plotted countries. This becomes relevant for the next plots.
 
@@ -544,7 +454,7 @@ my.corona.after.100 %>%
 
 ## Deaths
 
-```{r death.last12.days, echo=FALSE}
+```{r death.last12.days, echo=FALSE, warning=FALSE}
 my.corona.after.100 %>%
     filter(country %in% countries) %>%
     filter(type == 'death') %>%
@@ -629,29 +539,9 @@ my.corona.after.100 %>%
 **Warning**: This visualization is not very intuitive, use it to see the trend over the last days.
 
 ```{r countries.more, echo=FALSE}
-countries.eu <- c('Italy', 'Spain','Germany', 'Portugal', 'France',  
-                  'United Kingdom', 'Poland', 'Greece', 'Croatia', 'Slovenia', 
-                  'Hungary', 'Slovakia', 'Ireland', 'Luxembourg', 'Finland', 
-                  'Sweden', 'Denmark', 'Romania', 'Netherlands', 'Belgium', 
-                  'Czechia', 'Austria', 'Bulgaria', 'Lithuania', 'Latvia', 
-                  'Malta', 'Estonia', 'Cyprus')
+countries.always.include <- c()
 
-countries.cplp <- c('Angola', 'Mozambique', 'Cabo Verde', 'Timor-Leste', 
-                    'Brazil'
-                    , 'Macao SAR, China', 'Guinea-Bissau', 'Sao Tome and Principe' # not in corona data
-                    )
-
-countries.europe.non.eu <- c('Norway', 'Switzerland', 'Ukraine', 'Serbia', 'Russia', 
-                             'Albania', 'Iceland', 'Turkey', 'Belarus')
-
-countries.non.europe <- c('US', 'China', 'Canada', 
-                          'Australia', 'New Zealand', 
-                          'Korea, South', 'Japan', 'Argentina', 'Chile', 'Thailand')
-
-countries.always.include <- c('Portugal', 'Iran', 'Germany', 'Spain', 'Italy', 'Korea, South')
-
-countries.extended <- c(countries.eu, countries.europe.non.eu, countries.cplp, countries.non.europe) %>%
-    unique
+countries.extended <- countries
 
 # countries.extended[!countries.extended %in% my.corona$country]
 # countries.extended[!countries.extended %in% populations$country]
@@ -817,28 +707,10 @@ plot.death.vs.cases <- function(country.filter, always.include = countries.alway
 }
 ```
 
-## EU
+## All states
 
 ```{r eu, echo=FALSE}
-plot.death.vs.cases(countries.eu)
-```
-
-## Non-EU Europe
-
-```{r non.eu.europe, echo=FALSE}
-plot.death.vs.cases(countries.europe.non.eu)
-```
-
-## Non-Europe
-
-```{r non.europe, echo=FALSE}
-plot.death.vs.cases(countries.non.europe)
-```
-
-## CPLP
-
-```{r cplp, echo=FALSE}
-plot.death.vs.cases(countries.cplp)
+plot.death.vs.cases(countries.extended)
 ```
 
 ## Data for Confirmed Cases
@@ -889,309 +761,4 @@ my.corona.original %>%
         theme(legend.position = 'none')
 ```
 
-# Hospital beds vs. Cases *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
 
-This visualization shows the number of cases/deaths per 100k of the population.
-
-* **x axis**: Confirmed cases per 100k population
-* **y axis**: Hospilta beds per 100k population
-* **size of data point**: Ratio of Confirmed cases / Hospital beds
-* **label**: Country (<Confirmed cases / Hospital beds> | <Deaths / Hospital beds>)
-
-*note*: It always shows Portugal, Spain, Italy, South Korea, Iran and Germany.
-
-```{r hospital.beds, echo=FALSE}
-
-wb.indicator <- function(indicator, name) {
-    renamed.100k <- glue("{name} (per 100,000 people)")
-    
-    dta.original <- wb(indicator = indicator)
-    
-    dta.norm <- dta.original %>%
-        mutate(value = value * 100, value,
-               indicator = renamed.100k)
-    
-    for (ix.name in names(convert.names)) {
-        dta.norm <- dta.norm %>%
-            arrange(country) %>%
-            ungroup %>%
-            mutate(country = replace(country, country == ix.name, convert.names[[ix.name]]))    
-    }
-    
-    dta <- dta.norm %>% 
-        group_by(country) %>%
-        arrange(desc(date)) %>%
-        summarise(date = first(date),
-                  value = first(value))
-    
-    dta.vs.cases <- left_join(death.vs.cases, dta, by = 'country') %>%
-        mutate(ratio.confirmed = cases.confirmed / value) %>%
-        mutate(ratio.death = cases.death / value)
-    
-    return(dta.vs.cases)
-}
-# death.vs.cases$country[!death.vs.cases$country %in% dta$country]
-# dta.norm$country %>% unique %>% sort
-
-beds.vs.cases <- wb.indicator('SH.MED.BEDS.ZS', 'Hospital beds')
-```
-
-```{r hospital.beds.func, echo=FALSE}
-plot.what.vs.cases <- function(data,
-                               country.filter = c(), 
-                               always.include = c(),
-                               what = 'Hospital beds') {
-    my.tbl <- data %>%
-        filter(country %in% (c(always.include, country.filter) %>% unique))
-    return(
-        my.tbl %>%
-            ggplot(aes(x = cases.confirmed, y = value, color = country)) +
-                    geom_point(aes(size = ratio.confirmed), alpha = .4) +
-                    geom_label_repel(aes(label = paste0(country, 
-                                                        ' (', percent(ratio.confirmed, accuracy = .1), '/', 
-                                                              percent(ratio.death, accuracy = .1), ')'),
-                                         fill = country),
-                                         na.rm = TRUE,
-                                         alpha = .8,
-                                         color = 'white',
-                                         size = 3,
-                                         segment.alpha = .4,
-                                         segment.colour = 'black',
-                                         force = 2) +
-                    expand_limits(x = ceiling(max(my.tbl %>% pull(cases.confirmed))),
-                                  y = ceiling(max(my.tbl %>% pull(value)))) +
-                    scale_color_viridis(discrete = TRUE, end = .85) +
-                    scale_fill_viridis(discrete = TRUE, end = .85) +
-                    labs(x = 'Confirmed Cases per 100k population', 
-                         y = glue('{what} per 100k population'), 
-                         title = glue('{what} vs. Cases per 100k population'), 
-                         subtitle = glue('percentage shows the {tolower(what)} per confirmed cases and deaths, respectively'),
-                         caption = last.date.string) +
-                    theme_minimal() +
-                    theme(legend.position = 'none')
-        )
-}
-plot.beds.vs.cases <- function(...) { 
-    plot.what.vs.cases(..., 
-                       data = beds.vs.cases, 
-                       what = 'Hospital beds', 
-                       always.include = countries.always.include)
-}
-```
-
-## EU
-
-```{r eu.beds, echo=FALSE}
-plot.beds.vs.cases(countries.eu)
-```
-
-## Non-EU Europe
-
-```{r non.eu.europe.beds, echo=FALSE}
-plot.beds.vs.cases(countries.europe.non.eu)
-```
-
-## Non-Europe
-
-```{r non.europe.beds, echo=FALSE}
-plot.beds.vs.cases(countries.non.europe)
-```
-
-## CPLP
-
-```{r cplp.beds, echo=FALSE}
-plot.beds.vs.cases(countries.cplp)
-```
-
-## Data
-
-```{r beds.vs.cases, echo=FALSE}
-beds.vs.cases %>% 
-    filter(country %in% countries.extended) %>%
-    mutate(Country = country,
-           Population = format(population, big.mark = ','),
-           'Deaths per 100k' = round(cases.death, digits = 2),
-           'Cases per 100k' = round(cases.confirmed, digits = 2),
-           '(source year)' = as.numeric(date),
-           'Beds per 100k' = value,
-           'Cases per Beds' = percent(cases.confirmed / value, accuracy = .01),
-           'Deaths per Beds' = percent(cases.death / value, accuracy = .01)) %>%
-    ungroup %>%
-    select(Country,
-           Population, 
-           'Beds per 100k', 
-           '(source year)' , 
-           'Cases per 100k', 
-           'Deaths per 100k', 
-           'Cases per Beds',
-           'Deaths per Beds') %>%
-    datatable()
-```
-
-# Nurses and Midwifes *(per 100k population)*  {.tabset .tabset-fade .tabset-pills}
-
-```{r nurses, echo=FALSE}
-nurses.vs.cases <- wb.indicator('SH.MED.NUMW.P3', 'Nurses and midwives')
-```
-
-```{r nurses.func, echo=FALSE}
-plot.nurses.vs.cases <- function(...) { plot.what.vs.cases(..., data = nurses.vs.cases, what = 'Nurses and Midwifes') }
-```
-
-## EU
-
-```{r eu.nurses, echo=FALSE}
-plot.nurses.vs.cases(countries.eu)
-```
-
-## Non-EU Europe
-
-```{r non.eu.europe.nurses, echo=FALSE}
-plot.nurses.vs.cases(countries.europe.non.eu)
-```
-
-## Non-Europe
-
-```{r non.europe.nurses, echo=FALSE}
-plot.nurses.vs.cases(countries.non.europe)
-```
-
-## CPLP
-
-```{r cplp.nurses, echo=FALSE}
-plot.nurses.vs.cases(countries.cplp)
-```
-
-
-## Data
-
-```{r nurses.vs.cases, echo=FALSE}
-nurses.vs.cases %>% 
-    filter(country %in% countries.extended) %>%
-    mutate(Country = country,
-           Population = format(population, big.mark = ','),
-           'Deaths per 100k' = round(cases.death, digits = 2),
-           'Cases per 100k' = round(cases.confirmed, digits = 2),
-           '(source year)' = as.numeric(date),
-           'Nurses per 100k' = value,
-           'Cases per Nurses' = percent(cases.confirmed / value, accuracy = .01),
-           'Deaths per Nurses' = percent(cases.death / value, accuracy = .01)) %>%
-    ungroup %>%
-    select(Country,
-           Population, 
-           'Nurses per 100k', 
-           '(source year)' , 
-           'Cases per 100k', 
-           'Deaths per 100k', 
-           'Cases per Nurses',
-           'Deaths per Nurses') %>%
-    datatable()
-```
-
-# Physicians *(per 100k population)*  {.tabset .tabset-fade .tabset-pills}
-
-
-```{r physicians, echo=FALSE}
-physicians.vs.cases <- wb.indicator('SH.MED.PHYS.ZS', 'Physicians')
-```
-
-```{r physicians.func, echo=FALSE}
-plot.physicians.vs.cases <- function(...) { plot.what.vs.cases(..., data = physicians.vs.cases, what = 'Physicians') }
-```
-
-## EU
-
-```{r eu.physicians, echo=FALSE}
-plot.physicians.vs.cases(countries.eu)
-```
-
-## Non-EU Europe
-
-```{r non.eu.europe.physicians, echo=FALSE}
-plot.physicians.vs.cases(countries.europe.non.eu)
-```
-
-## Non-Europe
-
-```{r non.europe.physicians, echo=FALSE}
-plot.physicians.vs.cases(countries.non.europe)
-```
-
-## CPLP
-
-```{r cplp.physicians, echo=FALSE}
-plot.physicians.vs.cases(countries.cplp)
-```
-
-## Data
-
-```{r physicians.vs.cases, echo=FALSE}
-physicians.vs.cases %>% 
-    filter(country %in% countries.extended) %>%
-    mutate(Country = country,
-           Population = format(population, big.mark = ','),
-           'Deaths per 100k' = round(cases.death, digits = 2),
-           'Cases per 100k' = round(cases.confirmed, digits = 2),
-           '(source year)' = as.numeric(date),
-           'Physicians per 100k' = value,
-           'Cases per Physicians' = percent(cases.confirmed / value, accuracy = .01),
-           'Deaths per Physicians' = percent(cases.death / value, accuracy = .01)) %>%
-    ungroup %>%
-    select(Country,
-           Population, 
-           'Physicians per 100k', 
-           '(source year)' , 
-           'Cases per 100k', 
-           'Deaths per 100k', 
-           'Cases per Physicians',
-           'Deaths per Physicians') %>%
-    datatable()
-```
-
-
-\- - - - - - - - The end. - - - - - - - -
-
-```{r handle.data, eval=FALSE, include=FALSE}
-anim.confirmed.vs.death <- last.week %>%
-    filter(country %in% c('Italy', 'Portugal')) %>%
-    group_by(country, date) %>%
-    mutate(cases.death = cumulative.cases.death / population * 100000,
-           cases.confirmed = cumulative.cases.confirmed / population * 100000,
-           ratio = if_else(cumulative.cases.confirmed == 0, 0, cumulative.cases.death / cumulative.cases.confirmed)) %>%
-    select(country, date, cases.confirmed, cases.death, cumul.confirmed = cumulative.cases.confirmed, cumul.death = cumulative.cases.death, ratio, population) %>%
-    arrange(desc(date))
-
-anim.confirmed.vs.death
-```
-
-```{r animate, eval=FALSE, include=FALSE}
-anim <- anim.confirmed.vs.death %>%
-    arrange(date) %>%
-    #filter(date == '2020-03-24') %>%
-    ggplot(aes(x = cases.confirmed, y = cases.death, color = country)) +
-        geom_point(aes(size = population), alpha = .4) +
-        geom_label_repel(aes(label = paste0(country, ' (', percent(ratio, accuracy = .1), ')'),
-                     fill = country),
-                     na.rm = TRUE,
-                     alpha = .8,
-                     color = 'white',
-                     size = 3,
-                     segment.alpha = .4,
-                     segment.colour = 'black',
-                     force = 2) +
-        expand_limits(x = ceiling(max(anim.confirmed.vs.death %>% pull(cases.confirmed))),
-                          y = ceiling(max(anim.confirmed.vs.death %>% pull(cases.death)))) +
-            labs(x = 'Confirmed Cases per 100k population', 
-                 y = 'Deaths per 100k population', 
-                 title = 'Deaths vs. Cases per 100k population -- {format(frame_along, \'%B\ %d\')}', 
-                 subtitle = 'percentage is the death rate per confirmed cases and size represents size of country by population',
-                 caption = '??') +
-            theme_minimal() +
-            theme(legend.position = 'none') +
-    transition_time(date) +
-    enter_drift()
-```
-
-```{r show_anim, message=FALSE, eval=FALSE, include=FALSE}
-animate(anim, end_pause = 30)
-```
