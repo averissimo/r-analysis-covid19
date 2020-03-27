@@ -163,9 +163,7 @@ flog.info('     Latest: %s from %s', last.date, source.by)
 The plots presented get very complex as more countries are added. I'm focusing mainly on Europe and comparing against Portugal and Germany *(where I'm from vs. where I live)*
 
 ```{r, echo=FALSE, collapse=TRUE}
-countries <- c('Italy', 'Spain','Germany', 'China', 'Portugal', 'US', 'France', 'Switzerland')
-
-countries <- c('Italy', 'Spain','Germany', 'China', 'Portugal', 'US', 'France', 'Switzerland')
+countries <- c('Italy', 'Spain','Germany', 'China', 'Portugal', 'US', 'France', 'Switzerland', 'Iran') %>% sort
 
 flog.info('Looking only at the following countries: \n\n  %s' , paste0(countries, collapse = ', '))
 ```
@@ -781,7 +779,7 @@ This visualization shows the number of cases/deaths per 100k of the population.
 * **size of data point**: Total population if the country
 * **label**: Rate of deaths per confirmed cases
 
-*note*: It always shows Portugal, Spain, Italy, South Korea, Iran and Germany.
+*note*: It always shows `r paste(countries, collapse = ", ")`.
 
 ```{r death.vs.cases.function.and.data, echo=FALSE}
 death.vs.cases <- last.week %>%
