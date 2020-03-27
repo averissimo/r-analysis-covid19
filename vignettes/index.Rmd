@@ -17,7 +17,11 @@ This is a personal analysis of the cases of covid-19.
 
 I'm not from the Epidemiology field. My background is computer science and bioinformatics.
 
-# Symptoms for Portugal
+Other analysis:
+
+* [Germany](https://averissimo.github.io/covid19-analysis/germany.html)
+
+# Symptoms *(count)* for Portugal
 
 1. Headaches - Cefaleias - Dor de cabeça - 2233
 1. Cough - Tosse - 1878
@@ -1122,6 +1126,7 @@ beds.vs.cases %>%
            'Cases per Beds' = percent(cases.confirmed / value, accuracy = .01),
            'Deaths per Beds' = percent(cases.death / value, accuracy = .01)) %>%
     ungroup %>%
+    arrange(desc(value)) %>%
     select(Country,
            Population, 
            'Beds per 100k', 
@@ -1182,6 +1187,7 @@ nurses.vs.cases %>%
            'Cases per Nurses' = percent(cases.confirmed / value, accuracy = .01),
            'Deaths per Nurses' = percent(cases.death / value, accuracy = .01)) %>%
     ungroup %>%
+    arrange(desc(value)) %>%
     select(Country,
            Population, 
            'Nurses per 100k', 
@@ -1242,6 +1248,7 @@ physicians.vs.cases %>%
            'Cases per Physicians' = percent(cases.confirmed / value, accuracy = .01),
            'Deaths per Physicians' = percent(cases.death / value, accuracy = .01)) %>%
     ungroup %>%
+    arrange(desc(value)) %>%
     select(Country,
            Population, 
            'Physicians per 100k', 
