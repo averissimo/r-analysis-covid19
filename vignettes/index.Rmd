@@ -32,6 +32,7 @@ rmarkdown::render('index.Rmd', quiet = TRUE)
 
 ```{r render.site, include=FALSE, eval=FALSE}
 rmarkdown::render_site(quiet = TRUE)
+rmarkdown::render_site()
 rmarkdown::clean_site()
 ```
 
@@ -162,9 +163,7 @@ flog.info('     Latest: %s from %s', last.date, source.by)
 The plots presented get very complex as more countries are added. I'm focusing mainly on Europe and comparing against Portugal and Germany *(where I'm from vs. where I live)*
 
 ```{r, echo=FALSE, collapse=TRUE}
-countries <- c('Italy', 'Spain','Germany', 'China', 'Portugal', 'US', 'France', 'Switzerland')
-
-countries <- c('Italy', 'Spain','Germany', 'China', 'Portugal', 'US', 'France', 'Switzerland')
+countries <- c('Italy', 'Spain','Germany', 'China', 'Portugal', 'US', 'France', 'Switzerland', 'Iran')
 
 flog.info('Looking only at the following countries: \n\n  %s' , paste0(countries, collapse = ', '))
 ```
