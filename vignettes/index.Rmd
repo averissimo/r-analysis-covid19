@@ -66,32 +66,33 @@ It's not realtime data and data presented may have 1 or more days of difference 
 # EU Data lags a day
 # 
 source.by = ''
-
-tryCatch({
-    eu.data.raw <- read_csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
+if (FALSE) {
+    tryCatch({
+        eu.data.raw <- read_csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
+        
+        eu.data <- eu.data.raw %>%
+            mutate(date = anytime(glue('{year}/{month}/{day}')),
+                   country = countriesAndTerritories) %>%
+            select(country, date, cases, deaths, countryCode, popData2018) %>%
+            arrange(date) %>%
+            melt(id.vars = c('country', 'countryCode', 'popData2018', 'date'),
+                 variable.name = 'type',
+                 value.name = 'cases') %>%
+            mutate(type = if_else(type == 'cases', 'confirmed', 'death')) %>%
+            group_by(country, type, date, popData2018, countryCode) %>%
+            summarise(cases = sum(cases)) %>%
+            group_by(country, type) %>%
+            mutate(cumul = cumsum(cases)) %>%
+            ungroup() %>%
+            mutate(country = gsub('_', ' ', country)) %>%
+            select(country, date, type, cases, cumul, countryCode, population = popData2018)
     
-    eu.data <- eu.data.raw %>%
-        mutate(date = anytime(glue('{year}/{month}/{day}')),
-               country = countriesAndTerritories) %>%
-        select(country, date, cases, deaths, countryCode, popData2018) %>%
-        arrange(date) %>%
-        melt(id.vars = c('country', 'countryCode', 'popData2018', 'date'),
-             variable.name = 'type',
-             value.name = 'cases') %>%
-        mutate(type = if_else(type == 'cases', 'confirmed', 'death')) %>%
-        group_by(country, type, date, popData2018, countryCode) %>%
-        summarise(cases = sum(cases)) %>%
-        group_by(country, type) %>%
-        mutate(cumul = cumsum(cases)) %>%
-        ungroup() %>%
-        mutate(country = gsub('_', ' ', country)) %>%
-        select(country, date, type, cases, cumul, countryCode, population = popData2018)
-
-    source.by = 'EU CDPC'
-})
+        source.by = 'EU CDPC'
+    })
+}
 ```
 
-```{r, include=FALSE, eval=FALSE}
+```{r eu.nl, include=FALSE, eval=FALSE}
 eu.nl.raw <- read_csv('https://github.com/covid19-eu-zh/covid19-eu-data/raw/master/dataset/covid-19-nl.csv')
 
 eu.nl.state <- eu.nl.raw %>% 
@@ -117,7 +118,7 @@ eu.nl
 ```
 
 ```{r buildCorona, echo=FALSE, message=FALSE, warning=FALSE}
-if (!exists('source.by') || source.by == '') {
+if (!exists('source.by') || source.by == '' || source.by != ') {
     BiocManager::install('RamiKrispin/coronavirus', ask = FALSE)
 
     library(coronavirus)
