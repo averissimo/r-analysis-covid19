@@ -1,3 +1,6 @@
 ## covid-19 analysis
 
-See https://sels.tecnico.ulisboa.pt/burn/coronavirus.html for the output of this repository
+See analysis:
+
+* Global: https://averissimo.github.io/covid19-analysis/ 
+* Germany: https://averissimo.github.io/covid19-analysis/germany.html
