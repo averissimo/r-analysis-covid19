@@ -114,112 +114,41 @@ flog.info('Looking only at the following states: \n\n  %s' , paste0(countries, c
 ## Total Confirmed cases
 
 ```{r top30confirmed, echo=FALSE}
-my.corona.original %>%
-    filter(type == 'confirmed') %>%
-    group_by(state, type) %>%
-    summarise(cases = sum(cases)) %>%
-    arrange(cases) %>%
-    ungroup() %>%
-    mutate(state = paste0(state, ' (', cases, ')')) %>%
-    mutate(state = factor(state, levels = unique(.$state))) %>%
-    ggplot() +
-        geom_bar(aes(state, cases, fill = state), stat = 'identity') +
-        # scale_y_continuous(trans = 'log10') +
-        coord_flip() +
-        labs(x = 'Confirmed Cases', 
-             y = '', 
-             title = 'Confirmed Cases by State' , 
-             caption = last.date.string) + 
-        theme_minimal() + 
-        theme(legend.position = 'none')
+top30(my.corona.original, 'confirmed')
 ```
 
 ## Total Deaths
 
 ```{r top30deaths, echo=FALSE}
-my.corona.original %>%
-    filter(type == 'death') %>%
-    group_by(state, type) %>%
-    summarise(cases = sum(cases)) %>%
-    arrange(cases) %>%
-    ungroup() %>%
-    mutate(state = paste0(state, ' (', cases, ')')) %>%
-    mutate(state = factor(state, levels = unique(.$state))) %>%
-    filter(cases > 0) %>%
-    ggplot() +
-        geom_bar(aes(state, cases, fill = state), stat = 'identity') +
-        # scale_y_continuous(trans = 'log10') +
-        coord_flip() +
-        labs(x = 'Deaths', 
-             y = '', 
-             title = 'Deaths by State' , 
-             caption = last.date.string) + 
-        theme_minimal() + 
-        theme(legend.position = 'none')
+top30(my.corona.original, 'confirmed')
 ```
 
 ## Data confirmed
 
 ```{r data.confirmed, echo=FALSE}
-my.corona.original %>%
-    filter(type == 'confirmed') %>%
-    group_by(state, type) %>%
-    summarise(cases = sum(cases)) %>%
-    arrange(cases) %>%
-    ungroup() %>%
-    filter(cases > 0) %>%
-    arrange(-cases) %>%
-    mutate(cases = format(cases, big.mark = ',')) %>%
-    select(State = state, 'Cases Confirmed' = cases) %>%
-    datatable()
+my.corona.original %>% top30.data('confirmed') %>% datatable
 ```
 
 ## Data death
 
 ```{r data.death, echo=FALSE}
-my.corona.original %>%
-    filter(type == 'death') %>%
-    group_by(state, type) %>%
-    summarise(cases = sum(cases)) %>%
-    arrange(cases) %>%
-    ungroup() %>%
-    filter(cases > 0) %>%
-    arrange(-cases) %>%
-    mutate(cases = format(cases, big.mark = ',')) %>%
-    select(State = state, 'Cases Death' = cases) %>%
-    datatable()
+my.corona.original %>% top30.data('death') %>% datatable
 ```
 
 ```{r eurostat}
-eu.population.raw <- get_eurostat('tgs00096')
+populations <- download.eurostat.population('DE')
 
-eu.population.norm <- eu.population.raw %>% 
-    filter(grepl('^DE', geo)) %>%
-    mutate(nuts_1 = substr(geo, 0, 3),
-           nuts_1_label = label_eurostat(nuts_1, dic = 'geo')) %>%
-    group_by(nuts_1, nuts_1_label) %>%
-    filter(time == max(time)) %>%
-    summarize(values = sum(values))
+my.corona <- my.corona.original %>% left_join(populations, by = 'state')
 
-populations <- eu.population.norm %>%
-    ungroup() %>%
-    select(state = nuts_1_label, population = values)
-
-my.corona <- my.corona.original %>% 
-    left_join(populations, by = 'state')
-
-my.corona <- mutate(my.corona, 
-                    state.data = factor(state, levels = my.corona %>% filter(type == 'confirmed') %>% summarise(cases = max(cumul)) %>% arrange(cases) %>% pull(state)))
+my.corona <- my.corona %>% 
+    ungroup %>%
+    mutate(state.data = factor(state, levels = my.corona %>% filter(type == 'confirmed') %>% summarise(cases = max(cumul)) %>% arrange(cases) %>% pull(state)),
+           state = state) %>%
+    group_by(state)
 ```
 
 ```{r, echo=FALSE}
-my.corona.after.100 <- my.corona %>%
-    #
-    filter((type == 'death' & cumul >= params$death.start ) | 
-           (type == 'confirmed' & cumul >= params$confirmed.start) | 
-           (type == 'recovered' & cumul >= 0)) %>%
-    arrange(date) %>%
-    mutate(days.after.100 = as.numeric(difftime(date, min(date), units = 'days')))
+my.corona.after.100 <- filter.after(my.corona, params$death.start, params$confirmed.start)
 ```
 
 # Confirmed cases / Deaths *(ommiting start of epidemic)*
@@ -239,121 +168,38 @@ If you do not understand logarythm scale, I recommend this [video](https://www.y
 ### Confirmed cases  
 
 ```{r corfirmed.cases.after.100, echo=FALSE}
-my.corona.after.100 %>%
-    filter(state %in% countries) %>%
-    filter(type == 'confirmed') %>%
-    ungroup(state) %>%
-    group_by(state) %>%
-    arrange(-cases) %>% {
-        tmp <- summarise(., cases = max(cumul))
-        tmp <- arrange(tmp, cases)
-        tmp <- mutate(tmp, state.data = paste0(state, ' (', cases, ')'))
-        
-        mutate(., state.data = factor(paste0(state, ' (', max(cumul), ')'),
-                                        levels = rev(pull(tmp, state.data))))
-        } %>%
-    mutate(label = if_else(cumul == max(cumul), as.character(state.data), NA_character_)) %>%
-    ungroup %>%
-    ggplot(aes(x = days.after.100, y = cumul, color = state.data)) + 
-        geom_line(size = 1.2) +
-        geom_label_repel(aes(label = label,
-                             fill = state.data), 
-                         na.rm = TRUE,
-                         color = 'white',
-                         size = 3.5,
-                         segment.alpha = .4,
-                         segment.colour = 'black') +
-        labs(y = 'Confirmed cases',
-             x = 'Number of days since ≥ {params$confirmed.start} confirmed cases' %>% glue,
-             title = 'Confirmed cases over time',
-             subtitle = 'Only showing after each state had more than {params$confirmed.start} cases' %>% glue,
-             caption = last.date.string) +
-        scale_y_continuous('Confirmed cases (log2 scale)', trans = 'log2') + 
-        scale_color_viridis(discrete = TRUE, end = .85, option = 'A') +
-        scale_fill_viridis(discrete = TRUE, end = .85, option = 'A') +
-        theme_minimal() +
-        theme(legend.position = 'none', legend.title = element_blank())
+ommit.start(my.corona.after.100, 'confirmed', params$confirmed.start, filter.countries = countries)
 ```
 
 ### Patient deaths
 
 ```{r death.after.100, echo=FALSE}
-my.corona.after.100 %>%
-    filter(state %in% countries) %>%
-    filter(type == 'death') %>%
-    group_by(state) %>% {
-        tmp <- summarise(., cases = max(cumul))
-        tmp <- arrange(tmp, cases)
-        tmp <- mutate(tmp, state.data = paste0(state, ' (', cases, ')'))
-        
-        mutate(., state.data = factor(paste0(state, ' (', max(cumul), ')'),
-                                        levels = rev(pull(tmp, state.data))))
-        } %>%
-    mutate(label = if_else(cumul == max(cumul), as.character(state.data), NA_character_)) %>%
-    ungroup %>%
-    ggplot(aes(x = days.after.100, y = cumul, color = state.data)) + 
-        # geom_point(aes(date, cumul, color = state)) +
-        geom_line(size = 1.2) +
-        geom_label_repel(aes(label = label,
-                             fill = state.data), 
-                             na.rm = TRUE,
-                             color = 'white',
-                             size = 3.5,
-                             segment.alpha = .4,
-                             segment.colour = 'black') +
-        labs(y = 'Deaths',
-             x = glue('Number of days since ≥ {params$death.start} deaths'),
-             title = 'Deaths over Time',
-             subtitle = 'Only showing after each state had more than {params$death.start} deaths' %>% glue,
-             caption = last.date.string) +
-        scale_y_continuous('Deaths (log2 scale)', trans = 'log2') + 
-        scale_color_viridis(discrete = TRUE, end = .85, option = 'A') +
-        scale_fill_viridis(discrete = TRUE, end = .85, option = 'A') +
-        theme_minimal() +
-        theme(legend.position = 'none', legend.title = element_blank())
+ommit.start(my.corona.after.100, 'death', params$death.start, filter.countries = countries)
+```
+
+### Confirmed cases *(log2 scale)*
+
+```{r, echo=FALSE}
+ommit.start(my.corona.after.100, 'confirmed', params$confirmer.start, filter.countries = countries, log2.flag = TRUE)
+```
+
+### Patient deaths *(log2 scale)*
+
+```{r, echo=FALSE}
+ommit.start(my.corona.after.100, 'death', params$death.start, filter.countries = countries, log2.flag = TRUE)
 ```
 
 ### Data for confirmed cases
 
 ```{r confirmed.per.100.data.1, echo=FALSE}
-my.corona.after.100.confirmed.dat <- my.corona.after.100 %>%
-    filter(state %in% countries) %>%
-    filter(type %in% c('confirmed')) %>%
-    mutate(cumul.per.100k = cumul / population * 100000) %>%
-    ungroup %>%
-    arrange(desc(date), desc(cumul)) %>%
-    mutate(cases.per.100k = round(cases / population * 100000, digits = 3),
-           population = format(population, big.mark = ','),
-           cases = format(cases, big.mark = ','),
-           cumul = format(cumul, big.mark = ',')) %>%
-    select(State = state,
-           'Days' = days.after.100,
-           'Confirmed' = cases,
-           'Sub-total' = cumul,
-           'Sub-total per 100k' = cumul.per.100k,
-           population = population)
-my.corona.after.100.confirmed.dat %>% datatable()
+my.corona.after.100.confirmed.dat <- ommit.data(my.corona.after.100, 'confirmed', countries)
+my.corona.after.100.confirmed.dat %>% datatable
 ```
 
 ### Data for deaths
 
 ```{r deaths.per.100.data.1, echo=FALSE}
-my.corona.after.100.death.dat <- my.corona.after.100 %>%
-    filter(state %in% countries) %>%
-    filter(type %in% c('death')) %>%
-    mutate(cumul.per.100k = cumul / population * 100000) %>%
-    ungroup %>%
-    arrange(desc(date), desc(cumul)) %>%
-    mutate(cases.per.100k = round(cases / population * 100000, digits = 3),
-           population = format(population, big.mark = ','),
-           cases = format(cases, big.mark = ','),
-           cumul = format(cumul, big.mark = ',')) %>%
-    select(State = state,
-           'Days' = days.after.100,
-           'Deaths' = cases,
-           'Sub-total' = cumul,
-           'Sub-total per 100k' = cumul.per.100k,
-           population = population)
+my.corona.after.100.death.dat <- ommit.data(my.corona.after.100, 'death', countries)
 my.corona.after.100.death.dat %>% datatable()
 ```
 
@@ -364,102 +210,43 @@ Showing population for plotted states. This becomes relevant for the next plots.
 ### Confirmed cases
 
 ```{r confirmed.after.100.per100k, echo=FALSE}
-my.corona.after.100 %>%
-    filter(state %in% countries) %>%
-    filter(type %in% c('confirmed')) %>%
-    mutate(cumul.per.100k = cumul / population * 100000) %>%
-    group_by(state) %>% {
-        tmp <- summarise(., cases = round(max(cumul.per.100k), digits = 2))
-        tmp <- arrange(tmp, cases)
-        tmp <- mutate(tmp, state.data = paste0(state, ' (', cases, ')'))
-        
-        mutate(., state.data = factor(paste0(state, ' (', round(max(cumul.per.100k), digits = 2), ')'),
-                                        levels = rev(pull(tmp, state.data))))
-        } %>%
-    mutate(label = if_else(cumul.per.100k == max(cumul.per.100k), as.character(state.data), NA_character_)) %>%
-    ungroup %>%
-    ggplot(aes(x = days.after.100, y = cumul.per.100k, color = state.data)) + 
-        geom_line(size = 1.2) +
-        geom_label_repel(aes(label = label,
-                                 fill = state.data), 
-                             na.rm = TRUE,
-                             color = 'white',
-                             size = 3.5,
-                             segment.alpha = .4,
-                             segment.colour = 'black') +
-        labs(x = 'Number of days since ≥ 100 cases',
-             y = 'Confirmed cases -- per 100k population',
-             title = 'Confirmed cases per 100k population',
-             subtitle = 'Only showing after each state had more than 100 cases',
-             caption = last.date.string) + 
-        scale_y_continuous('Confirmed cases -- per 100k population (log2 scale)', trans = 'log2') +
-        scale_color_viridis(discrete = TRUE, end = .85, option = 'C') +
-        scale_fill_viridis(discrete = TRUE, end = .85, option = 'C') +
-        theme_minimal() +
-        theme(legend.position = 'none', legend.title = element_blank())
+ommit.start(my.corona.after.100, 'confirmed', params$confirmed.start, filter.countries = countries, log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
 ### Deaths 
 
 ```{r death.after.100.per.100k, echo=FALSE}
-my.corona.after.100 %>%
-    filter(state %in% countries) %>%
-    filter(type %in% c('death')) %>%
-    mutate(cumul = cumul / population * 100000) %>%
-    group_by(state) %>% {
-        tmp <- summarise(., cases = round(max(cumul), digits = 2))
-        tmp <- arrange(tmp, cases)
-        tmp <- mutate(tmp, state.data = paste0(state, ' (', cases, ')'))
-        
-        mutate(., state.data = factor(paste0(state, ' (', round(max(cumul), digits = 2), ')'),
-                                        levels = rev(pull(tmp, state.data))))
-        } %>%
-    mutate(label = if_else(cumul == max(cumul), as.character(state.data), NA_character_)) %>%
-    ungroup %>%
-    ggplot(aes(x = days.after.100, y = cumul, color = state.data)) + 
-        geom_line(size = 1.2) +
-        geom_label_repel(aes(label = label,
-                                 fill = state.data), 
-                             na.rm = TRUE,
-                             color = 'white',
-                             size = 3.5,
-                             segment.alpha = .4,
-                             segment.colour = 'black') +
-        labs(x = 'Number of days since ≥ {params$death.start} deaths' %>% glue,
-             y = 'Deaths -- per 100k population',
-             title = 'Deaths per 100k population',
-             subtitle = 'Only showing after each state had more than {params$death.start} deaths' %>% glue,
-             caption = last.date.string) + 
-        scale_y_continuous('Deaths -- per 100k population (log2 scale)', trans = 'log2') + 
-        scale_color_viridis(discrete = TRUE, end = .85, option = 'C') +
-        scale_fill_viridis(discrete = TRUE, end = .85, option = 'C') +
-        theme_minimal() +
-        theme(legend.position = 'none', legend.title = element_blank())
+ommit.start(my.corona.after.100, 'death', params$confirmer.start, filter.countries = countries, log2.flag = FALSE, per.100k.flag = TRUE)
+```
+
+### Confirmed cases *(log2 scale)*
+
+```{r, echo=FALSE}
+ommit.start(my.corona.after.100, 'confirmed', params$confirmer.start, filter.countries = countries, log2.flag = TRUE, per.100k.flag = TRUE)
+```
+
+### Deaths *(log2 scale)*
+
+```{r, echo=FALSE}
+ommit.start(my.corona.after.100, 'death', params$confirmer.start, filter.countries = countries, log2.flag = TRUE, per.100k.flag = TRUE)
 ```
 
 ### Data for confirmed cases
 
 ```{r confirmed.per.100.data, echo=FALSE}
-my.corona.after.100.confirmed.dat %>% datatable()
+my.corona.after.100.confirmed.dat %>% datatable
 ```
 
 ### Data for deaths
 
 ```{r deaths.per.100.data, echo=FALSE}
-my.corona.after.100.death.dat %>% datatable()
+my.corona.after.100.death.dat %>% datatable
 ```
 
 ### Population data
 
 ```{r population.data, echo=FALSE}
-my.corona %>% 
-    filter(state %in% countries) %>% 
-    ungroup %>% 
-    select(state, population) %>% 
-    distinct(state, .keep_all = TRUE) %>%
-    arrange(population) %>%
-    mutate(population = format(population, big.mark = ',', trim = FALSE)) %>%
-    datatable()
+population.data(my.corona) %>% datatable()
 ```
 
 # Last `r params$last.days` days {.tabset .tabset-fade .tabset-pills}
@@ -471,82 +258,26 @@ The first data point is the number of new cases that day.
 ## Confirmed cases 
 
 ```{r confirmed.last12.days, echo=FALSE}
-my.corona.after.100 %>%
-    filter(state %in% countries) %>%
-    filter(type == 'confirmed') %>%
-    arrange(state) %>%
-    top_n(params$last.days, days.after.100) %>%
-    mutate(days.before.now = days.after.100 - max(days.after.100)) %>%
-    mutate(cumul = cumsum(cases)) %>%
-    group_by(state) %>% {
-        tmp <- summarise(., cases = max(cumul))
-        tmp <- arrange(tmp, cases)
-        tmp <- mutate(tmp, state.data = paste0(state, ' (', cases, ')'))
-        
-        mutate(., state.data = factor(paste0(state, ' (', max(cumul), ')'),
-                                        levels = rev(pull(tmp, state.data))))
-        } %>%
-    mutate(label = if_else(cumul == max(cumul), as.character(state.data), NA_character_)) %>%
-    ungroup %>%
-    ggplot(aes(x = days.before.now, y = cumul, color = state.data)) + 
-        geom_line(size = 1.2) +
-        geom_label_repel(aes(label = label,
-                                 fill = state.data), 
-                             na.rm = TRUE,
-                             color = 'white',
-                             size = 3.5,
-                             segment.colour = 'black',
-                             segment.alpha = .4) +
-        labs(x = paste0('Last ', params$last.days, ' days'),
-             y = 'Confirmed cases',
-             title = paste0('Confirmend Cases in the last ', params$last.days, ' days'),
-             caption = last.date.string) + 
-        scale_y_continuous('Confirmed cases (log2 scale)', trans = 'log2') + 
-        scale_color_viridis(discrete = TRUE, end = .85, option = 'A') +
-        scale_fill_viridis(discrete = TRUE, end = .85, option = 'A') +
-        #
-        theme_minimal() +
-        theme(legend.position = 'none', legend.title = element_blank())
+my.corona.last.days <- filter.last.days(my.corona, params$last.days)
+last.days(my.corona.last.days, 'confirmed', params$last.days, countries, log2.flag = FALSE, per.100k.flag = FALSE)
 ```
 
 ## Deaths
 
 ```{r death.last12.days, echo=FALSE, warning=FALSE}
-my.corona.after.100 %>%
-    filter(state %in% countries) %>%
-    filter(type == 'death') %>%
-    arrange(state) %>%
-    top_n(params$last.days, days.after.100) %>%
-    mutate(days.before.now = days.after.100 - max(days.after.100)) %>%
-    mutate(cumul = cumsum(cases)) %>%
-    group_by(state) %>% {
-        tmp <- summarise(., cases = max(cumul))
-        tmp <- arrange(tmp, cases)
-        tmp <- mutate(tmp, state.data = paste0(state, ' (', cases, ')'))
-        
-        mutate(., state.data = factor(paste0(state, ' (', max(cumul), ')'),
-                                        levels = rev(pull(tmp, state.data))))
-        } %>%
-    mutate(label = if_else(cumul == max(cumul), as.character(state.data), NA_character_)) %>%
-    ungroup %>%
-    ggplot(aes(x = days.before.now, y = cumul, color = state.data)) + 
-        geom_line(size = 1.2) +
-        geom_label_repel(aes(label = label,
-                                 fill = state.data), 
-                             na.rm = TRUE,
-                             color = 'white',
-                             size = 3.5,
-                             segment.alpha = .4,
-                             segment.colour = 'black') +
-        labs(x = paste0('Last ', params$last.days, ' days'),
-             y = 'Deaths',
-             title = paste0('Deaths in the last ', params$last.days, ' days'),
-             caption = last.date.string) + 
-        scale_y_continuous('Deaths (log2 scale)', trans = 'log2') + 
-        scale_color_viridis(discrete = TRUE, end = .85, option = 'B') +
-        scale_fill_viridis(discrete = TRUE, end = .85, option = 'B') +
-        theme_minimal() +
-        theme(legend.position = 'none', legend.title = element_blank())
+last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag = FALSE, per.100k.flag = FALSE)
+```
+
+## Confirmed cases *(log2 scale)*
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+last.days(my.corona.last.days, 'confirmed', params$last.days, countries, log2.flag = TRUE, per.100k.flag = FALSE)
+```
+
+## Deaths
+
+```{r, echo=FALSE, warning=FALSE}
+last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag = FALSE, per.100k.flag = FALSE)
 ```
 
 ## Data for confirmed cases
@@ -554,22 +285,7 @@ my.corona.after.100 %>%
 **warning**: sub-total is only for last 12 days
 
 ```{r last.12.days.confirmed.data, echo=FALSE}
-my.corona.after.100 %>%
-    filter(state %in% countries) %>%
-    filter(type == 'confirmed') %>%
-    top_n(params$last.days, days.after.100) %>%
-    mutate(days.before.now = days.after.100 - max(days.after.100)) %>%
-    group_by(state) %>%
-    arrange(date) %>%
-    mutate(cumul = cumsum(cases)) %>%
-    mutate(State = state,
-           Date = format(date, '%B %d'),
-           'Confirmed cases' = cases,
-           'Sub-total' = cumul) %>%
-    arrange(desc(date), desc(cases), state) %>%
-    ungroup() %>%
-    select(State, Date, 'Confirmed cases', 'Sub-total') %>%
-    datatable()
+last.days.data(my.corona.last.days, 'confirmed', countries) %>% datatable
 ```
 
 ## Data for Deaths
@@ -577,20 +293,7 @@ my.corona.after.100 %>%
 **warning**: sub-total is only for last 12 days
 
 ```{r last.12.days.death.data, echo=FALSE}
-my.corona.after.100 %>%
-    filter(state %in% countries) %>%
-    filter(type == 'death') %>%
-    arrange(state) %>%
-    top_n(params$last.days, days.after.100) %>%
-    mutate(days.before.now = days.after.100 - max(days.after.100)) %>%
-    mutate(cumul = cumsum(cases)) %>%
-    ungroup() %>%
-    mutate(State = state,
-           Date = format(date, '%B %d', tz = 'Europe/London'),
-           'Deaths' = cases,
-           'Sub-total' = cumul) %>%
-    select(State, Date, 'Deaths', 'Sub-total') %>%
-    datatable()
+last.days.data(my.corona.last.days, 'death', countries) %>% datatable
 ```
 
 # Cumulative cases of previous 4 days *(how it tracks over time)* {.tabset .tabset-fade .tabset-pills}
@@ -608,136 +311,42 @@ countries.extended <- countries
 # my.corona$state %>% unique %>% sort
 # populations$state %>% unique %>% sort
 
-last.week.tmp <- my.corona.original %>% 
-    filter(state %in% countries.extended) %>%
-    # filter(state == 'Portugal') %>%
-    group_by(state, type) %>%
-    arrange(desc(date)) %>%
-    ungroup() %>%
-    select(state, date, type, cases)
-
-last.week <- 
-    # Join confirmed and death cases
-    left_join(last.week.tmp %>% filter(type == 'confirmed') %>% select(-type),
-                        last.week.tmp %>% filter(type == 'death') %>% select(-type),
-                        by = c('state', 'date'),
-                        suffix = c('.confirmed', '.death')) %>%
-    #
-    # Replace any NA from join
-    mutate(cases.confirmed = replace(cases.confirmed, is.na(cases.confirmed), 0),
-           cases.death = replace(cases.death, is.na(cases.death), 0)) %>%
-    #    
-    # Calculate cumulative sum over date
-    arrange(date) %>%
-    group_by(state) %>%
-    #
-    # calculate cumulative cases (i.e. all cases reported up to that day)
-    mutate(cumul.death = cumsum(cases.death),
-           cumul.confirmed = cumsum(cases.confirmed)) %>% 
-    arrange(desc(date)) %>%
-    mutate(last.week.cases.confirmed = rollapply(cases.confirmed, 4, sum, align = 'left', fill = c(0,0,0), partial = TRUE)) %>%
-    mutate(last.week.cases.death = rollapply(cases.death, 4, sum, align = 'left', fill = c(0,0,0), partial = TRUE)) %>%
-    #
-    #
-    left_join(populations, by = 'state') %>%
-    group_by(state) %>%
-    arrange(date) %>%
-    #
-    mutate(deaths.per.100k = last.week.cases.death / population * 100000,
-           confirmed.per.100k = last.week.cases.confirmed / population * 100000,
-           ratio.deaths.per.confirmed = last.week.cases.death / last.week.cases.confirmed) 
+last.week <- filter.last.days.cumulative(my.corona.original, populations, 4)
 ```
 
 ## Confirmed cases
 
 ```{r confirmed.lastweek.cumulative, echo=FALSE}
-p <- last.week %>% 
-    filter(state %in% countries) %>%
-    group_by(state) %>% {
-        tmp <- summarise(., cases = last(last.week.cases.confirmed))
-        tmp <- arrange(tmp, cases)
-        tmp <- mutate(tmp, state.data = paste0(state, ' (', cases, ')'))
-        
-        mutate(., state.data = factor(paste0(state, ' (', last(last.week.cases.confirmed), ')'),
-                                        levels = rev(pull(tmp, state.data))))
-    } %>%
-    mutate(label = if_else(date == max(date), as.character(state.data), NA_character_)) %>%
-    #
-    ggplot(aes(x = date, y = last.week.cases.confirmed, color = state.data)) +
-        geom_line(size = 1.2) +
-        geom_point(size = 1.2) +
-                geom_label_repel(aes(label = label,
-                                     fill = state.data), 
-                                 na.rm = TRUE,
-                                 color = 'white',
-                                 size = 3.5,
-                                 segment.alpha = .4,
-                                 segment.colour = 'black') +
-        labs(title = 'WARNING:: Each point is a sum from previous 4 days',
-             y = 'Number of cases confirmed in previous 4 days',
-             x = 'Date',
-             caption = last.date.string) +
-        scale_color_viridis(discrete = TRUE, end = .85, option = 'A') +
-        scale_fill_viridis(discrete = TRUE, end = .85, option = 'A') +
-        theme_minimal() +
-        theme(legend.position = 'none')
-p
-# p + scale_y_continuous('Number of cases confirmed in previous 4 days (log2 scale)', trans = 'log2')
+last.week.cumulative(last.week, 'confirmed', 4, countries, log2.flag = FALSE, per.100k.flag = FALSE)
 ```
 
 ## Deaths
 
 ```{r death.lastweek.cumulative, echo=FALSE}
-p <- last.week %>% 
-    filter(state %in% countries) %>%
-    group_by(state) %>% {
-        tmp <- summarise(., cases = last(last.week.cases.death))
-        tmp <- arrange(tmp, cases)
-        tmp <- mutate(tmp, state.data = paste0(state, ' (', cases, ')'))
-        
-        mutate(., state.data = factor(paste0(state, ' (', last(last.week.cases.death), ')'),
-                                        levels = rev(pull(tmp, state.data))))
-    } %>%
-    mutate(label = if_else(date == max(date), as.character(state.data), NA_character_)) %>%
-    #
-    ggplot(aes(x = date, y = last.week.cases.death, color = state.data)) +
-        geom_line(size = 1.2) +
-                geom_label_repel(aes(label = label,
-                                     fill = state.data), 
-                                 na.rm = TRUE,
-                                 color = 'white',
-                                 size = 3.5,
-                                 segment.alpha = .4,
-                                 segment.colour = 'black') +
-        labs(title = 'WARNING:: Each point is a sum from previous 4 days',
-             y = 'Number of deaths in previous 4 days',
-             x = 'Date',
-             caption = last.date.string) +
-        scale_color_viridis(discrete = TRUE, end = .85, option = 'A') +
-        scale_fill_viridis(discrete = TRUE, end = .85, option = 'A') +
-        theme_minimal() +
-        theme(legend.position = 'none')
-p
-# p + scale_y_continuous('Number of cases confirmed in previous 4 days (log2 scale)', trans = 'log2')
+last.week.cumulative(last.week, 'death', 4, countries, log2.flag = FALSE, per.100k.flag = FALSE)
 ```
 
-## Data for last 4 days
+## Confirmed cases
+
+```{r confirmed.lastweek.cumulative, echo=FALSE}
+last.week.cumulative(last.week, 'confirmed', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE)
+```
+
+## Deaths
+
+```{r death.lastweek.cumulative, echo=FALSE}
+last.week.cumulative(last.week, 'death', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE)
+```
+## Data for Confirmed cases in last 4 days
 
 ```{r data.last.week, echo=FALSE}
-last.week %>% 
-    filter(state %in% countries) %>%
-    group_by(state) %>%
-    arrange(desc(date), state) %>%
-    mutate(date = format(date, '%B %d'),
-           last.week.cases.confirmed = format(last.week.cases.confirmed, big.mark = ','),
-           last.week.cases.death = format(last.week.cases.death, big.mark = ',')) %>%
-    select(State = state, 
-           Date = date, 
-           Confirmed = cases.confirmed, 
-           Deaths = cases.death, 
-           'Cases in last 4 days' = last.week.cases.confirmed,
-           'Deaths in last 4 days' = last.week.cases.death) %>%
-    datatable()
+cumulative.last.days.data(last.week, 'confirmed', countries, 4) %>% datatable()
+```
+
+## Data for Deaths in last 4 days
+
+```{r data.last.week, echo=FALSE}
+cumulative.last.days.data(last.week, 'death', countries, 4) %>% datatable()
 ```
 
 # Confirmed cases vs. Death visualizations *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
@@ -750,112 +359,31 @@ This visualization shows the number of cases/deaths per 100k of the population.
 * **label**: Rate of deaths per confirmed cases
 
 ```{r death.vs.cases.function.and.data, echo=FALSE}
-death.vs.cases <- last.week %>%
-    group_by(state, population) %>%
-    summarise(ratio = max(cumul.death) / max(cumul.confirmed),
-              cases.death = max(cumul.death / population * 100000), 
-              cases.confirmed = max(cumul.confirmed / population * 100000)) %>%
-    filter(cases.death > 0)
-
-plot.death.vs.cases <- function(state.filter, always.include = countries.always.include) {
-    return(death.vs.cases %>%
-        filter(state %in% (c(always.include, state.filter) %>% unique)) %>%
-        ggplot(aes(x = cases.confirmed, y = cases.death, color = state)) +
-            geom_point(aes(size = population), alpha = .4) +
-            geom_label_repel(aes(label = paste0(state, ' (', percent(ratio, accuracy = .1), ')'),
-                                 fill = state),
-                                 na.rm = TRUE,
-                                 alpha = .8,
-                                 color = 'white',
-                                 size = 3,
-                                 segment.alpha = .4,
-                                 segment.colour = 'black',
-                                 force = 2) +
-            expand_limits(x = ceiling(max(death.vs.cases %>% pull(cases.confirmed))),
-                          y = ceiling(max(death.vs.cases %>% pull(cases.death)))) +
-            labs(x = 'Confirmed Cases per 100k population', 
-                 y = 'Deaths per 100k population', 
-                 title = 'Deaths vs. Cases per 100k population', 
-                 subtitle = 'percentage is the death rate per confirmed cases and size represents size of state by population',
-                 caption = last.date.string) +
-            theme_minimal() +
-            theme(legend.position = 'none'))
-}
+death.vs.cases <- filter.death.vs.cases(last.week)
 ```
 
 ## All states
 
 ```{r eu, echo=FALSE}
-plot.death.vs.cases(countries.extended)
+death.vs.cases.plot(death.vs.cases)
 ```
 
 ## Data
 
 ```{r cases.vs.death.data, echo=FALSE}
-death.vs.cases %>%
-    arrange(desc(ratio)) %>%
-    mutate(ratio = percent(ratio, accuracy = .0001),
-           death = format(cases.death / 100000 * population, big.mark = ','),
-           confirmed = format(cases.confirmed / 100000 * population, big.mark = ','),
-           cases.death = round(cases.death, digits = 4),
-           cases.confirmed = round(cases.death, digits = 4),
-           population = format(population, big.mark = ',')) %>%
-    select(State = state,
-           'Death / Confirmed' = ratio,
-           'Deaths' = death,
-           'Deaths per 100k' = cases.death,
-           'Confirmed' = confirmed,
-           'Confirmed per 100k' = cases.confirmed,
-           Population = population) %>%
-    datatable()
+death.vs.cases %>% death.vs.cases.data %>% datatable()
 ```
 
 ## Number of Confirmed Cases
 
 ```{r death.vs.cases.data.confirmed, echo=FALSE}
-my.corona.original %>%
-    filter(state %in% countries.extended) %>%
-    filter(type == 'confirmed') %>%
-    group_by(state, type) %>%
-    summarise(cases = sum(cases)) %>%
-    arrange(cases) %>%
-    ungroup() %>%
-    mutate(state = paste0(state, ' (', cases, ')')) %>%
-    mutate(state = factor(state, levels = unique(.$state))) %>%
-    ggplot() +
-        geom_bar(aes(state, cases, fill = state), stat = 'identity') +
-        # scale_y_continuous(trans = 'log10') +
-        coord_flip() +
-        labs(x = 'Confirmed Cases', 
-             y = '', 
-             title = 'Confirmed Cases by State' ,
-             caption = last.date.string) + 
-        theme_minimal() + 
-        theme(legend.position = 'none')
+cases.plot(my.corona.original, 'confirmed')
 ```
 
 ## Number of Deaths
 
 ```{r death.vs.cases.data.death, echo=FALSE}
-my.corona.original %>%
-    filter(state %in% countries.extended) %>%
-    filter(type == 'death') %>%
-    group_by(state, type) %>%
-    summarise(cases = sum(cases)) %>%
-    arrange(cases) %>%
-    ungroup() %>%
-    mutate(state = paste0(state, ' (', cases, ')')) %>%
-    mutate(state = factor(state, levels = unique(.$state))) %>%
-    ggplot() +
-        geom_bar(aes(state, cases, fill = state), stat = 'identity') +
-        # scale_y_continuous(trans = 'log10') +
-        coord_flip() +
-        labs(x = 'Deaths', 
-             y = '', 
-             title = 'Deaths by State' , 
-             caption = last.date.string) + 
-        theme_minimal() + 
-        theme(legend.position = 'none')
+cases.plot(my.corona.original, 'death')
 ```
 
 
