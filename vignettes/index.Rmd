@@ -118,24 +118,26 @@ eu.nl
 ```
 
 ```{r buildCorona, echo=FALSE, message=FALSE, warning=FALSE}
-if (!exists('source.by') || source.by == '') {
-    BiocManager::install('RamiKrispin/coronavirus', ask = FALSE)
+BiocManager::install('RamiKrispin/coronavirus', ask = FALSE)
 
-    library(coronavirus)
-    
-    data("coronavirus")
+library(coronavirus)
 
-    my.corona.original <- coronavirus %>% as_tibble() %>%
-        mutate(country = Country.Region) %>%
-        group_by(country, type, date) %>%
-        summarise(cases = sum(cases)) %>%
-        arrange(date) %>%
-        mutate(cumul = cumsum(cases))   
-    
-    source.by = 'RamiKrispin/coronavirus'
-} else {
-    my.corona.original = eu.data
-}
+data("coronavirus")
+
+my.corona.original <- coronavirus %>% as_tibble() %>%
+    mutate(country = Country.Region) %>%
+    group_by(country, type, date) %>%
+    summarise(cases = sum(cases)) %>%
+    arrange(date) %>%
+    mutate(cumul = cumsum(cases))   
+
+source.by = 'RamiKrispin/coronavirus'
+
+#if (!exists('source.by') || source.by == '') {
+    # future idea
+#} else {
+#    my.corona.original = eu.data
+#}
 ```
 
 
