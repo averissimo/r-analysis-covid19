@@ -118,7 +118,7 @@ eu.nl
 ```
 
 ```{r buildCorona, echo=FALSE, message=FALSE, warning=FALSE}
-if (!exists('source.by') || source.by == '' || source.by != ') {
+if (!exists('source.by') || source.by == '') {
     BiocManager::install('RamiKrispin/coronavirus', ask = FALSE)
 
     library(coronavirus)
