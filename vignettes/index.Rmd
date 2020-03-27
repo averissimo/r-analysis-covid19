@@ -269,8 +269,6 @@ convert.names <- list('United States' = 'US',
      'Slovak Republic' = 'Slovakia',
      'Korea, Rep.' = 'Korea, South')
 
-if (source.by == 'EU CDPC') {
-
 populations <- wb(indicator = "SP.POP.TOTL") %>% 
     group_by(iso3c) %>%
     filter(date == max(date)) %>%
@@ -300,9 +298,6 @@ my.corona <- my.corona.original %>%
 my.corona <- mutate(my.corona, 
                     country.data = factor(country, levels = my.corona %>% filter(type == 'confirmed') %>% summarise(cases = max(cumul)) %>% arrange(cases) %>% pull(country))) %>%
     select(-iso3c)
-} else {
-    my.corona <- my.corona.original
-}
 ```
 
 ```{r, echo=FALSE}
