@@ -155,7 +155,7 @@ my.corona.original %>%
 
 ## Data confirmed
 
-```{r data.confirmed}
+```{r data.confirmed, echo=FALSE}
 my.corona.original %>%
     filter(type == 'confirmed') %>%
     group_by(state, type) %>%
@@ -171,7 +171,7 @@ my.corona.original %>%
 
 ## Data death
 
-```{r data.death}
+```{r data.death, echo=FALSE}
 my.corona.original %>%
     filter(type == 'death') %>%
     group_by(state, type) %>%
@@ -215,8 +215,6 @@ my.corona.after.100 <- my.corona %>%
            (type == 'recovered' & cumul >= 0)) %>%
     arrange(date) %>%
     mutate(days.after.100 = as.numeric(difftime(date, min(date), units = 'days')))
-
-
 ```
 
 # Confirmed cases / Deaths *(ommiting start of epidemic)*
@@ -310,6 +308,50 @@ my.corona.after.100 %>%
         theme(legend.position = 'none', legend.title = element_blank())
 ```
 
+### Data for confirmed cases
+
+```{r confirmed.per.100.data.1, echo=FALSE}
+my.corona.after.100.confirmed.dat <- my.corona.after.100 %>%
+    filter(state %in% countries) %>%
+    filter(type %in% c('confirmed')) %>%
+    mutate(cumul.per.100k = cumul / population * 100000) %>%
+    ungroup %>%
+    arrange(desc(date), desc(cumul)) %>%
+    mutate(cases.per.100k = round(cases / population * 100000, digits = 3),
+           population = format(population, big.mark = ','),
+           cases = format(cases, big.mark = ','),
+           cumul = format(cumul, big.mark = ',')) %>%
+    select(State = state,
+           'Days' = days.after.100,
+           'Confirmed' = cases,
+           'Sub-total' = cumul,
+           'Sub-total per 100k' = cumul.per.100k,
+           population = population)
+my.corona.after.100.confirmed.dat %>% datatable()
+```
+
+### Data for deaths
+
+```{r deaths.per.100.data.1, echo=FALSE}
+my.corona.after.100.death.dat <- my.corona.after.100 %>%
+    filter(state %in% countries) %>%
+    filter(type %in% c('death')) %>%
+    mutate(cumul.per.100k = cumul / population * 100000) %>%
+    ungroup %>%
+    arrange(desc(date), desc(cumul)) %>%
+    mutate(cases.per.100k = round(cases / population * 100000, digits = 3),
+           population = format(population, big.mark = ','),
+           cases = format(cases, big.mark = ','),
+           cumul = format(cumul, big.mark = ',')) %>%
+    select(State = state,
+           'Days' = days.after.100,
+           'Deaths' = cases,
+           'Sub-total' = cumul,
+           'Sub-total per 100k' = cumul.per.100k,
+           population = population)
+my.corona.after.100.death.dat %>% datatable()
+```
+
 ## Starting point after exceeding `r params$confirmed.start` cases or `r params$death.start` deaths *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
 
 Showing population for plotted states. This becomes relevant for the next plots.
@@ -388,6 +430,18 @@ my.corona.after.100 %>%
         scale_fill_viridis(discrete = TRUE, end = .85, option = 'C') +
         theme_minimal() +
         theme(legend.position = 'none', legend.title = element_blank())
+```
+
+### Data for confirmed cases
+
+```{r confirmed.per.100.data, echo=FALSE}
+my.corona.after.100.confirmed.dat %>% datatable()
+```
+
+### Data for deaths
+
+```{r deaths.per.100.data, echo=FALSE}
+my.corona.after.100.death.dat %>% datatable()
 ```
 
 ### Population data
@@ -498,15 +552,17 @@ my.corona.after.100 %>%
 my.corona.after.100 %>%
     filter(state %in% countries) %>%
     filter(type == 'confirmed') %>%
-    arrange(state) %>%
     top_n(params$last.days, days.after.100) %>%
     mutate(days.before.now = days.after.100 - max(days.after.100)) %>%
+    group_by(state) %>%
+    arrange(date) %>%
     mutate(cumul = cumsum(cases)) %>%
-    ungroup() %>%
     mutate(State = state,
            Date = format(date, '%B %d'),
            'Confirmed cases' = cases,
            'Sub-total' = cumul) %>%
+    arrange(desc(date), desc(cases), state) %>%
+    ungroup() %>%
     select(State, Date, 'Confirmed cases', 'Sub-total') %>%
     datatable()
 ```
@@ -660,6 +716,25 @@ p
 # p + scale_y_continuous('Number of cases confirmed in previous 4 days (log2 scale)', trans = 'log2')
 ```
 
+## Data for last 4 days
+
+```{r data.last.week, echo=FALSE}
+last.week %>% 
+    filter(state %in% countries) %>%
+    group_by(state) %>%
+    arrange(desc(date), state) %>%
+    mutate(date = format(date, '%B %d'),
+           last.week.cases.confirmed = format(last.week.cases.confirmed, big.mark = ','),
+           last.week.cases.death = format(last.week.cases.death, big.mark = ',')) %>%
+    select(State = state, 
+           Date = date, 
+           Confirmed = cases.confirmed, 
+           Deaths = cases.death, 
+           'Cases in last 4 days' = last.week.cases.confirmed,
+           'Deaths in last 4 days' = last.week.cases.death) %>%
+    datatable()
+```
+
 # Confirmed cases vs. Death visualizations *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
 
 This visualization shows the number of cases/deaths per 100k of the population.
@@ -709,7 +784,28 @@ plot.death.vs.cases <- function(state.filter, always.include = countries.always.
 plot.death.vs.cases(countries.extended)
 ```
 
-## Data for Confirmed Cases
+## Data
+
+```{r cases.vs.death.data, echo=FALSE}
+death.vs.cases %>%
+    arrange(desc(ratio)) %>%
+    mutate(ratio = percent(ratio, accuracy = .0001),
+           death = format(cases.death / 100000 * population, big.mark = ','),
+           confirmed = format(cases.confirmed / 100000 * population, big.mark = ','),
+           cases.death = round(cases.death, digits = 4),
+           cases.confirmed = round(cases.death, digits = 4),
+           population = format(population, big.mark = ',')) %>%
+    select(State = state,
+           'Death / Confirmed' = ratio,
+           'Deaths' = death,
+           'Deaths per 100k' = cases.death,
+           'Confirmed' = confirmed,
+           'Confirmed per 100k' = cases.confirmed,
+           Population = population) %>%
+    datatable()
+```
+
+## Number of Confirmed Cases
 
 ```{r death.vs.cases.data.confirmed, echo=FALSE}
 my.corona.original %>%
@@ -733,7 +829,7 @@ my.corona.original %>%
         theme(legend.position = 'none')
 ```
 
-## Data for Deaths
+## Number of Deaths
 
 ```{r death.vs.cases.data.death, echo=FALSE}
 my.corona.original %>%
