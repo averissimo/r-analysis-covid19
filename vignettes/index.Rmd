@@ -20,6 +20,7 @@ I'm not from the Epidemiology field. My background is computer science and bioin
 # Other covid-19 analysis
 
 * [Germany (by state)](https://averissimo.github.io/covid19-analysis/germany.html)
+* [Bavaria (in Germany)](https://averissimo.github.io/covid19-analysis/bayer.html)
 
 # Symptoms *(count)* for Portugal
 
