@@ -411,7 +411,7 @@ Showing population for plotted countries. This becomes relevant for the next plo
 
 ### Confirmed cases
 
-```{r confirmed.after.100.per100k, echo=FALSE}
+```{r confirmed.after.100.per100k, echo=FALSE, warning=FALSE, message=FALSE}
 my.corona.after.100 %>%
     filter(country %in% countries) %>%
     filter(type %in% c('confirmed')) %>%
