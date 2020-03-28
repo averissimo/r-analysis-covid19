@@ -36,7 +36,7 @@ download.it.data <- function() {
         group_by(state, date) %>%
         summarise(confirmed = sum(confirmed),
                   death = sum(death)) %>%
-        melt(id.vars = c('state', 'date'), variable.name = 'type', value.name = 'cases') %>%
+        melt(id.vars = c('state', 'date'), variable.name = 'type', value.name = 'cases', factorsAsStrings = FALSE) %>%
         as_tibble %>%
         #
         arrange(desc(date)) %>%

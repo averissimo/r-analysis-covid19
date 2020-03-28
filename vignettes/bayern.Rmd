@@ -1,5 +1,5 @@
 ---
-title: "Bayern analysis of covid-19 cases"
+title: "Bayern covid-19 analysis"
 output: 
     html_document:
         toc: true
@@ -35,7 +35,7 @@ rmarkdown::clean_site()
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, collapse = TRUE, fig.width = 10, fig.height = 8)
+knitr::opts_chunk$set(echo = FALSE, collapse = TRUE, fig.width = 10, fig.height = 8)
 library(tidyverse)
 library(dplyr)
 library(viridis) # color pallete
@@ -86,7 +86,7 @@ my.corona <- my.corona %>%
 
 ```{r}
 last.date          <- format(max(my.corona.original$date), '%Y/%m/%d')
-last.date.string   <- paste0('Latest date from ', last.date, ' (source: ', source.by, ' r package)')
+last.date.string   <- paste0('Latest date from ', last.date, ' (source: ', source.by, ')')
 region.code        <- 'State'
 region.code.plural <- 'States'
 
@@ -233,7 +233,7 @@ If you do not understand logarythm scale, I recommend this [video](https://www.y
 
 ### Cases  
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 ommit.start(my.corona.after.100, 'confirmed', params$confirmed.start, filter.states = countries)
 ```
 

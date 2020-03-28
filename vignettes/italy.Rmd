@@ -1,5 +1,5 @@
 ---
-title: "Germany analysis of covid-19 cases"
+title: "Italy covid-19 analysis"
 output: 
     html_document:
         toc: true
@@ -93,7 +93,7 @@ my.corona <- my.corona %>%
 
 ```{r}
 last.date          <- format(max(my.corona.original$date), '%Y/%m/%d')
-last.date.string   <- paste0('Latest date from ', last.date, ' (source: ', source.by, ' r package)')
+last.date.string   <- paste0('Latest date from ', last.date, ' (source: ', source.by, ')')
 region.code        <- 'State'
 region.code.plural <- 'States'
 
@@ -237,7 +237,7 @@ If you do not understand logarythm scale, I recommend this [video](https://www.y
 
 ### Cases  
 
-```{r}
+```{r , message=FALSE, warning=FALSE}
 ommit.start(my.corona.after.100, 'confirmed', params$confirmed.start, filter.states = countries)
 ```
 
@@ -279,25 +279,25 @@ Showing population for plotted `r region(2, TRUE)` This becomes relevant for the
 
 ### Cases
 
-```{r}
+```{r , message=FALSE, warning=FALSE}
 ommit.start(my.corona.after.100, 'confirmed', params$confirmed.start, filter.states = countries, log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
 ### Deaths 
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 ommit.start(my.corona.after.100, 'death', params$confirmer.start, filter.states = countries, log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
 ### Cases *(log2 scale)*
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 ommit.start(my.corona.after.100, 'confirmed', params$confirmer.start, filter.states = countries, log2.flag = TRUE, per.100k.flag = TRUE)
 ```
 
 ### Deaths *(log2 scale)*
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 ommit.start(my.corona.after.100, 'death', params$confirmer.start, filter.states = countries, log2.flag = TRUE, per.100k.flag = TRUE)
 ```
 

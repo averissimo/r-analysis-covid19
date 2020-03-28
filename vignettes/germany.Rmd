@@ -1,5 +1,5 @@
 ---
-title: "Germany analysis of covid-19 cases"
+title: "Germany covid-19 analysis"
 output: 
     html_document:
         toc: true
@@ -20,7 +20,7 @@ I'm not from the Epidemiologist! My background is computer science and bioinform
 ## Other covid-19 analysis
 
 * [World](https://averissimo.github.io/covid19-analysis/)
-* [Italy (by state)](https://averissimo.github.io/covid19-analysis/italy.html)
+* [Italy (by regione)](https://averissimo.github.io/covid19-analysis/italy.html)
 * [Bavaria (in Germany)](https://averissimo.github.io/covid19-analysis/bayern.html)
 
 ```{r render.me, include=FALSE, eval=FALSE}
@@ -86,7 +86,7 @@ my.corona <- my.corona %>%
 
 ```{r}
 last.date          <- format(max(my.corona.original$date), '%Y/%m/%d')
-last.date.string   <- paste0('Latest date from ', last.date, ' (source: ', source.by, ' r package)')
+last.date.string   <- paste0('Latest date from ', last.date, ' (source: ', source.by, ')')
 region.code        <- 'State'
 region.code.plural <- 'States'
 
