@@ -75,6 +75,7 @@ source.by = eu.it$source
 ```{r eurostat}
 pop.raw <- download.eurostat.population('IT', 2)
 
+# see readme.. this is a problem between EU and IT mapping of regions
 problem.states <- c('Provincia Autonoma di Bolzano/Bozen', 'Provincia Autonoma di Trento')
 regions.sum <- pop.raw %>% filter(state %in% problem.states) %>% pull(population) %>% sum
 

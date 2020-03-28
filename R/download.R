@@ -45,7 +45,7 @@ download.it.data <- function() {
                cumul = cases,
                cases = rollapply(cases, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE))
 
-    return(list(data = eu.data, source = 'Proteczione Civile'))
+    return(list(data = eu.data, source = 'Protezione Civile'))
 }
 
 download.eurostat.population <- function(country.code, nuts = 1) {
