@@ -1,12 +1,13 @@
-top30 <- function(dat, type) {
+top30 <- function(dat, case.type, n = 30) {
     my.plot <- dat %>%
-        filter(type == 'confirmed') %>%
+        filter(type == case.type) %>%
         group_by(state, type) %>%
         summarise(cases = sum(cases)) %>%
         arrange(cases) %>%
         ungroup() %>%
         mutate(state = paste0(state, ' (', cases, ')')) %>%
         mutate(state = factor(state, levels = unique(.$state))) %>%
+        top_n(n) %>%
         ggplot() +
         geom_bar(aes(state, cases, fill = state), stat = 'identity') +
         # scale_y_continuous(trans = 'log10') +
@@ -22,7 +23,7 @@ top30 <- function(dat, type) {
 }
 
 
-ommit.start <- function(dat, case.type, start_of, filter.countries = c(), log2.flag = FALSE, per.100k.flag = FALSE) {
+ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE) {
     lab.y <- proper.cases(case.type, capitalize = TRUE)
     lab.t <- glue('{proper.cases(case.type, capitalize = TRUE)} over time')
 
@@ -31,12 +32,17 @@ ommit.start <- function(dat, case.type, start_of, filter.countries = c(), log2.f
         lab.t <- paste0(lab.t, ' -- per 100k population')
     }
 
-     my.plot <- dat %>%
-        filter(state %in% filter.countries) %>%
+    if (!any(colnames(dat) == 'days.after.100')) {
+        dat <- dat %>% mutate(days.after.100 = date)
+    }
+
+    my.plot <- dat %>%
+        filter(cumul > 0) %>%
+        filter(length(filter.states) == 0 | state %in% filter.states) %>%
         filter(type == case.type) %>%
         ungroup(state) %>%
+        mutate(cumul = if_else(rep(per.100k.flag, length(cumul)), round(cumul * 100000 / population, digits = 3), as.double(cumul))) %>%
         group_by(state) %>%
-        mutate(cumul = if_else(rep(per.100k.flag, length(cumul)), round(cumul / population * 100000, digits = 3), cumul)) %>%
         arrange(-cases) %>% {
             tmp <- summarise(., cases = max(cumul))
             tmp <- arrange(tmp, cases)
@@ -70,7 +76,7 @@ ommit.start <- function(dat, case.type, start_of, filter.countries = c(), log2.f
      return(my.plot)
 }
 
-last.days <- function(dat, case.type, days, filter.countries = c(), log2.flag = FALSE, per.100k.flag = FALSE) {
+last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE) {
     lab.y <- proper.cases(case.type, capitalize = TRUE)
     lab.t <- glue('{proper.cases(case.type, capitalize = TRUE)} over time')
 
@@ -80,8 +86,8 @@ last.days <- function(dat, case.type, days, filter.countries = c(), log2.flag = 
     }
 
     my.plot <- dat %>%
-        filter(type == case.type & state %in% filter.countries) %>%
-        mutate(cumul = if_else(rep(per.100k.flag, length(cumul)), round(cumul / population * 100000, digits = 3), cumul)) %>%
+        filter(type == case.type & state %in% filter.states) %>%
+        mutate(cumul = if_else(rep(per.100k.flag, length(cumul)), round(cumul / population * 100000, digits = 3), as.double(cumul))) %>%
         group_by(state) %>% {
             tmp <- summarise(., cases = max(cumul))
             tmp <- arrange(tmp, cases)
@@ -117,7 +123,7 @@ last.days <- function(dat, case.type, days, filter.countries = c(), log2.flag = 
 }
 
 
-last.week.cumulative <- function(dat, case.type, days, filter.countries = c(), log2.flag = FALSE, per.100k.flag = FALSE) {
+last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE) {
     lab.y <- 'Number of cases confirmed in previous {days} days' %>% glue
     lab.t <- 'Cumulative {proper.cases(case.type, capitalize = TRUE)} for the last {days} days' %>% glue
     lab.s <- 'WARNING:: Each point is a sum from previous 4 days' %>% glue
@@ -136,7 +142,7 @@ last.week.cumulative <- function(dat, case.type, days, filter.countries = c(), l
     }
 
     my.plot <- dat.norm %>%
-        filter(state %in% filter.countries) %>%
+        filter(state %in% filter.states) %>%
         mutate(last.week.var = if_else(rep(per.100k.flag, length(last.week.var)), round(last.week.var / population * 100000, digits = 3), last.week.var)) %>%
         group_by(state) %>% {
             tmp <- summarise(., cases = last(last.week.var))
@@ -197,9 +203,9 @@ death.vs.cases.plot <- function(dat, state.filter = c(), always.include = c()) {
             theme(legend.position = 'none'))
 }
 
-cases.plot <- function(dat, case.type, filter.countries = c()) {
+cases.plot <- function(dat, case.type, filter.states = c()) {
     my.plot <- dat %>%
-        filter(length(filter.countries) == 0 | state %in% filter.countries) %>%
+        filter(length(filter.states) == 0 | state %in% filter.states) %>%
         filter(type == case.type) %>%
         group_by(state, type) %>%
         summarise(cases = sum(cases)) %>%
@@ -219,4 +225,39 @@ cases.plot <- function(dat, case.type, filter.countries = c()) {
             theme(legend.position = 'none')
 
     return(my.plot)
+}
+
+plot.what.vs.cases <- function(data,
+                               state.filter = c(),
+                               always.include = c(),
+                               what = 'Hospital beds') {
+    my.tbl <- data %>%
+        filter(length(always.include) == 0 | state %in% (c(always.include, state.filter) %>% unique))
+    return(
+        my.tbl %>%
+            ggplot(aes(x = cases.confirmed, y = value, color = state)) +
+            geom_point(aes(size = ratio.confirmed), alpha = .4) +
+            geom_label_repel(aes(label = paste0(state,
+                                                ' (', percent(ratio.confirmed, accuracy = .1), '/',
+                                                percent(ratio.death, accuracy = .1), ')'),
+                                 fill = state),
+                             na.rm = TRUE,
+                             alpha = .8,
+                             color = 'white',
+                             size = 3,
+                             segment.alpha = .4,
+                             segment.colour = 'black',
+                             force = 2) +
+            expand_limits(x = ceiling(max(my.tbl %>% pull(cases.confirmed))),
+                          y = ceiling(max(my.tbl %>% pull(value)))) +
+            scale_color_viridis(discrete = TRUE, end = .85) +
+            scale_fill_viridis(discrete = TRUE, end = .85) +
+            labs(x = 'Confirmed Cases per 100k population',
+                 y = glue('{what} per 100k population'),
+                 title = glue('{what} vs. Cases per 100k population'),
+                 subtitle = glue('percentage shows the {tolower(what)} per confirmed cases and deaths, respectively'),
+                 caption = last.date.string) +
+            theme_minimal() +
+            theme(legend.position = 'none')
+    )
 }

@@ -1,7 +1,6 @@
-top30.data <- function(dat, type) {
-    region.code.local <- 'Staat'
+top30.data <- function(dat, case.type) {
     dat %>%
-        filter(type == type) %>%
+        filter(type == case.type) %>%
         group_by(state, type) %>%
         summarise(cases = sum(cases)) %>%
         arrange(cases) %>%
@@ -14,10 +13,17 @@ top30.data <- function(dat, type) {
 }
 
 
-ommit.data <- function(dat, case.type, filter.countries = c()) {
+ommit.data <- function(dat, case.type, filter.states = c()) {
+    if (!any(colnames(dat) == 'days.after.100')) {
+        days.name <- 'Date'
+        dat <- dat %>% mutate(days.after.100 = date)
+    } else {
+        days.name <- 'Days'
+    }
+
     case.type.name <- proper.cases(case.type, capitalize = TRUE)
     dat %>%
-        filter(state %in% filter.countries) %>%
+        filter(length(filter.states) == 0 | state %in% filter.states) %>%
         filter(type %in% c(case.type)) %>%
         mutate(cumul.per.100k = cumul / population * 100000) %>%
         ungroup %>%
@@ -27,7 +33,7 @@ ommit.data <- function(dat, case.type, filter.countries = c()) {
                cases = format(cases, big.mark = ','),
                cumul = format(cumul, big.mark = ',')) %>%
         select(!! region.code := state,
-               'Days' = days.after.100,
+               !! days.name := days.after.100,
                 !! case.type.name := cases,
                'Sub-total' = cumul,
                'Sub-total per 100k' = cumul.per.100k,
@@ -35,9 +41,9 @@ ommit.data <- function(dat, case.type, filter.countries = c()) {
         return()
 }
 
-population.data <- function(dat, filter.countries = c()) {
+population.data <- function(dat, filter.states = c()) {
     dat %>%
-        filter(length(filter.countries) == 0 | state %in% filter.countries) %>%
+        filter(length(filter.states) == 0 | state %in% filter.states) %>%
         ungroup %>%
         select(state, population) %>%
         distinct(state, .keep_all = TRUE) %>%
@@ -47,11 +53,11 @@ population.data <- function(dat, filter.countries = c()) {
         return()
 }
 
-last.days.data <- function(dat, case.type, filter.countries = c()) {
+last.days.data <- function(dat, case.type, filter.states = c()) {
     case.type.name <- proper.cases(case.type, capitalize = TRUE)
 
     dat %>%
-        filter(state %in% filter.countries) %>%
+        filter(state %in% filter.states) %>%
         filter(type == 'confirmed') %>%
         group_by(state) %>%
         arrange(desc(date), desc(cases), state) %>%
@@ -64,7 +70,7 @@ last.days.data <- function(dat, case.type, filter.countries = c()) {
         return()
 }
 
-cumulative.last.days.data <- function(dat, case.type, filter.countries = c(), days) {
+cumulative.last.days.data <- function(dat, case.type, filter.states = c(), days) {
     cumul.name <- '{proper.cases(case.type, capitalize = TRUE)} in last {days} days' %>% glue
     value.name <- '{proper.cases(case.type, capitalize = TRUE)}' %>% glue
     if (case.type == 'confirmed') {
@@ -78,7 +84,7 @@ cumulative.last.days.data <- function(dat, case.type, filter.countries = c(), da
     }
 
     dat.norm %>%
-        filter(state %in% filter.countries) %>%
+        filter(state %in% filter.states) %>%
         group_by(state) %>%
         arrange(desc(date), state) %>%
         mutate(date = format(date, '%B %d'),
@@ -108,4 +114,43 @@ death.vs.cases.data <- function(dat) {
                'Confirmed per 100k' = cases.confirmed,
                Population = population) %>%
         return()
+}
+
+something.vs.cases.data <- function(dat, name, state.filter = c()) {
+    name.per <- '{name} per 100k' %>% glue
+    cases.per.name <- 'Confirmed cases per {name}' %>% glue
+    deaths.per.name <- 'Deaths per {name}' %>% glue
+    dat %>%
+        filter(length(state.filter) == 0 | state %in% state.filter) %>%
+        mutate(!! region.code := state,
+               Population = format(population, big.mark = ','),
+               'Deaths per 100k' = round(cases.death, digits = 2),
+               'Cases per 100k' = round(cases.confirmed, digits = 2),
+               '(source year)' = as.numeric(date),
+               !! name.per := value,
+               !! cases.per.name := percent(cases.confirmed / value, accuracy = .01),
+               !! deaths.per.name := percent(cases.death / value, accuracy = .01)) %>%
+        ungroup %>%
+        arrange(desc(value)) %>%
+        select(!! region.code,
+               Population,
+               !! name.per,
+               '(source year)' ,
+               'Cases per 100k',
+               'Deaths per 100k',
+               !! cases.per.name,
+               !! deaths.per.name) %>%
+        return()
+}
+
+region <- function(num = 1, lower = FALSE) {
+    if (num > 1 && lower) {
+        return(tolower(region.code.plural))
+    }  else if (num > 1 && !lower) {
+        return(region.code.plural)
+    }  else if (num <= 1 && lower) {
+        return(tolower(region.code))
+    }  else if (num <= 1 && !lower) {
+        return(region.code)
+    }
 }

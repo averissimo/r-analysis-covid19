@@ -15,15 +15,16 @@ params:
 
 This is a personal analysis of the cases of covid-19.
 
-I'm not from the Epidemiology field. I'm currently working on modeling cancer datasets for my PhD thesis.
+I'm not from the Epidemiologist! My background is computer science and bioinformatics.
 
-# Other covid-19 analysis
+## Other covid-19 analysis
 
 * [World](https://averissimo.github.io/covid19-analysis/)
+* [Italy (by state)](https://averissimo.github.io/covid19-analysis/italy.html)
 * [Bavaria (in Germany)](https://averissimo.github.io/covid19-analysis/bayern.html)
 
 ```{r render.me, include=FALSE, eval=FALSE}
-rmarkdown::render('Bavaria.Rmd', quiet = TRUE)
+rmarkdown::render('germany.Rmd', quiet = TRUE)
 ```
 
 ```{r render.site, include=FALSE, eval=FALSE}
@@ -34,7 +35,7 @@ rmarkdown::clean_site()
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, collapse = TRUE, fig.width = 10, fig.height = 8)
+knitr::opts_chunk$set(echo = FALSE, collapse = TRUE, fig.width = 10, fig.height = 8)
 library(tidyverse)
 library(dplyr)
 library(viridis) # color pallete
@@ -43,11 +44,14 @@ library(zoo)
 library(glue)
 library(DT)
 library(anytime)
+library(loose.rock)
 library(scales)
 library(futile.logger)
 library(wbstats) # world bank data
 library(reshape2)
 library(eurostat)
+
+devtools::load_all()
 
 Sys.setlocale('LC_TIME', 'en_GB.UTF-8')
 .Last.value <- flog.layout(layout.format('~m'))
@@ -61,78 +65,11 @@ It's not realtime data and data presented may have 1 or more days of difference 
 
 
 ```{r buildCorona, echo=FALSE, message=FALSE, warning=FALSE}
-eu.de.raw <- read_csv('https://github.com/covid19-eu-zh/covid19-eu-data/raw/master/dataset/covid-19-de.csv')
+eu.de <- download.de.data()
 
-eu.de <- eu.de.raw %>%
-    mutate(nuts_1 = gsub('[\u00ad]', '', nuts_1)) %>%
-    filter(nuts_1 != 'Repatriierte') %>%
-    select(state = nuts_1, cases, deaths, date = datetime) %>%
-    group_by(state) %>% 
-    melt(id.vars = c('state', 'date'), variable.name = 'type', value.name = 'cases') %>%
-    mutate(type = if_else(type == 'cases', 'confirmed', 'death')) %>%
-    arrange(desc(date)) %>%
-    group_by(state, type) %>% 
-    mutate(date = anydate(format(date, '%Y/%m/%d')),
-           cumul = cases,
-           # need to break down differences between days
-           cases = rollapply(cases, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE))
+my.corona.original <- eu.de$data
 
-my.corona.original <- eu.de
-
-source.by = 'Robert Koch Institute'
-```
-
-
-```{r summaryCorona, echo=FALSE, collapse=TRUE}
-flog.info('### Summary of data ###')
-flog.info('')
-flog.info('     States: %d', my.corona.original %>% filter(cases > 0) %>% pull(state) %>% unique %>% length)
-flog.info('')
-flog.info('      Cases: %d', sum((my.corona.original %>% filter(type == 'confirmed'))$cases))
-flog.info('     Deaths: %d', sum((my.corona.original %>% filter(type == 'death'))$cases))
-flog.info('')
-
-last.date <- format(max(my.corona.original$date), '%Y/%m/%d')
-last.date.string <- paste0('Latest date from ', last.date, ' (source: ', source.by, ')')
-
-flog.info('     Latest: %s from %s', last.date, source.by)
-```
-
-
-## States in visualizations
-
-The plots presented get very complex as more states are added.
-
-```{r, echo=FALSE, collapse=TRUE, include=TRUE}
-countries <- my.corona.original %>% pull(state) %>% unique %>% sort
-
-flog.info('Looking only at the following states: \n\n  %s' , paste0(countries, collapse = ', '))
-```
-
-# Top 30 states {.tabset .tabset-fade .tabset-pills}
-
-## Total Confirmed cases
-
-```{r top30confirmed, echo=FALSE}
-top30(my.corona.original, 'confirmed')
-```
-
-## Total Deaths
-
-```{r top30deaths, echo=FALSE}
-top30(my.corona.original, 'confirmed')
-```
-
-## Data confirmed
-
-```{r data.confirmed, echo=FALSE}
-my.corona.original %>% top30.data('confirmed') %>% datatable
-```
-
-## Data death
-
-```{r data.death, echo=FALSE}
-my.corona.original %>% top30.data('death') %>% datatable
+source.by = eu.de$source
 ```
 
 ```{r eurostat}
@@ -147,15 +84,141 @@ my.corona <- my.corona %>%
     group_by(state)
 ```
 
-```{r, echo=FALSE}
+```{r}
+last.date          <- format(max(my.corona.original$date), '%Y/%m/%d')
+last.date.string   <- paste0('Latest date from ', last.date, ' (source: ', source.by, ' r package)')
+region.code        <- 'State'
+region.code.plural <- 'States'
+
+countries                <- my.corona$state %>% unique
+countries.always.include <- my.corona$state %>% unique
+countries.extended       <- countries.always.include
+```
+
+```{r, include=FALSE, eval=FALSE}
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#     BELOW should be always the same
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+
+```
+
+
+```{r, collapse=TRUE}
+flog.info('### Summary of data ###')
+flog.info('')
+flog.info('  %s: %d', region(2), my.corona.original %>% filter(cases > 0) %>% pull(state) %>% unique %>% length)
+flog.info('')
+flog.info('      Cases: %d', sum((my.corona.original %>% filter(type == 'confirmed'))$cases))
+flog.info('     Deaths: %d', sum((my.corona.original %>% filter(type == 'death'))$cases))
+flog.info('')
+flog.info('     Latest: %s from %s', last.date, source.by)
+```
+
+
+## Main `r region(2)` in visualizations
+
+The plots presented get very complex as more `r region(2, TRUE)` are added. I'm focusing mainly on Europe and comparing against Portugal and Germany *(where I'm from vs. where I live)*
+
+```{r, collapse=TRUE}
+flog.info('Looking only at the following %s: \n\n  %s' , region(2, TRUE), paste0(countries, collapse = ', '))
+```
+
+# Top 30 `r region(2)` {.tabset .tabset-fade .tabset-pills}
+
+## Total Cases
+
+```{r, message=FALSE}
+top30(my.corona.original, 'confirmed')
+```
+
+## Total Deaths
+
+```{r, message=FALSE}
+top30(my.corona.original, 'death')
+```
+
+## Data Cases
+
+```{r}
+my.corona.original %>% top30.data('confirmed') %>% datatable
+```
+
+## Data Deaths
+
+```{r}
+my.corona.original %>% top30.data('death') %>% datatable
+```
+
+```{r}
 my.corona.after.100 <- filter.after(my.corona, params$death.start, params$confirmed.start)
 ```
 
-# Confirmed cases / Deaths *(ommiting start of epidemic)*
+# Confirmed cases / Deaths {.tabset .tabset-fade .tabset-pills}
+
+## Confirmed
+
+```{r}
+ommit.start(my.corona, 'confirmed', params$confirmed.start, filter.states = countries)
+```
+
+## Deaths
+
+```{r}
+ommit.start(my.corona, 'death', params$confirmed.start, filter.states = countries)
+```
+
+## Confirmed *(log2 scale)*
+
+```{r}
+ommit.start(my.corona, 'confirmed', params$confirmed.start, filter.states = countries, log2.flag = TRUE)
+```
+
+## Deaths *(log2 scale)*
+
+```{r}
+ommit.start(my.corona, 'death', params$confirmed.start, filter.states = countries, log2.flag = TRUE)
+```
+
+## Data for Confirmed
+
+```{r}
+ommit.data(my.corona, 'confirmed') %>% datatable
+```
+
+## Data for Deaths
+
+```{r}
+ommit.data(my.corona, 'confirmed') %>% datatable
+```
+
+# Confirmed cases / Deaths *(ommiting early start of epidemic)*
 
 ## Starting point after exceeding `r params$confirmed.start` cases or `r params$death.start` deaths {.tabset .tabset-fade .tabset-pills}
 
-The visualizations presented below have been time-shifted to the day when each state exceeded `r params$confirmed.start` cases or `r params$death.start` deaths *(depending on the visualization)*.
+The visualizations presented below have been time-shifted to the day when each `r region(1, TRUE)` exceeded `r params$confirmed.start` cases or `r params$death.start` deaths *(depending on the visualization)*.
 
 It is an arbitrary number, but allows to have a more accurate view of the progression as the first cases are quite sporadic and make the plots more complex.
 
@@ -165,126 +228,120 @@ It is used because covid-19 cases grow very fast, and this way it becomes easier
 
 If you do not understand logarythm scale, I recommend this [video](https://www.youtube.com/watch?v=Kas0tIxDvrg).
 
-### Confirmed cases  
+### Cases  
 
-```{r corfirmed.cases.after.100, echo=FALSE}
-ommit.start(my.corona.after.100, 'confirmed', params$confirmed.start, filter.countries = countries)
+```{r}
+ommit.start(my.corona.after.100, 'confirmed', params$confirmed.start, filter.states = countries)
 ```
 
-### Patient deaths
+### Deaths
 
-```{r death.after.100, echo=FALSE}
-ommit.start(my.corona.after.100, 'death', params$death.start, filter.countries = countries)
+```{r}
+ommit.start(my.corona.after.100, 'death', params$death.start, filter.states = countries)
 ```
 
-### Confirmed cases *(log2 scale)*
+### Cases *(log2 scale)*
 
-```{r, echo=FALSE}
-ommit.start(my.corona.after.100, 'confirmed', params$confirmer.start, filter.countries = countries, log2.flag = TRUE)
+```{r}
+ommit.start(my.corona.after.100, 'confirmed', params$confirmer.start, filter.states = countries, log2.flag = TRUE)
 ```
 
-### Patient deaths *(log2 scale)*
+### Deaths *(log2 scale)*
 
-```{r, echo=FALSE}
-ommit.start(my.corona.after.100, 'death', params$death.start, filter.countries = countries, log2.flag = TRUE)
+```{r}
+ommit.start(my.corona.after.100, 'death', params$death.start, filter.states = countries, log2.flag = TRUE)
 ```
 
-### Data for confirmed cases
+### Data for Cases
 
-```{r confirmed.per.100.data.1, echo=FALSE}
+```{r}
 my.corona.after.100.confirmed.dat <- ommit.data(my.corona.after.100, 'confirmed', countries)
 my.corona.after.100.confirmed.dat %>% datatable
 ```
 
-### Data for deaths
+### Data for Deaths
 
-```{r deaths.per.100.data.1, echo=FALSE}
+```{r}
 my.corona.after.100.death.dat <- ommit.data(my.corona.after.100, 'death', countries)
 my.corona.after.100.death.dat %>% datatable()
 ```
 
 ## Starting point after exceeding `r params$confirmed.start` cases or `r params$death.start` deaths *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
 
-Showing population for plotted states. This becomes relevant for the next plots.
+Showing population for plotted `r region(2, TRUE)` This becomes relevant for the next plots.
 
-### Confirmed cases
+### Cases
 
-```{r confirmed.after.100.per100k, echo=FALSE}
-ommit.start(my.corona.after.100, 'confirmed', params$confirmed.start, filter.countries = countries, log2.flag = FALSE, per.100k.flag = TRUE)
+```{r}
+ommit.start(my.corona.after.100, 'confirmed', params$confirmed.start, filter.states = countries, log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
 ### Deaths 
 
-```{r death.after.100.per.100k, echo=FALSE}
-ommit.start(my.corona.after.100, 'death', params$confirmer.start, filter.countries = countries, log2.flag = FALSE, per.100k.flag = TRUE)
+```{r}
+ommit.start(my.corona.after.100, 'death', params$confirmer.start, filter.states = countries, log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
-### Confirmed cases *(log2 scale)*
+### Cases *(log2 scale)*
 
-```{r, echo=FALSE}
-ommit.start(my.corona.after.100, 'confirmed', params$confirmer.start, filter.countries = countries, log2.flag = TRUE, per.100k.flag = TRUE)
+```{r}
+ommit.start(my.corona.after.100, 'confirmed', params$confirmer.start, filter.states = countries, log2.flag = TRUE, per.100k.flag = TRUE)
 ```
 
 ### Deaths *(log2 scale)*
 
-```{r, echo=FALSE}
-ommit.start(my.corona.after.100, 'death', params$confirmer.start, filter.countries = countries, log2.flag = TRUE, per.100k.flag = TRUE)
+```{r}
+ommit.start(my.corona.after.100, 'death', params$confirmer.start, filter.states = countries, log2.flag = TRUE, per.100k.flag = TRUE)
 ```
 
-### Data for confirmed cases
+### Data for Cases
 
-```{r confirmed.per.100.data, echo=FALSE}
+```{r}
 my.corona.after.100.confirmed.dat %>% datatable
 ```
 
-### Data for deaths
+### Data for Deaths
 
-```{r deaths.per.100.data, echo=FALSE}
+```{r}
 my.corona.after.100.death.dat %>% datatable
-```
-
-### Population data
-
-```{r population.data, echo=FALSE}
-population.data(my.corona) %>% datatable()
 ```
 
 # Last `r params$last.days` days {.tabset .tabset-fade .tabset-pills}
 
-Instead of showing the evolution of the cases/deaths since a state exceeded `r params$confirmed.start`/`r params$death.start` cases, it insteads shows the last 12 days.
+Instead of showing the evolution of the cases/deaths since a `r region(1, TRUE)` exceeded `r params$confirmed.start`/`r params$death.start` cases, it insteads shows the last 12 days.
 
 The first data point is the number of new cases that day.
 
-## Confirmed cases 
+## Cases 
 
-```{r confirmed.last12.days, echo=FALSE}
+```{r}
 my.corona.last.days <- filter.last.days(my.corona, params$last.days)
 last.days(my.corona.last.days, 'confirmed', params$last.days, countries, log2.flag = FALSE, per.100k.flag = FALSE)
 ```
 
 ## Deaths
 
-```{r death.last12.days, echo=FALSE, warning=FALSE}
+```{r, warning=FALSE}
 last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag = FALSE, per.100k.flag = FALSE)
 ```
 
-## Confirmed cases *(log2 scale)*
+## Cases *(log2 scale)*
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE}
 last.days(my.corona.last.days, 'confirmed', params$last.days, countries, log2.flag = TRUE, per.100k.flag = FALSE)
 ```
 
 ## Deaths
 
-```{r, echo=FALSE, warning=FALSE}
+```{r, warning=FALSE}
 last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag = FALSE, per.100k.flag = FALSE)
 ```
 
-## Data for confirmed cases
+## Data for Cases
 
 **warning**: sub-total is only for last 12 days
 
-```{r last.12.days.confirmed.data, echo=FALSE}
+```{r}
 last.days.data(my.corona.last.days, 'confirmed', countries) %>% datatable
 ```
 
@@ -292,98 +349,87 @@ last.days.data(my.corona.last.days, 'confirmed', countries) %>% datatable
 
 **warning**: sub-total is only for last 12 days
 
-```{r last.12.days.death.data, echo=FALSE}
+```{r}
 last.days.data(my.corona.last.days, 'death', countries) %>% datatable
 ```
 
-# Cumulative cases of previous 4 days *(how it tracks over time)* {.tabset .tabset-fade .tabset-pills}
+# Sum of previous 4 days *(tracking over time)* {.tabset .tabset-fade .tabset-pills}
 
 **Warning**: This visualization is not very intuitive, use it to see the trend over the last days.
 
-```{r countries.more, echo=FALSE}
-countries.always.include <- c()
-
-countries.extended <- countries
-
-# countries.extended[!countries.extended %in% my.corona$state]
-# countries.extended[!countries.extended %in% populations$state]
-
-# my.corona$state %>% unique %>% sort
-# populations$state %>% unique %>% sort
-
+```{r}
 last.week <- filter.last.days.cumulative(my.corona.original, populations, 4)
 ```
 
-## Confirmed cases
+## Cases
 
-```{r confirmed.lastweek.cumulative, echo=FALSE}
+```{r}
 last.week.cumulative(last.week, 'confirmed', 4, countries, log2.flag = FALSE, per.100k.flag = FALSE)
 ```
 
 ## Deaths
 
-```{r death.lastweek.cumulative, echo=FALSE}
+```{r}
 last.week.cumulative(last.week, 'death', 4, countries, log2.flag = FALSE, per.100k.flag = FALSE)
 ```
 
-## Confirmed cases
+## Cases *(per 100k population)*
 
-```{r confirmed.lastweek.cumulative, echo=FALSE}
+```{r}
 last.week.cumulative(last.week, 'confirmed', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
-## Deaths
+## Deaths *(per 100k population)*
 
-```{r death.lastweek.cumulative, echo=FALSE}
+```{r}
 last.week.cumulative(last.week, 'death', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE)
 ```
-## Data for Confirmed cases in last 4 days
 
-```{r data.last.week, echo=FALSE}
+## Data for Cases in last 4 days
+
+```{r}
 cumulative.last.days.data(last.week, 'confirmed', countries, 4) %>% datatable()
 ```
 
 ## Data for Deaths in last 4 days
 
-```{r data.last.week, echo=FALSE}
+```{r}
 cumulative.last.days.data(last.week, 'death', countries, 4) %>% datatable()
 ```
 
-# Confirmed cases vs. Death visualizations *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
+# Cases vs. Death visualizations *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
 
 This visualization shows the number of cases/deaths per 100k of the population.
 
 * **x axis**: Confirmed cases per 100k population
 * **y axis**: Deaths per 100k population
-* **size of data point**: Total population if the state
+* **size of data point**: Total population of the `r region(1, TRUE)`
 * **label**: Rate of deaths per confirmed cases
 
-```{r death.vs.cases.function.and.data, echo=FALSE}
-death.vs.cases <- filter.death.vs.cases(last.week)
+```{r}
+death.vs.cases <- filter.death.vs.cases(last.week) %>% filter(state %in% c(countries.extended, countries.always.include) %>% unique)
 ```
 
 ## All states
 
-```{r eu, echo=FALSE}
-death.vs.cases.plot(death.vs.cases)
+```{r}
+death.vs.cases.plot(death.vs.cases, always.include = countries.always.include)
 ```
 
 ## Data
 
-```{r cases.vs.death.data, echo=FALSE}
-death.vs.cases %>% death.vs.cases.data %>% datatable()
+```{r}
+death.vs.cases.data(death.vs.cases) %>% datatable()
 ```
 
 ## Number of Confirmed Cases
 
-```{r death.vs.cases.data.confirmed, echo=FALSE}
-cases.plot(my.corona.original, 'confirmed')
+```{r}
+my.corona.original %>% filter(state %in% countries.extended) %>% cases.plot('confirmed')
 ```
 
 ## Number of Deaths
 
-```{r death.vs.cases.data.death, echo=FALSE}
-cases.plot(my.corona.original, 'death')
+```{r}
+my.corona.original %>% filter(state %in% countries.extended) %>% cases.plot('death')
 ```
-
-

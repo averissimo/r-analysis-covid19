@@ -1,5 +1,5 @@
 ---
-title: "Bayern analysis of covid-19 cases"
+title: "Germany analysis of covid-19 cases"
 output: 
     html_document:
         toc: true
@@ -21,10 +21,10 @@ I'm not from the Epidemiologist! My background is computer science and bioinform
 
 * [World](https://averissimo.github.io/covid19-analysis/)
 * [Germany (by state)](https://averissimo.github.io/covid19-analysis/germany.html)
-* [Italy (by state)](https://averissimo.github.io/covid19-analysis/italy.html)
+* [Bavaria (in Germany)](https://averissimo.github.io/covid19-analysis/bayern.html)
 
 ```{r render.me, include=FALSE, eval=FALSE}
-rmarkdown::render('bayern.Rmd', quiet = TRUE)
+rmarkdown::render('italy.Rmd', quiet = TRUE)
 ```
 
 ```{r render.site, include=FALSE, eval=FALSE}
@@ -35,7 +35,7 @@ rmarkdown::clean_site()
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, collapse = TRUE, fig.width = 10, fig.height = 8)
+knitr::opts_chunk$set(echo = FALSE, collapse = TRUE, fig.width = 10, fig.height = 8)
 library(tidyverse)
 library(dplyr)
 library(viridis) # color pallete
@@ -43,8 +43,8 @@ library(ggrepel)
 library(zoo)
 library(glue)
 library(DT)
-library(loose.rock)
 library(anytime)
+library(loose.rock)
 library(scales)
 library(futile.logger)
 library(wbstats) # world bank data
@@ -65,16 +65,23 @@ It's not realtime data and data presented may have 1 or more days of difference 
 
 
 ```{r buildCorona, echo=FALSE, message=FALSE, warning=FALSE}
-eu.de <- download.de.data()
+eu.it <- download.it.data()
 
-my.corona.original <- eu.de$data
+my.corona.original <- eu.it$data
 
-source.by = eu.de$source
+source.by = eu.it$source
 ```
 
 ```{r eurostat}
-populations <- download.eurostat.population('DE')
+pop.raw <- download.eurostat.population('IT', 2)
 
+problem.states <- c('Provincia Autonoma di Bolzano/Bozen', 'Provincia Autonoma di Trento')
+regions.sum <- pop.raw %>% filter(state %in% problem.states) %>% pull(population) %>% sum
+
+populations <- pop.raw %>%
+    add_row(state = 'Trentino-Aalot Adige/Südtirol', population = regions.sum) %>% 
+    filter(!state %in% problem.states)
+    
 my.corona <- my.corona.original %>% left_join(populations, by = 'state')
 
 my.corona <- my.corona %>% 
@@ -90,14 +97,10 @@ last.date.string   <- paste0('Latest date from ', last.date, ' (source: ', sourc
 region.code        <- 'State'
 region.code.plural <- 'States'
 
-countries                <- 'Bayern'
+countries                <- my.corona$state %>% unique
 countries.always.include <- my.corona$state %>% unique
 countries.extended       <- countries.always.include
 ```
-
-
-
-
 
 ```{r, include=FALSE, eval=FALSE}
 #
@@ -128,6 +131,7 @@ countries.extended       <- countries.always.include
 #
 
 ```
+
 
 ```{r, collapse=TRUE}
 flog.info('### Summary of data ###')
