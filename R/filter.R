@@ -12,7 +12,7 @@ filter.after <- function(dat, death.start, confirmed.start) {
 filter.last.days <- function(dat, days) {
     dat %>%
         arrange(state) %>%
-        mutate(days.before.now = as.numeric(date - max(date))) %>%
+        mutate(days.before.now = as.numeric(difftime(date, max(date), units = 'days'))) %>%
         filter(days.before.now > -days) %>%
         arrange(date) %>%
         group_by(state, type) %>%

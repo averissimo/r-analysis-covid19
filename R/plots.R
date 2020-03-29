@@ -110,7 +110,7 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
                                  segment.alpha = .4) +
             labs(x = 'Last {days} days' %>% glue,
                  y = lab.y,
-                 title = 'Confirmend Cases in the last {days} days' %>% glue,
+                 title = '{proper.cases(case.type, capitalize = TRUE)} in the last {days} days' %>% glue,
                  caption = last.date.string) +
             scale_color_viridis(discrete = TRUE, end = .85, option = 'A') +
             scale_fill_viridis(discrete = TRUE, end = .85, option = 'A') +
