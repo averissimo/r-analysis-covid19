@@ -21,7 +21,7 @@ wb.indicator <- function(dat, indicator, name) {
         summarise(date = first(date),
                   value = first(value))
 
-    dta.vs.cases <- left_join(dat, dta, by = 'state') %>%
+    dta.vs.cases <- inner_join(dat, dta, by = 'state') %>%
         mutate(ratio.confirmed = cases.confirmed / value) %>%
         mutate(ratio.death = cases.death / value)
 

@@ -34,6 +34,7 @@ I'm not from the Epidemiology field. My background is computer science and bioin
 
 ```{r, include=FALSE, eval=FALSE}
 rmarkdown::render('index.Rmd', quiet = TRUE)
+rmarkdown::render('index.Rmd')
 ```
 
 ```{r, include=FALSE, eval=FALSE}
@@ -72,7 +73,75 @@ Data was retrieved from *'RamiKrispin/coronavirus'* R data package which is upda
 
 It's not realtime data and data presented may have 1 or more days of difference from real-time data. Check the caption on the figures to check when was the last data point.
 
-```{r, message=FALSE, warning=FALSE}
+```{r}
+world.dat <- download.eucdc.data()
+
+it.dat <- download.it.data() 
+
+source.by <- '{world.dat$source} and {it.dat$source}'
+
+it.dat <- it.dat$data %>%
+    ungroup %>%
+    mutate(state = 'Italy') %>%
+    group_by(state, date, type) %>%
+    summarise(cases = sum(cases),
+              cumul = sum(cumul)) %>% 
+    ungroup() %>%
+    arrange(date)
+
+my.corona.original <- world.dat$data %>% 
+    filter(state != 'Diamond Princess') %>%
+    filter(state != 'Italy') %>%
+    ungroup() %>%
+    add_row(state = it.dat$state, type = it.dat$type, date = it.dat$date, cases = it.dat$cases, cumul = it.dat$cumul) %>%
+    arrange(date, state, type) %>%
+    group_by(state, type)
+
+my.corona <- my.corona.original
+
+my.corona <- mutate(my.corona, 
+                    state.data = factor(state, 
+                                        levels = my.corona %>% filter(type == 'confirmed') %>% summarise(cases = max(cumul)) %>% arrange(cases) %>% pull(state)))
+
+convert.names <- list(
+  '404-1' =  'Anguilla',
+  '404-2' =  'Cases on an international conveyance Japan',
+  '404-2' =  'Guernsey',
+  '404-3' =  'Jersey',
+  '404-4' =  'Montserrat',
+  '404-5' =  'Palestine',
+  #
+  'Bahamas, The' =  'Bahamas',
+  'Cabo Verde' =  'Cape Verde',
+  'Congo, Rep' =  'Congo',
+  'Cote d\'Ivoire' =  'Cote dIvoire',
+  'Congo, Dem. Rep' =  'Democratic Republic of the Congo',
+  'Egypt, Arab Rep.' =  'Egypt',
+  'Gambia, The' =  'Gambia',
+  'Guinea-Bissau' =  'Guinea Bissau',
+  'Iran, Islamic Rep.' =  'Iran',
+  'Kyrgyz Republic' =  'Kyrgyzstan',
+  'Lao PDR' =  'Laos',
+  'Russian Federation' =  'Russia',
+  'St. Kitts and Nevis' =  'Saint Kitts and Nevis',
+  'St. Lucia' =  'Saint Lucia',
+  'St. Martin' =  'Saint Vincent and the Grenadines',
+  'Sint Maarten (Dutch part)' =  'Sint Maarten',
+  'Slovak Republic' =  'Slovakia',
+  'Korea, Rep.' =  'South Korea',
+  'Syrian Arab Republic' =  'Syria',
+  'Taiwan*' =  'Taiwan',
+  'Timor-Leste' =  'Timor Leste',
+  'Turks and Caicos Islands' =  'Turks and Caicos islands',
+  'Tanzania' =  'United Republic of Tanzania',
+  'United States' =  'United States of America',
+  'Virgin Islands (U.S.)' =  'United States Virgin Islands',
+  'Venezuela, RB' =  'Venezuela'
+    )
+```
+
+
+```{r, message=FALSE, warning=FALSE, eval=FALSE}
 BiocManager::install('RamiKrispin/coronavirus', ask = FALSE)
 
 library(coronavirus)
@@ -101,7 +170,7 @@ my.corona.original <- world.dat$data %>%
     group_by(state, type)
 ```
 
-```{r}
+```{r, eval=FALSE}
 ### Add census data from World Bank
 #
 # Population census data from World Bank
@@ -421,7 +490,7 @@ last.days.data(my.corona.last.days, 'death', countries) %>% datatable
 **Warning**: This visualization is not very intuitive, use it to see the trend over the last days.
 
 ```{r}
-last.week <- filter.last.days.cumulative(my.corona.original, populations, 4)
+last.week <- filter.last.days.cumulative(my.corona, 4)
 ```
 
 ## Cases

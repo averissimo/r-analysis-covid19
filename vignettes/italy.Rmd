@@ -366,7 +366,7 @@ last.days.data(my.corona.last.days, 'death', countries) %>% datatable
 **Warning**: This visualization is not very intuitive, use it to see the trend over the last days.
 
 ```{r}
-last.week <- filter.last.days.cumulative(my.corona.original, populations, 4)
+last.week <- filter.last.days.cumulative(my.corona, 4)
 ```
 
 ## Cases

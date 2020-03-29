@@ -21,19 +21,19 @@ filter.last.days <- function(dat, days) {
         return()
 }
 
-filter.last.days.cumulative <- function(dat, populations, days = 4) {
+filter.last.days.cumulative <- function(dat, days = 4) {
 
     last.week.tmp <- dat %>%
         group_by(state, type) %>%
         arrange(desc(date)) %>%
         ungroup() %>%
-        select(state, date, type, cases)
+        select(state, date, type, cases, population)
 
     last.week <-
         # Join confirmed and death cases
         left_join(last.week.tmp %>% filter(type == 'confirmed') %>% select(-type),
                   last.week.tmp %>% filter(type == 'death') %>% select(-type),
-                  by = c('state', 'date'),
+                  by = c('state', 'date', 'population'),
                   suffix = c('.confirmed', '.death')) %>%
         #
         # Replace any NA from join
@@ -52,7 +52,7 @@ filter.last.days.cumulative <- function(dat, populations, days = 4) {
         mutate(last.week.cases.death = rollapply(cases.death, days, sum, align = 'left', fill = c(0,0,0), partial = TRUE)) %>%
         #
         #
-        left_join(populations, by = 'state') %>%
+        #left_join(populations, by = 'state') %>%
         group_by(state) %>%
         arrange(date) %>%
         #

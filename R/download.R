@@ -111,20 +111,21 @@ download.eucdc.data <- function() {
 
     eu.data <- eu.data.raw %>%
         mutate(date = anytime(glue('{year}/{month}/{day}')),
-               country = countriesAndTerritories) %>%
-        select(country, date, cases, deaths, countryCode, popData2018) %>%
+               state = countriesAndTerritories) %>%
+        select(state, date, cases, deaths, popData2018) %>%
+        mutate(state = iconv(state, to = 'UTF-8')) %>%
         arrange(date) %>%
-        melt(id.vars = c('country', 'countryCode', 'popData2018', 'date'),
+        melt(id.vars = c('state', 'popData2018', 'date'),
              variable.name = 'type',
              value.name = 'cases') %>%
         mutate(type = if_else(type == 'cases', 'confirmed', 'death')) %>%
-        group_by(country, type, date, popData2018, countryCode) %>%
+        group_by(state, type, date, popData2018) %>%
         summarise(cases = sum(cases)) %>%
-        group_by(country, type) %>%
+        group_by(state, type) %>%
         mutate(cumul = cumsum(cases)) %>%
         ungroup() %>%
-        mutate(country = gsub('_', ' ', country)) %>%
-        select(country, date, type, cases, cumul, countryCode, population = popData2018)
+        mutate(state = gsub('_', ' ', state)) %>%
+        select(state, date, type, cases, cumul, population = popData2018)
 
     list(data = eu.data, source = 'EU CDC') %>%
         return()
