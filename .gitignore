@@ -4,3 +4,6 @@
 .Ruserdata
 vignettes/*.html
 run-cache
+render_*.sh
+*.txt
+*.log
