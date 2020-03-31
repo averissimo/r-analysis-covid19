@@ -1,3 +1,5 @@
+doubling.every <- function(date.vector, days) { return(function(a) {return(1/days * as.numeric(difftime(a, min(date.vector), units = 'days')))})}
+
 top30 <- function(dat, case.type, n = 30) {
     my.plot <- dat %>%
         filter(type == case.type) %>%
@@ -27,6 +29,7 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
     lab.y <- proper.cases(case.type, capitalize = TRUE)
     lab.t <- glue('{proper.cases(case.type, capitalize = TRUE)} over time')
     lab.s <- 'Only showing after each {region.code} had more than {start_of} {proper.cases(case.type)}' %>% glue
+    lab.x <- 'Number of days since ≥ {start_of} {proper.cases(case.type)}' %>% glue
 
     if (per.100k.flag) {
         lab.y <- paste0(lab.y, ' -- per 100k population')
@@ -35,10 +38,13 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
 
     if (!any(colnames(dat) == 'days.after.100')) {
         lab.s <- 'Showing cases since start of epidemic'
+        lab.x <- 'Day'
         dat <- dat %>% mutate(days.after.100 = date)
     }
 
-    my.plot <- dat %>%
+
+
+    my.plot.data <- dat %>%
         filter(cumul > 0) %>%
         filter(length(filter.states) == 0 | state %in% filter.states) %>%
         filter(type == case.type) %>%
@@ -56,13 +62,28 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
                           state.data.str = paste0(state, ' (', cases.str, ')'))
 
             mutate(., state.data = factor(paste0(state, ' (', max(cumul), ')'),
-                                                  levels = rev(pull(tmp, state.data)),
-                                                  labels = rev(pull(tmp, state.data.str))))
+                                          levels = rev(pull(tmp, state.data)),
+                                          labels = rev(pull(tmp, state.data.str))))
         } %>%
         mutate(label = if_else(cumul == max(cumul), as.character(state.data), NA_character_)) %>%
-        ungroup %>%
+        ungroup
+
+    my.plot <- my.plot.data %>%
         ggplot(aes(x = days.after.100, y = cumul, color = state.data)) +
+
+        #stat_function(fun = doubling.every(my.plot.data$date, 3),
+        ##              color = 'gray',
+        #              linetype = 'dashed') +
+
         geom_line(size = 1.2) +
+
+        #geom_label_repel(data = tibble(days.after.100 = median(my.plot.data$date),
+        #                               cumul = doubling.every(my.plot.data$date, 1)(median(my.plot.data$date)),
+        #                               label = 'Gray line doubles every 3 days',
+        #                               state.data = 'gray'),
+        #                 mapping = aes(x = days.after.100, y = cumul, label = label),
+        #                 color = 'white', fill = 'gray') +
+
         geom_label_repel(aes(label = label,
                              fill = state.data),
                          na.rm = TRUE,
@@ -70,8 +91,9 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
                          size = 3.5,
                          segment.alpha = .4,
                          segment.colour = 'black') +
+
         labs(y = lab.y,
-             x = 'Number of days since ≥ {start_of} {proper.cases(case.type)}' %>% glue,
+             x = lab.x,
              title = lab.t,
              subtitle = lab.s,
              caption = last.date.string) +
@@ -155,7 +177,7 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
             mutate(last.week.var = last.week.cases.death)
     }
 
-    my.plot <- dat.norm %>%
+    my.plot.data <- dat.norm %>%
         filter(state %in% filter.states) %>%
         mutate(last.week.var = if_else(rep(per.100k.flag, length(last.week.var)),
                                        round(last.week.var / population * 100000, digits = 1),
@@ -168,11 +190,13 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
                           state.data = paste0(state, ' (', cases, ')'),
                           state.data.str = paste0(state, ' (', cases.str, ')'))
 
-            mutate(., state.data = factor(paste0(state, ' (', max(cumul), ')'),
+            mutate(., state.data = factor(paste0(state, ' (', last(last.week.var), ')'),
                                           levels = rev(pull(tmp, state.data)),
                                           labels = rev(pull(tmp, state.data.str))))
         } %>%
-        mutate(label = if_else(date == max(date), format(state.data, big.mark = ','), NA_character_)) %>%
+        mutate(label = if_else(date == max(date), format(state.data, big.mark = ','), NA_character_))
+
+    my.plot <- my.plot.data %>%
         #
         ggplot(aes(x = date, y = last.week.var, color = state.data)) +
             geom_line(size = 1.2) +

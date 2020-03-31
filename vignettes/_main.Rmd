@@ -178,38 +178,40 @@ my.corona.after.100.confirmed.dat %>% datatable
 my.corona.after.100.death.dat %>% datatable
 ```
 
-# Last `r params$last.days` days {.tabset .tabset-fade .tabset-pills}
+# Last `r params$last.days` days
+
+## Last `r params$last.days` days {.tabset .tabset-fade .tabset-pills}
 
 Instead of showing the evolution of the cases/deaths since a `r region(1, TRUE)` exceeded `r params$confirmed.start`/`r params$death.start` cases, it insteads shows the last 12 days.
 
 The first data point is the number of new cases that day.
 
-## Cases 
+### Cases 
 
 ```{r}
 my.corona.last.days <- filter.last.days(my.corona, params$last.days)
 last.days(my.corona.last.days, 'confirmed', params$last.days, countries, log2.flag = FALSE, per.100k.flag = FALSE)
 ```
 
-## Deaths
+### Deaths
 
 ```{r, warning=FALSE}
 last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag = FALSE, per.100k.flag = FALSE)
 ```
 
-## Cases *(log2 scale)*
+### Cases *(log2 scale)*
 
 ```{r, message=FALSE, warning=FALSE}
 last.days(my.corona.last.days, 'confirmed', params$last.days, countries, log2.flag = TRUE, per.100k.flag = FALSE)
 ```
 
-## Deaths
+### Deaths
 
 ```{r, warning=FALSE}
 last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag = TRUE, per.100k.flag = FALSE)
 ```
 
-## Data for Cases
+### Data for Cases
 
 **warning**: sub-total is only for last 12 days
 
@@ -217,7 +219,7 @@ last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag =
 last.days.data(my.corona.last.days, 'confirmed', countries) %>% datatable
 ```
 
-## Data for Deaths
+### Data for Deaths
 
 **warning**: sub-total is only for last 12 days
 
@@ -225,38 +227,38 @@ last.days.data(my.corona.last.days, 'confirmed', countries) %>% datatable
 last.days.data(my.corona.last.days, 'death', countries) %>% datatable
 ```
 
-# Last `r params$last.days` days *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
+## Last `r params$last.days` days *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
 
 Instead of showing the evolution of the cases/deaths since a `r region(1, TRUE)` exceeded `r params$confirmed.start`/`r params$death.start` cases, it insteads shows the last 12 days.
 
 The first data point is the number of new cases that day.
 
-## Cases 
+### Cases 
 
 ```{r}
 my.corona.last.days <- filter.last.days(my.corona, params$last.days)
 last.days(my.corona.last.days, 'confirmed', params$last.days, countries, log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
-## Deaths
+### Deaths
 
 ```{r, warning=FALSE}
 last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
-## Cases *(log2 scale)*
+### Cases *(log2 scale)*
 
 ```{r, message=FALSE, warning=FALSE}
 last.days(my.corona.last.days, 'confirmed', params$last.days, countries, log2.flag = TRUE, per.100k.flag = TRUE)
 ```
 
-## Deaths *(log2 scale)*
+### Deaths *(log2 scale)*
 
 ```{r, warning=FALSE}
 last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag = TRUE, per.100k.flag = TRUE)
 ```
 
-## Data for Cases
+### Data for Cases
 
 **warning**: sub-total is only for last 12 days
 
@@ -264,14 +266,13 @@ last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag =
 last.days.data(my.corona.last.days, 'confirmed', countries) %>% datatable
 ```
 
-## Data for Deaths
+### Data for Deaths
 
 **warning**: sub-total is only for last 12 days
 
 ```{r}
 last.days.data(my.corona.last.days, 'death', countries) %>% datatable
 ```
-
 
 # Sum of previous 4 days *(tracking over time)* {.tabset .tabset-fade .tabset-pills}
 

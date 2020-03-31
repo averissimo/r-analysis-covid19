@@ -1,0 +1,417 @@
+---
+title: "World covid-19 Analysis"
+output: 
+    html_document:
+        toc: true
+        dev: 'svg'
+params:
+    death.start: !r 10
+    confirmed.start: !r 100
+    duplicate.every: !r 2
+    last.days: !r 12
+---
+
+```{r, child='_header.md'}
+```
+
+
+```{r, include=FALSE, eval=FALSE}
+rmarkdown::render('world_smaller.Rmd', quiet = TRUE)
+rmarkdown::render('world_smaller.Rmd')
+```
+
+```{r, include=FALSE, eval=FALSE}
+rmarkdown::render_site(quiet = TRUE)
+rmarkdown::render_site()
+rmarkdown::clean_site()
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, collapse = TRUE, fig.width = 10, fig.height = 8)
+library(tidyverse)
+library(dplyr)
+library(viridis) # color pallete
+library(ggrepel)
+library(zoo)
+library(glue)
+library(DT)
+library(loose.rock)
+library(anytime)
+library(scales)
+library(futile.logger)
+library(wbstats) # world bank data
+library(reshape2)
+library(eurostat)
+
+devtools::load_all()
+
+Sys.setlocale('LC_TIME', 'en_GB.UTF-8')
+.Last.value <- flog.layout(layout.format('~m'))
+```
+
+# Data
+
+Data was retrieved from *'RamiKrispin/coronavirus'* R data package which is updated daily in github.com.
+
+It's not realtime data and data presented may have 1 or more days of difference from real-time data. Check the caption on the figures to check when was the last data point.
+
+```{r, message=FALSE, warning=FALSE}
+world.dat <- download.eucdc.data()
+
+it.dat <- download.it.data() 
+
+source.by <- '{world.dat$source} and {it.dat$source}' %>% glue
+
+it.dat <- it.dat$data %>%
+    ungroup %>%
+    mutate(state = 'Italy') %>%
+    group_by(state, date, type) %>%
+    summarise(cases = sum(cases),
+              cumul = sum(cumul)) %>% 
+    ungroup() %>%
+    arrange(date)
+
+it.population <- world.dat$data %>% filter(state == 'Italy') %>% top_n(1) %>% pull(population) %>% unique
+
+my.corona.original <- world.dat$data %>% 
+    filter(state != 'Diamond Princess') %>%
+    filter(state != 'Italy') %>%
+    ungroup() %>%
+    add_row(state = it.dat$state, type = it.dat$type, date = it.dat$date, cases = it.dat$cases, cumul = it.dat$cumul, population = it.population) %>%
+    arrange(date, state, type) %>%
+    group_by(state, type)
+
+my.corona <- my.corona.original
+
+my.corona <- mutate(my.corona, 
+                    state.data = factor(state, 
+                                        levels = my.corona %>% filter(type == 'confirmed') %>% summarise(cases = max(cumul)) %>% arrange(cases) %>% pull(state)))
+
+convert.names <- list(
+  '404-1' =  'Anguilla',
+  '404-2' =  'Cases on an international conveyance Japan',
+  '404-2' =  'Guernsey',
+  '404-3' =  'Jersey',
+  '404-4' =  'Montserrat',
+  '404-5' =  'Palestine',
+  #
+  'Bahamas, The' =  'Bahamas',
+  'Cabo Verde' =  'Cape Verde',
+  'Congo, Rep' =  'Congo',
+  'Cote d\'Ivoire' =  'Cote dIvoire',
+  'Congo, Dem. Rep' =  'Democratic Republic of the Congo',
+  'Egypt, Arab Rep.' =  'Egypt',
+  'Gambia, The' =  'Gambia',
+  'Guinea-Bissau' =  'Guinea Bissau',
+  'Iran, Islamic Rep.' =  'Iran',
+  'Kyrgyz Republic' =  'Kyrgyzstan',
+  'Lao PDR' =  'Laos',
+  'Russian Federation' =  'Russia',
+  'St. Kitts and Nevis' =  'Saint Kitts and Nevis',
+  'St. Lucia' =  'Saint Lucia',
+  'St. Martin' =  'Saint Vincent and the Grenadines',
+  'Sint Maarten (Dutch part)' =  'Sint Maarten',
+  'Slovak Republic' =  'Slovakia',
+  'Korea, Rep.' =  'South Korea',
+  'Syrian Arab Republic' =  'Syria',
+  'Taiwan*' =  'Taiwan',
+  'Timor-Leste' =  'Timor Leste',
+  'Turks and Caicos Islands' =  'Turks and Caicos islands',
+  'Tanzania' =  'United Republic of Tanzania',
+  'United States' =  'United States of America',
+  'Virgin Islands (U.S.)' =  'United States Virgin Islands',
+  'Venezuela, RB' =  'Venezuela'
+    )
+```
+
+
+```{r, message=FALSE, warning=FALSE, eval=FALSE}
+BiocManager::install('RamiKrispin/coronavirus', ask = FALSE)
+
+library(coronavirus)
+
+world.dat <- download.world.data()
+
+it.dat <- download.it.data() 
+
+source.by <- '{world.dat$source} and {it.dat$source}'
+
+it.dat <- it.dat$data %>%
+    ungroup %>%
+    mutate(state = 'Italy') %>%
+    group_by(state, date, type) %>%
+    summarise(cases = sum(cases),
+              cumul = sum(cumul)) %>% 
+    ungroup() %>%
+    arrange(date)
+
+my.corona.original <- world.dat$data %>% 
+    filter(state != 'Diamond Princess') %>%
+    filter(state != 'Italy') %>%
+    ungroup() %>%
+    add_row(state = it.dat$state, type = it.dat$type, date = it.dat$date, cases = it.dat$cases, cumul = it.dat$cumul) %>%
+    arrange(date, state, type) %>%
+    group_by(state, type)
+```
+
+```{r}
+last.date          <- format(max(my.corona.original$date), '%Y/%m/%d')
+last.date.string   <- paste0('Latest date from ', last.date, ' (source: ', source.by, ')')
+region.code        <- 'Country'
+region.code.plural <- 'Countries'
+
+countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'France', 'Switzerland') %>% sort
+
+countries.eu <- c('Italy', 'Spain','Germany', 'Portugal', 'France',  
+                  'United Kingdom', 'Poland', 'Greece', 'Croatia', 'Slovenia', 
+                  'Hungary', 'Slovakia', 'Ireland', 'Luxembourg', 'Finland', 
+                  'Sweden', 'Denmark', 'Romania', 'Netherlands', 'Belgium', 
+                  'Czechia', 'Austria', 'Bulgaria', 'Lithuania', 'Latvia', 
+                  'Malta', 'Estonia', 'Cyprus')
+countries.cplp <- c('Angola', 'Mozambique', 'Cabo Verde', 'Timor-Leste', 
+                    'Brazil'
+                    , 'Macao SAR, China', 'Guinea-Bissau', 'Sao Tome and Principe' # not in corona data
+                    )
+countries.europe.non.eu <- c('Norway', 'Switzerland', 'Ukraine', 'Serbia', 'Russia', 
+                             'Albania', 'Iceland', 'Turkey', 'Belarus')
+countries.non.europe <- c('United States of America', 'China', 'Canada', 
+                          'Australia', 'New Zealand', 
+                          'Korea, South', 'Japan', 'Argentina', 'Chile', 'Thailand',
+                          'Iran', 'China')
+
+countries.always.include <- c('Portugal', 'Iran', 'Germany', 'Spain', 'Italy', 'Korea, South')
+countries.extended <- c(countries.eu, countries.europe.non.eu, countries.cplp, countries.non.europe, countries.always.include) %>%
+    unique
+```
+
+
+```{r, child='_main.Rmd'}
+```
+
+
+## EU
+
+```{r}
+death.vs.cases.plot(death.vs.cases, state.filter = countries.eu, always.include = countries.always.include)
+```
+
+## Non-EU Europe
+
+```{r}
+death.vs.cases.plot(death.vs.cases, state.filter = countries.europe.non.eu, always.include = countries.always.include)
+```
+
+## Non-Europe
+
+```{r}
+death.vs.cases.plot(death.vs.cases, state.filter = countries.non.europe, always.include = countries.always.include)
+```
+
+## CPLP
+
+```{r}
+death.vs.cases.plot(death.vs.cases, state.filter = countries.cplp, always.include = countries.always.include)
+```
+
+## Data
+
+```{r}
+death.vs.cases.data(death.vs.cases) %>% datatable()
+```
+
+## Number of Confirmed Cases
+
+```{r}
+my.corona.original %>% filter(state %in% countries.extended) %>% cases.plot('confirmed')
+```
+
+## Number of Deaths
+
+```{r}
+my.corona.original %>% filter(state %in% countries.extended) %>% cases.plot('death')
+```
+
+# Hospital beds vs. Cases *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
+
+This visualization shows the number of cases/deaths per 100k of the population.
+
+* **x axis**: Confirmed cases per 100k population
+* **y axis**: Hospital beds per 100k population
+* **size of data point**: Ratio of Confirmed cases / Hospital beds
+* **label**: `r region(1)` (<Confirmed cases / Hospital beds> | <Deaths / Hospital beds>)
+
+*note*: It always shows Portugal, Spain, Italy, South Korea, Iran and Germany.
+
+```{r}
+beds.vs.cases <- wb.indicator(death.vs.cases, 'SH.MED.BEDS.ZS', 'Hospital beds')
+```
+
+```{r}
+plot.beds.vs.cases <- function(...) { 
+    plot.what.vs.cases(..., 
+                       data = beds.vs.cases, 
+                       what = 'Hospital beds', 
+                       always.include = countries.always.include)
+}
+```
+
+## EU
+
+```{r}
+plot.beds.vs.cases(countries.eu)
+```
+
+## Non-EU Europe
+
+```{r}
+plot.beds.vs.cases(countries.europe.non.eu)
+```
+
+## Non-Europe
+
+```{r}
+plot.beds.vs.cases(countries.non.europe)
+```
+
+## CPLP
+
+```{r}
+plot.beds.vs.cases(countries.cplp)
+```
+
+## Data
+
+```{r}
+something.vs.cases.data(beds.vs.cases, 'Beds') %>% datatable()
+```
+
+# Nurses and Midwifes *(per 100k population)*  {.tabset .tabset-fade .tabset-pills}
+
+```{r}
+nurses.vs.cases <- wb.indicator(death.vs.cases, 'SH.MED.NUMW.P3', 'Nurses and midwives')
+```
+
+```{r}
+plot.nurses.vs.cases <- function(...) { plot.what.vs.cases(..., data = nurses.vs.cases, what = 'Nurses and Midwifes') }
+```
+
+## EU
+
+```{r}
+plot.nurses.vs.cases(countries.eu)
+```
+
+## Non-EU Europe
+
+```{r}
+plot.nurses.vs.cases(countries.europe.non.eu)
+```
+
+## Non-Europe
+
+```{r}
+plot.nurses.vs.cases(countries.non.europe)
+```
+
+## CPLP
+
+```{r}
+plot.nurses.vs.cases(countries.cplp)
+```
+
+
+## Data
+
+```{r}
+something.vs.cases.data(nurses.vs.cases, 'Nurses') %>% datatable()
+```
+
+# Physicians *(per 100k population)*  {.tabset .tabset-fade .tabset-pills}
+
+
+```{r}
+physicians.vs.cases <- wb.indicator(death.vs.cases, 'SH.MED.PHYS.ZS', 'Physicians')
+```
+
+```{r}
+plot.physicians.vs.cases <- function(...) { plot.what.vs.cases(..., data = physicians.vs.cases, what = 'Physicians') }
+```
+
+## EU
+
+```{r}
+plot.physicians.vs.cases(countries.eu)
+```
+
+## Non-EU Europe
+
+```{r}
+plot.physicians.vs.cases(countries.europe.non.eu)
+```
+
+## Non-Europe
+
+```{r}
+plot.physicians.vs.cases(countries.non.europe)
+```
+
+## CPLP
+
+```{r}
+plot.physicians.vs.cases(countries.cplp)
+```
+
+## Data
+
+```{r}
+something.vs.cases.data(physicians.vs.cases, 'Nurses') %>% datatable()
+```
+
+
+\- - - - - - - - The end. - - - - - - - -
+
+```{r, eval=FALSE, include=FALSE}
+anim.confirmed.vs.death <- last.week %>%
+    filter(country %in% c('Italy', 'Portugal')) %>%
+    group_by(country, date) %>%
+    mutate(cases.death = cumulative.cases.death / population * 100000,
+           cases.confirmed = cumulative.cases.confirmed / population * 100000,
+           ratio = if_else(cumulative.cases.confirmed == 0, 0, cumulative.cases.death / cumulative.cases.confirmed)) %>%
+    select(country, date, cases.confirmed, cases.death, cumul.confirmed = cumulative.cases.confirmed, cumul.death = cumulative.cases.death, ratio, population) %>%
+    arrange(desc(date))
+
+anim.confirmed.vs.death
+```
+
+```{r, eval=FALSE, include=FALSE}
+anim <- anim.confirmed.vs.death %>%
+    arrange(date) %>%
+    #filter(date == '2020-03-24') %>%
+    ggplot(aes(x = cases.confirmed, y = cases.death, color = country)) +
+        geom_point(aes(size = population), alpha = .4) +
+        geom_label_repel(aes(label = paste0(country, ' (', percent(ratio, accuracy = .1), ')'),
+                     fill = country),
+                     na.rm = TRUE,
+                     alpha = .8,
+                     color = 'white',
+                     size = 3,
+                     segment.alpha = .4,
+                     segment.colour = 'black',
+                     force = 2) +
+        expand_limits(x = ceiling(max(anim.confirmed.vs.death %>% pull(cases.confirmed))),
+                          y = ceiling(max(anim.confirmed.vs.death %>% pull(cases.death)))) +
+            labs(x = 'Confirmed Cases per 100k population', 
+                 y = 'Deaths per 100k population', 
+                 title = 'Deaths vs. Cases per 100k population -- {format(frame_along, \'%B\ %d\')}', 
+                 subtitle = 'percentage is the death rate per confirmed cases and size represents size of {region(1, TRUE)} by population' %>% glue,
+                 caption = '??') +
+            theme_minimal() +
+            theme(legend.position = 'none') +
+    transition_time(date) +
+    enter_drift()
+```
+
+```{r, message=FALSE, eval=FALSE, include=FALSE}
+animate(anim, end_pause = 30)
+```
