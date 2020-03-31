@@ -55,6 +55,7 @@ filter.last.days.cumulative <- function(dat, days = 4) {
         #left_join(populations, by = 'state') %>%
         group_by(state) %>%
         arrange(date) %>%
+        filter(difftime(date, '2020-03-01', units = 'days') >= 0) %>%
         #
         mutate(deaths.per.100k = last.week.cases.death / population * 100000,
                confirmed.per.100k = last.week.cases.confirmed / population * 100000,
