@@ -26,6 +26,7 @@ top30 <- function(dat, case.type, n = 30) {
 ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE) {
     lab.y <- proper.cases(case.type, capitalize = TRUE)
     lab.t <- glue('{proper.cases(case.type, capitalize = TRUE)} over time')
+    lab.s <- 'Only showing after each {region.code} had more than {start_of} {proper.cases(case.type)}' %>% glue
 
     if (per.100k.flag) {
         lab.y <- paste0(lab.y, ' -- per 100k population')
@@ -33,6 +34,7 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
     }
 
     if (!any(colnames(dat) == 'days.after.100')) {
+        lab.s <- 'Showing cases since start of epidemic'
         dat <- dat %>% mutate(days.after.100 = date)
     }
 
@@ -41,15 +43,21 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
         filter(length(filter.states) == 0 | state %in% filter.states) %>%
         filter(type == case.type) %>%
         ungroup(state) %>%
-        mutate(cumul = if_else(rep(per.100k.flag, length(cumul)), round(cumul * 100000 / population, digits = 3), as.double(cumul))) %>%
+        mutate(cumul = if_else(rep(per.100k.flag, length(cumul)),
+                               round(cumul * 100000 / population, digits = 1),
+                               as.double(cumul))) %>%
         group_by(state) %>%
         arrange(-cases) %>% {
             tmp <- summarise(., cases = max(cumul))
             tmp <- arrange(tmp, cases)
-            tmp <- mutate(tmp, state.data = paste0(state, ' (', cases, ')'))
+            tmp <- mutate(tmp,
+                          cases.str = format(cases, big.mark = ','),
+                          state.data = paste0(state, ' (', cases, ')'),
+                          state.data.str = paste0(state, ' (', cases.str, ')'))
 
             mutate(., state.data = factor(paste0(state, ' (', max(cumul), ')'),
-                                          levels = rev(pull(tmp, state.data))))
+                                                  levels = rev(pull(tmp, state.data)),
+                                                  labels = rev(pull(tmp, state.data.str))))
         } %>%
         mutate(label = if_else(cumul == max(cumul), as.character(state.data), NA_character_)) %>%
         ungroup %>%
@@ -65,7 +73,7 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
         labs(y = lab.y,
              x = 'Number of days since ≥ {start_of} {proper.cases(case.type)}' %>% glue,
              title = lab.t,
-             subtitle = 'Only showing after each {region.code} had more than {start_of} {proper.cases(case.type)}' %>% glue,
+             subtitle = lab.s,
              caption = last.date.string) +
         scale_color_viridis(discrete = TRUE, end = .85, option = 'A') +
         scale_fill_viridis(discrete = TRUE, end = .85, option = 'A') +
@@ -87,16 +95,22 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
 
     my.plot <- dat %>%
         filter(type == case.type & state %in% filter.states) %>%
-        mutate(cumul = if_else(rep(per.100k.flag, length(cumul)), round(cumul / population * 100000, digits = 3), as.double(cumul))) %>%
+        mutate(cumul = if_else(rep(per.100k.flag, length(cumul)),
+                               round(cumul / population * 100000, digits = 1),
+                               as.double(cumul))) %>%
         group_by(state) %>% {
             tmp <- summarise(., cases = max(cumul))
             tmp <- arrange(tmp, cases)
-            tmp <- mutate(tmp, state.data = paste0(state, ' (', cases, ')'))
+            tmp <- mutate(tmp,
+                          cases.str = format(cases, big.mark = ','),
+                          state.data = paste0(state, ' (', cases, ')'),
+                          state.data.str = paste0(state, ' (', cases.str, ')'))
 
             mutate(., state.data = factor(paste0(state, ' (', max(cumul), ')'),
-                                            levels = rev(pull(tmp, state.data))))
+                                          levels = rev(pull(tmp, state.data)),
+                                          labels = rev(pull(tmp, state.data.str))))
             } %>%
-        mutate(label = if_else(cumul == max(cumul), as.character(state.data), NA_character_)) %>%
+        mutate(label = if_else(cumul == max(cumul), format(state.data, big.mark = ','), NA_character_)) %>%
         filter(cumul > 0) %>%
         ungroup %>%
         ggplot(aes(x = days.before.now, y = cumul, color = state.data)) +
@@ -143,16 +157,22 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
 
     my.plot <- dat.norm %>%
         filter(state %in% filter.states) %>%
-        mutate(last.week.var = if_else(rep(per.100k.flag, length(last.week.var)), round(last.week.var / population * 100000, digits = 3), last.week.var)) %>%
+        mutate(last.week.var = if_else(rep(per.100k.flag, length(last.week.var)),
+                                       round(last.week.var / population * 100000, digits = 1),
+                                       as.double(last.week.var))) %>%
         group_by(state) %>% {
             tmp <- summarise(., cases = last(last.week.var))
             tmp <- arrange(tmp, cases)
-            tmp <- mutate(tmp, state.data = paste0(state, ' (', cases, ')'))
+            tmp <- mutate(tmp,
+                          cases.str = format(cases, big.mark = ','),
+                          state.data = paste0(state, ' (', cases, ')'),
+                          state.data.str = paste0(state, ' (', cases.str, ')'))
 
-            mutate(., state.data = factor(paste0(state, ' (', last(last.week.var), ')'),
-                                            levels = rev(pull(tmp, state.data))))
+            mutate(., state.data = factor(paste0(state, ' (', max(cumul), ')'),
+                                          levels = rev(pull(tmp, state.data)),
+                                          labels = rev(pull(tmp, state.data.str))))
         } %>%
-        mutate(label = if_else(date == max(date), as.character(state.data), NA_character_)) %>%
+        mutate(label = if_else(date == max(date), format(state.data, big.mark = ','), NA_character_)) %>%
         #
         ggplot(aes(x = date, y = last.week.var, color = state.data)) +
             geom_line(size = 1.2) +
