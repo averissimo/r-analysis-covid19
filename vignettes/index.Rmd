@@ -235,7 +235,7 @@ last.date.string   <- paste0('Latest date from ', last.date, ' (source: ', sourc
 region.code        <- 'Country'
 region.code.plural <- 'Countries'
 
-countries          <- c('Italy', 'Spain','Germany', 'China', 'Portugal', 'United States of America', 'France', 'Switzerland', 'Iran') %>% sort
+countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'United States of America', 'France', 'Switzerland', 'Iran') %>% sort
 
 countries.eu <- c('Italy', 'Spain','Germany', 'Portugal', 'France',  
                   'United Kingdom', 'Poland', 'Greece', 'Croatia', 'Slovenia', 
@@ -252,7 +252,7 @@ countries.europe.non.eu <- c('Norway', 'Switzerland', 'Ukraine', 'Serbia', 'Russ
 countries.non.europe <- c('United States of America', 'China', 'Canada', 
                           'Australia', 'New Zealand', 
                           'Korea, South', 'Japan', 'Argentina', 'Chile', 'Thailand',
-                          'Iran')
+                          'Iran', 'China')
 
 countries.always.include <- c('Portugal', 'Iran', 'Germany', 'Spain', 'Italy', 'Korea, South')
 countries.extended <- c(countries.eu, countries.europe.non.eu, countries.cplp, countries.non.europe, countries.always.include) %>%
