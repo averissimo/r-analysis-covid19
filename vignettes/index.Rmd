@@ -61,6 +61,11 @@ world.dat <- download.eucdc.data()
 it.dat <- download.it.data() 
 
 source.by <- '{world.dat$source} and {it.dat$source}' %>% glue
+last.date.world <- format(max(world.dat$data$date), '%Y/%m/%d')
+last.date.it <- format(max(it.dat$data$date), '%Y/%m/%d')
+
+last.date <- '{last.date.world} (EU CDC) and {last.date.it} (Protezione Civile)' %>% glue
+last.date.string   <- paste0('Latest date from ', last.date)
 
 it.dat <- it.dat$data %>%
     ungroup %>%
@@ -124,96 +129,9 @@ convert.names <- list(
     )
 ```
 
-
-```{r, message=FALSE, warning=FALSE, eval=FALSE}
-BiocManager::install('RamiKrispin/coronavirus', ask = FALSE)
-
-library(coronavirus)
-
-world.dat <- download.world.data()
-
-it.dat <- download.it.data() 
-
-source.by <- '{world.dat$source} and {it.dat$source}'
-
-it.dat <- it.dat$data %>%
-    ungroup %>%
-    mutate(state = 'Italy') %>%
-    group_by(state, date, type) %>%
-    summarise(cases = sum(cases),
-              cumul = sum(cumul)) %>% 
-    ungroup() %>%
-    arrange(date)
-
-my.corona.original <- world.dat$data %>% 
-    filter(state != 'Diamond Princess') %>%
-    filter(state != 'Italy') %>%
-    ungroup() %>%
-    add_row(state = it.dat$state, type = it.dat$type, date = it.dat$date, cases = it.dat$cases, cumul = it.dat$cumul) %>%
-    arrange(date, state, type) %>%
-    group_by(state, type)
-```
-
-```{r, eval=FALSE}
-### Add census data from World Bank
-#
-# Population census data from World Bank
-#
-# Get data from world bank
-convert.names <- list('United States' = 'US',
-                      'Czech Republic' = 'Czechia',
-                      'Russian Federation' = 'Russia',
-                      'Slovak Republic' = 'Slovakia',
-                      'Korea, Rep.' = 'Korea, South',
-                      'Iran, Islamic Rep.' = 'Iran',
-                      'Brunei Darussalam' = 'Brunei',
-                      'Egypt, Arab Rep.' = 'Egypt',
-                      'Bahamas, The' = 'Bahamas',
-                      'Congo, Rep.' = 'Congo (Brazzaville)',
-                      'Congo, Dem. Rep.' = 'Congo (Kinshasa)',
-                      'Gambia, The' = 'Gambia',
-                      'Kyrgyz Republic' = 'Kyrgyzstan',
-                      'Lao PDR' = 'Laos',
-                      'St. Kitts and Nevis' = 'Saint Kitts and Nevis',
-                      'St. Lucia' = 'Saint Lucia',
-                      'St. Vincent and the Grenadines' = 'Saint Vincent and the Grenadines',
-                      'Syrian Arab Republic' = 'Syria',
-                      'Venezuela, RB' = 'Venezuela')
-
-populations <- run.cache(wb, indicator = "SP.POP.TOTL", show.message = FALSE) %>% 
-    group_by(iso3c) %>%
-    filter(date == max(date)) %>%
-    select(population = value, state = country, iso3c) %>%
-    ungroup() %>%
-    #
-    add_row(state = 'Diamond Princess', population = 3711) %>%
-    add_row(state = 'Taiwan*', population = 23603121) %>%
-    add_row(state = 'Holy See', population = 801) %>%
-    arrange(state)
-     
-# Change some country name to match covid-19 data
-for (ix.name in names(convert.names)) {
-    populations <- populations %>%
-        arrange(state) %>%
-        ungroup %>%
-        mutate(state = replace(state, state == ix.name, convert.names[[ix.name]]))    
-}
-
-# populations$state[!populations$state %in% my.corona.original$state]
-# populations$state %>% unique %>% sort
-
-my.corona <- my.corona.original %>% left_join(populations, by = 'state')
-
-my.corona <- mutate(my.corona, 
-                    state.data = factor(state, 
-                                        levels = my.corona %>% filter(type == 'confirmed') %>% summarise(cases = max(cumul)) %>% arrange(cases) %>% pull(state))) %>%
-    select(-iso3c)
-```
-
-
 ```{r}
-last.date          <- format(max(my.corona.original$date), '%Y/%m/%d')
-last.date.string   <- paste0('Latest date from ', last.date, ' (source: ', source.by, ')')
+#last.date          <- format(max(my.corona.original$date), '%Y/%m/%d')
+#last.date.string   <- paste0('Latest date from ', last.date, ' (source: ', source.by, ')')
 region.code        <- 'Country'
 region.code.plural <- 'Countries'
 
