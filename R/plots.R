@@ -106,9 +106,14 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
      return(my.plot)
 }
 
-last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE) {
+last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE, new.flag = FALSE) {
     lab.y <- proper.cases(case.type, capitalize = TRUE)
     lab.t <- glue('{proper.cases(case.type, capitalize = TRUE)} over time')
+
+    if (new.flag) {
+        lab.t <- 'New {lab.t}' %>% glue
+        dat <- dat %>% mutate(cumul = cases)
+    }
 
     if (per.100k.flag) {
         lab.y <- paste0(lab.y, ' -- per 100k population')

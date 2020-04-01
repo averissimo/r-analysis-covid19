@@ -131,7 +131,7 @@ download.eucdc.data <- function() {
     eu.data.raw <- read_csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
 
     eu.data <- eu.data.raw %>%
-        mutate(date = anytime(glue('{year}/{month}/{day}')),
+        mutate(date = anydate(glue('{year}/{month}/{day}')) - 1,
                state = countriesAndTerritories) %>%
         select(state, date, cases, deaths, popData2018) %>%
         mutate(state = iconv(state, to = 'UTF-8')) %>%
