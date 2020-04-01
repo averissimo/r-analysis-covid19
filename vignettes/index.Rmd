@@ -11,26 +11,8 @@ params:
     last.days: !r 12
 ---
 
-# Preface
-
-This is a personal analysis of the cases of covid-19.
-
-I'm not from the Epidemiology field. My background is computer science and bioinformatics.
-
-## Other covid-19 analysis
-
-* [Germany (by state)](https://averissimo.github.io/covid19-analysis/germany.html)
-* [Italy (by regione)](https://averissimo.github.io/covid19-analysis/italy.html)
-* [Bavaria (in Germany)](https://averissimo.github.io/covid19-analysis/bayer.html)
-
-## Symptoms *(count)* for Portugal
-
-1. Headaches - Cefaleias - Dor de cabeça - 2233
-1. Cough - Tosse - 1878
-1. Fever - Febre - 1701
-1. General weakness - Fraqueza generalizada - 1311
-1. Muscular pain - Dores musculares - 1099
-1. Difficulties breathing - Dificuldade Respiratória - 673
+```{r, child='_header.md'}
+```
 
 ```{r, include=FALSE, eval=FALSE}
 rmarkdown::render('index.Rmd', quiet = TRUE)

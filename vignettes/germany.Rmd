@@ -11,17 +11,8 @@ params:
     last.days: !r 12
 ---
 
-# Preface
-
-This is a personal analysis of the cases of covid-19.
-
-I'm not from the Epidemiologist! My background is computer science and bioinformatics.
-
-## Other covid-19 analysis
-
-* [World](https://averissimo.github.io/covid19-analysis/)
-* [Italy (by regione)](https://averissimo.github.io/covid19-analysis/italy.html)
-* [Bavaria (in Germany)](https://averissimo.github.io/covid19-analysis/bayern.html)
+```{r, child='_header.md'}
+```
 
 ```{r render.me, include=FALSE, eval=FALSE}
 rmarkdown::render('germany.Rmd', quiet = TRUE)
