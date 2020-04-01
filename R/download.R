@@ -48,6 +48,27 @@ download.it.data <- function() {
     return(list(data = eu.data, source = 'Protezione Civile'))
 }
 
+download.eurostat.population.nuts_3 <- function(country.code, nuts = 3) {
+    nuts_converter <- list('1' = 3, '2' = 4, '3' = 5)
+    nuts.label <- 'nuts_{nuts}' %>% glue
+    nuts.label.2 <- 'nuts_{nuts}_label' %>% glue
+    eu.population.raw <- suppressMessages(get_eurostat('cens_11ag_r3')) %>% tibble
+
+    eu.population.norm <- eu.population.raw %>%
+        filter(grepl('^{country.code}[0-9A-Za-z]{paste0("{", nuts, "}")}' %>% glue, geo)) %>%
+        filter(age == 'TOTAL' & sex == 'T') %>%
+        mutate(nuts = substr(geo, 0, nuts_converter[[nuts]])) %>%
+        mutate(nuts.label = label_eurostat(nuts, dic = 'geo', fix_duplicated = TRUE)) %>%
+        group_by(nuts, nuts.label) %>%
+        filter(time == max(time)) %>%
+        summarize(values = sum(values))
+
+    populations <- eu.population.norm %>%
+        ungroup() %>%
+        select(state = nuts.label, population = values) %>%
+        return()
+}
+
 download.eurostat.population <- function(country.code, nuts = 1) {
     nuts_converter <- list('1' = 3, '2' = 4)
 
