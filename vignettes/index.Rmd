@@ -157,7 +157,7 @@ countries.europe.non.eu <- c('Norway', 'Switzerland', 'Ukraine', 'Serbia', 'Russ
 countries.non.europe <- c('United States of America', 'China', 'Canada', 
                           'Australia', 'New Zealand', 
                           'Korea, South', 'Japan', 'Argentina', 'Chile', 'Thailand',
-                          'Iran', 'China')
+                          'Iran', 'China', countries.cplp)
 
 countries.always.include <- c('Portugal', 'Iran', 'Germany', 'Spain', 'Italy', 'Korea, South')
 countries.extended <- c(countries.eu, countries.europe.non.eu, countries.cplp, countries.non.europe, countries.always.include) %>%

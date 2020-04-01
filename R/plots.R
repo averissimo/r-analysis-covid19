@@ -90,6 +90,7 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
                          na.rm = TRUE,
                          color = 'white',
                          size = 3.5,
+                         min.segment.length = 0,
                          segment.alpha = .4,
                          segment.colour = 'black') +
 
@@ -148,11 +149,12 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
             geom_point(size = 1.2) +
             geom_label_repel(aes(label = label,
                                      fill = state.data),
-                                 na.rm = TRUE,
-                                 color = 'white',
-                                 size = 3.5,
-                                 segment.colour = 'black',
-                                 segment.alpha = .4) +
+                             na.rm = TRUE,
+                             color = 'white',
+                             size = 3.5,
+                             min.segment.length = 0,
+                             segment.colour = 'black',
+                             segment.alpha = .4) +
             labs(x = 'Last {days} days' %>% glue,
                  y = lab.y,
                  title = lab.t,
@@ -239,14 +241,15 @@ death.vs.cases.plot <- function(dat, state.filter = c(), always.include = c()) {
         ggplot(aes(x = cases.confirmed, y = cases.death, color = state)) +
             geom_point(aes(size = population), alpha = .4) +
             geom_label_repel(aes(label = paste0(state, ' (', percent(ratio, accuracy = .1), ')'),
-                                 fill = state),
-                                 na.rm = TRUE,
-                                 alpha = .8,
-                                 color = 'white',
-                                 size = 3,
-                                 segment.alpha = .4,
-                                 segment.colour = 'black',
-                                 force = 2) +
+                             fill = state),
+                             na.rm = TRUE,
+                             alpha = .8,
+                             color = 'white',
+                             size = 3,
+                             min.segment.length = 0,
+                             segment.alpha = .4,
+                             segment.colour = 'black',
+                             force = 2) +
             expand_limits(x = ceiling(max(dat %>% pull(cases.confirmed))),
                           y = ceiling(max(dat %>% pull(cases.death)))) +
             labs(x = 'Confirmed Cases per 100k population',
@@ -300,6 +303,7 @@ plot.what.vs.cases <- function(data,
                              alpha = .8,
                              color = 'white',
                              size = 3,
+                             min.segment.length = 0,
                              segment.alpha = .4,
                              segment.colour = 'black',
                              force = 2) +
