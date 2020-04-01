@@ -25,7 +25,7 @@ top30 <- function(dat, case.type, n = 30) {
 }
 
 
-ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE) {
+ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE, double.every = NULL, digits = 1) {
     lab.y <- proper.cases(case.type, capitalize = TRUE)
     lab.t <- '\'{proper.cases(case.type, capitalize = TRUE)}\' over time' %>% glue
     lab.s <- 'Only showing after each {region.code} had more than {start_of} {proper.cases(case.type)}' %>% glue
@@ -42,15 +42,19 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
         dat <- dat %>% mutate(days.after.100 = date)
     }
 
-
+    if (case.type == 'all') {
+        dat <- dat %>%
+            ungroup() %>%
+            mutate(state = paste0(state, ' - ', type))
+    }
 
     my.plot.data <- dat %>%
         filter(cumul > 0) %>%
         filter(length(filter.states) == 0 | state %in% filter.states) %>%
-        filter(type == case.type) %>%
-        ungroup(state) %>%
+        filter(case.type == 'all' | type == case.type) %>%
+        group_by(state, type) %>%
         mutate(cumul = if_else(rep(per.100k.flag, length(cumul)),
-                               round(cumul * 100000 / population, digits = 1),
+                               round(cumul * 100000 / population, digits = digits),
                                as.double(cumul))) %>%
         group_by(state) %>%
         arrange(-cases) %>% {
@@ -71,19 +75,8 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
     my.plot <- my.plot.data %>%
         ggplot(aes(x = days.after.100, y = cumul, color = state.data)) +
 
-        #stat_function(fun = doubling.every(my.plot.data$date, 3),
-        ##              color = 'gray',
-        #              linetype = 'dashed') +
-
         geom_line(size = 1.2) +
         geom_point(size = 1.2) +
-
-        #geom_label_repel(data = tibble(days.after.100 = median(my.plot.data$date),
-        #                               cumul = doubling.every(my.plot.data$date, 1)(median(my.plot.data$date)),
-        #                               label = 'Gray line doubles every 3 days',
-        #                               state.data = 'gray'),
-        #                 mapping = aes(x = days.after.100, y = cumul, label = label),
-        #                 color = 'white', fill = 'gray') +
 
         geom_label_repel(aes(label = label,
                              fill = state.data),
@@ -102,10 +95,32 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
         scale_color_viridis(discrete = TRUE, end = .85, option = 'A') +
         scale_fill_viridis(discrete = TRUE, end = .85, option = 'A') +
         theme_minimal() +
-        theme(legend.position = 'none', legend.title = element_blank()) +
-        if(log2.flag) { scale_y_continuous('{lab.y} (log2 scale)' %>% glue, trans = 'log2' %>% glue) } else { scale_y_continuous() }
+        theme(legend.position = 'none', legend.title = element_blank())
 
-     return(my.plot)
+    if(log2.flag && !per.100k.flag) {
+        my.plot <- my.plot +
+            scale_y_continuous('{lab.y} (log2 scale)' %>% glue, trans = 'log2' %>% glue)
+    } else if (log2.flag) {
+        my.plot <- my.plot +
+            scale_y_continuous('{lab.y} (log2 scale)' %>% glue, trans = 'log2' %>% glue, labels = function(val) { round(val, digits = 6) })
+    }
+
+
+    if (is.null(double.every)) {
+        return(my.plot)
+    } else {
+        my.plot +
+            stat_function(fun = doubling.every(my.plot.data$date, double.every),
+                          color = 'gray',
+                          linetype = 'dashed') +
+            geom_label_repel(data = tibble(days.after.100 = median(my.plot.data$date),
+                                           cumul = doubling.every(my.plot.data$date, 1)(median(my.plot.data$date)),
+                                           label = 'Gray line doubles every 3 days',
+                                           state.data = 'gray'),
+                             mapping = aes(x = days.after.100, y = cumul, label = label),
+                             color = 'white', fill = 'gray') %>%
+            return()
+    }
 }
 
 last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE, new.flag = FALSE) {
@@ -122,12 +137,19 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
         lab.t <- paste0(lab.t, ' -- per 100k population')
     }
 
+    if (case.type == 'all') {
+        dat <- dat %>%
+            ungroup() %>%
+            mutate(state = paste0(state, ' - ', type))
+    }
+
     my.plot.data <- dat %>%
-        filter(type == case.type & state %in% filter.states) %>%
+        filter(length(filter.states) == 0 | state %in% filter.states) %>%
+        filter(case.type == 'all' | type == case.type) %>%
         mutate(cumul = if_else(rep(per.100k.flag, length(cumul)),
                                round(cumul / population * 100000, digits = 1),
                                as.double(cumul))) %>%
-        group_by(state) %>% {
+        group_by(state, type) %>% {
             tmp <- summarise(., cases = max(cumul))
             tmp <- arrange(tmp, cases)
             tmp <- mutate(tmp,
@@ -163,8 +185,15 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
             scale_fill_viridis(discrete = TRUE, end = .85, option = 'A') +
             #
             theme_minimal() +
-            theme(legend.position = 'none', legend.title = element_blank()) +
-            if(log2.flag) { scale_y_continuous('{lab.y} (log2 scale)' %>% glue, trans = 'log2' %>% glue) } else { scale_y_continuous() }
+            theme(legend.position = 'none', legend.title = element_blank())
+
+    if(log2.flag && !per.100k.flag) {
+        my.plot <- my.plot +
+            scale_y_continuous('{lab.y} (log2 scale)' %>% glue, trans = 'log2' %>% glue)
+    } else if (log2.flag) {
+        my.plot <- my.plot +
+            scale_y_continuous('{lab.y} (log2 scale)' %>% glue, trans = 'log2' %>% glue, labels = function(val) { round(val, digits = 6) })
+    }
 
     return(my.plot)
 }
@@ -183,13 +212,20 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
     dat.norm <- if (case.type == 'confirmed') {
         dat %>%
             mutate(last.week.var = last.week.cases.confirmed)
-    } else {
+    } else if (case.type == 'death') {
         dat %>%
             mutate(last.week.var = last.week.cases.death)
+    } else {
+        dat %>%
+            melt(id.vars = c('state', 'date', 'population'),
+                 measure.vars = c('last.week.cases.confirmed', 'last.week.cases.death'),
+                 variable.name = 'type', value.name = 'last.week.var') %>%
+            mutate(type.aux = if_else(type == 'last.week.cases.confirmed', 'confirmed', 'death'),
+                   state = paste0(state, ' - ', proper.cases(type.aux, capitalize = TRUE)))
     }
 
     my.plot.data <- dat.norm %>%
-        filter(state %in% filter.states) %>%
+        filter(length(filter.states) == 0 | state %in% filter.states) %>%
         mutate(last.week.var = if_else(rep(per.100k.flag, length(last.week.var)),
                                        round(last.week.var / population * 100000, digits = 1),
                                        as.double(last.week.var))) %>%

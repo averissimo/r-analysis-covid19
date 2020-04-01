@@ -62,18 +62,17 @@ It's not realtime data and data presented may have 1 or more days of difference 
 
 ```{r, message=FALSE, warning=FALSE}
 world.dat <- download.eucdc.data()
+it.dat    <- download.it.data() 
 
-it.dat <- download.it.data() 
-
-source.by <- '{world.dat$source} and {it.dat$source}' %>% glue
+source.by       <- '{world.dat$source} and {it.dat$source}' %>% glue
 last.date.world <- format(max(world.dat$data$date), '%Y/%m/%d')
-last.date.it <- format(max(it.dat$data$date), '%Y/%m/%d')
+last.date.it    <- format(max(it.dat$data$date), '%Y/%m/%d')
 
-last.date <- '{last.date.world} (EU CDC) and {last.date.it} (Protezione Civile)' %>% glue
-last.date.string   <- paste0('Latest date from ', last.date)
+last.date        <- '{last.date.world} (EU CDC) and {last.date.it} (Protezione Civile)' %>% glue
+last.date.string <- paste0('Latest date from ', last.date)
 
 it.dat <- it.dat$data %>%
-    ungroup %>%
+    ungroup() %>%
     mutate(state = 'Italy') %>%
     group_by(state, date, type) %>%
     summarise(cases = sum(cases),
@@ -164,9 +163,40 @@ countries.extended <- c(countries.eu, countries.europe.non.eu, countries.cplp, c
     unique
 ```
 
+```{r, child='_world.Rmd'}
+```
+
 
 ```{r, child='_main.Rmd'}
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ## EU

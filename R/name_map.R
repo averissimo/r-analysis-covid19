@@ -1,11 +1,17 @@
+#' Title
+#'
+#' @param value
+#' @param capitalize
+#' @param capitalize.all
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' proper.cases(c('death', 'confirmed'))
+#' proper.cases(c('death', 'confirmed'), capitalize = TRUE)
 proper.cases <- function(value, capitalize = FALSE, capitalize.all = FALSE) {
-    val = if (value == 'confirmed') {
-        'confirmed cases'
-    } else if (value == 'death') {
-        'deaths'
-    } else {
-        return(value)
-    }
+    val = (if_else(value == 'confirmed', 'confirmed cases', if_else(value == 'death', 'deaths', if_else(value == 'all', 'cases', value))))
     if (capitalize.all) {
         return(loose.rock::proper(val))
     } else if (capitalize) {

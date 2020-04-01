@@ -1,4 +1,5 @@
 top30.data <- function(dat, case.type) {
+    case.type.str <- proper.cases(case.type, capitalize.all = TRUE)
     dat %>%
         filter(type == case.type) %>%
         group_by(state, type) %>%
@@ -8,7 +9,7 @@ top30.data <- function(dat, case.type) {
         filter(cases > 0) %>%
         arrange(-cases) %>%
         mutate(cases = format(cases, big.mark = ',')) %>%
-        select(!! region.code := state, 'Cases Confirmed' = cases) %>%
+        select(!! region.code := state, !! case.type.str := cases) %>%
         return()
 }
 

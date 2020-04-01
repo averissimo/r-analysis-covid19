@@ -7,3 +7,5 @@ run-cache
 render_*.sh
 *.txt
 *.log
+vignettes/*_files
+vignettes/site_libs

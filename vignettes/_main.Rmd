@@ -156,13 +156,13 @@ ommit.start(my.corona.after.100, 'death', params$confirmer.start, filter.states 
 
 ### Cases *(log2 scale)*
 
-```{r}
+```{r, warning=FALSE}
 ommit.start(my.corona.after.100, 'confirmed', params$confirmer.start, filter.states = countries, log2.flag = TRUE, per.100k.flag = TRUE)
 ```
 
 ### Deaths *(log2 scale)*
 
-```{r}
+```{r, warning=FALSE}
 ommit.start(my.corona.after.100, 'death', params$confirmer.start, filter.states = countries, log2.flag = TRUE, per.100k.flag = TRUE)
 ```
 
