@@ -57,7 +57,7 @@ last.days.data <- function(dat, case.type, filter.states = c()) {
     case.type.name <- proper.cases(case.type, capitalize = TRUE)
 
     dat %>%
-        filter(state %in% filter.states) %>%
+        filter(length(filter.states) == 0 | state %in% filter.states) %>%
         filter(type == 'confirmed') %>%
         group_by(state) %>%
         arrange(desc(date), desc(cases), state) %>%

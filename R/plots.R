@@ -7,16 +7,16 @@ top30 <- function(dat, case.type, n = 30) {
         summarise(cases = sum(cases)) %>%
         arrange(cases) %>%
         ungroup() %>%
-        mutate(state = paste0(state, ' (', cases, ')')) %>%
+        mutate(state = paste0(state, ' (', format(cases, big.mark = ',', trim = TRUE), ')')) %>%
         mutate(state = factor(state, levels = unique(.$state))) %>%
         top_n(n) %>%
         ggplot() +
         geom_bar(aes(state, cases, fill = state), stat = 'identity') +
         # scale_y_continuous(trans = 'log10') +
         coord_flip() +
-        labs(x = 'Confirmed Cases',
+        labs(x = '{proper.cases(case.type, capitalize = TRUE)}' %>% glue,
              y = region.code,
-             title = 'Confirmed Cases by {region.code}' %>% glue ,
+             title = '\'{proper.cases(case.type, capitalize.all = TRUE)}\' by {region.code}' %>% glue ,
              caption = last.date.string) +
         theme_minimal() +
         theme(legend.position = 'none')
@@ -27,7 +27,7 @@ top30 <- function(dat, case.type, n = 30) {
 
 ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE) {
     lab.y <- proper.cases(case.type, capitalize = TRUE)
-    lab.t <- glue('{proper.cases(case.type, capitalize = TRUE)} over time')
+    lab.t <- '\'{proper.cases(case.type, capitalize = TRUE)}\' over time' %>% glue
     lab.s <- 'Only showing after each {region.code} had more than {start_of} {proper.cases(case.type)}' %>% glue
     lab.x <- 'Number of days since ≥ {start_of} {proper.cases(case.type)}' %>% glue
 
@@ -57,7 +57,7 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
             tmp <- summarise(., cases = max(cumul))
             tmp <- arrange(tmp, cases)
             tmp <- mutate(tmp,
-                          cases.str = format(cases, big.mark = ','),
+                          cases.str = format(cases, trim = TRUE, big.mark = ','),
                           state.data = paste0(state, ' (', cases, ')'),
                           state.data.str = paste0(state, ' (', cases.str, ')'))
 
@@ -76,6 +76,7 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
         #              linetype = 'dashed') +
 
         geom_line(size = 1.2) +
+        geom_point(size = 1.2) +
 
         #geom_label_repel(data = tibble(days.after.100 = median(my.plot.data$date),
         #                               cumul = doubling.every(my.plot.data$date, 1)(median(my.plot.data$date)),
@@ -108,7 +109,7 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
 
 last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE, new.flag = FALSE) {
     lab.y <- proper.cases(case.type, capitalize = TRUE)
-    lab.t <- glue('{proper.cases(case.type, capitalize = TRUE)} over time')
+    lab.t <- '\'{proper.cases(case.type, capitalize = TRUE)}\' of the last {days} days' %>% glue
 
     if (new.flag) {
         lab.t <- 'New {lab.t}' %>% glue
@@ -120,7 +121,7 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
         lab.t <- paste0(lab.t, ' -- per 100k population')
     }
 
-    my.plot <- dat %>%
+    my.plot.data <- dat %>%
         filter(type == case.type & state %in% filter.states) %>%
         mutate(cumul = if_else(rep(per.100k.flag, length(cumul)),
                                round(cumul / population * 100000, digits = 1),
@@ -129,7 +130,7 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
             tmp <- summarise(., cases = max(cumul))
             tmp <- arrange(tmp, cases)
             tmp <- mutate(tmp,
-                          cases.str = format(cases, big.mark = ','),
+                          cases.str = format(cases, trim = TRUE, big.mark = ','),
                           state.data = paste0(state, ' (', cases, ')'),
                           state.data.str = paste0(state, ' (', cases.str, ')'))
 
@@ -137,11 +138,14 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
                                           levels = rev(pull(tmp, state.data)),
                                           labels = rev(pull(tmp, state.data.str))))
             } %>%
-        mutate(label = if_else(cumul == max(cumul), format(state.data, big.mark = ','), NA_character_)) %>%
+        mutate(label = if_else(cumul == max(cumul), format(state.data, trim = TRUE, big.mark = ','), NA_character_)) %>%
         filter(cumul > 0) %>%
-        ungroup %>%
+        ungroup
+
+    my.plot <- my.plot.data %>%
         ggplot(aes(x = days.before.now, y = cumul, color = state.data)) +
             geom_line(size = 1.2) +
+            geom_point(size = 1.2) +
             geom_label_repel(aes(label = label,
                                      fill = state.data),
                                  na.rm = TRUE,
@@ -151,7 +155,7 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
                                  segment.alpha = .4) +
             labs(x = 'Last {days} days' %>% glue,
                  y = lab.y,
-                 title = '{proper.cases(case.type, capitalize = TRUE)} in the last {days} days' %>% glue,
+                 title = lab.t,
                  caption = last.date.string) +
             scale_color_viridis(discrete = TRUE, end = .85, option = 'A') +
             scale_fill_viridis(discrete = TRUE, end = .85, option = 'A') +
@@ -166,8 +170,8 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
 
 last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE) {
     lab.y <- 'Number of cases confirmed in previous {days} days' %>% glue
-    lab.t <- 'Cumulative {proper.cases(case.type, capitalize = TRUE)} for the last {days} days' %>% glue
-    lab.s <- 'WARNING:: Each point is a sum from previous 4 days *(only showing data from {format(min(dat$date), \'%B %d\')})' %>% glue
+    lab.t <- 'Rolling Average \'{proper.cases(case.type, capitalize = TRUE)}\' for the last {days} days' %>% glue
+    lab.s <- 'WARNING:: Each point is an average from previous {days} days *(only showing data from {format(min(dat$date), \'%B %d\')})' %>% glue
 
     if (per.100k.flag) {
         lab.y <- paste0(lab.y, ' -- per 100k population')
@@ -188,18 +192,18 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
                                        round(last.week.var / population * 100000, digits = 1),
                                        as.double(last.week.var))) %>%
         group_by(state) %>% {
-            tmp <- summarise(., cases = last(last.week.var))
+            tmp <- summarise(., cases = max(last.week.var))
             tmp <- arrange(tmp, cases)
             tmp <- mutate(tmp,
-                          cases.str = format(cases, big.mark = ','),
+                          cases.str = format(cases, trim = TRUE, big.mark = ','),
                           state.data = paste0(state, ' (', cases, ')'),
                           state.data.str = paste0(state, ' (', cases.str, ')'))
 
-            mutate(., state.data = factor(paste0(state, ' (', last(last.week.var), ')'),
+            mutate(., state.data = factor(paste0(state, ' (', max(last.week.var), ')'),
                                           levels = rev(pull(tmp, state.data)),
                                           labels = rev(pull(tmp, state.data.str))))
         } %>%
-        mutate(label = if_else(date == max(date), format(state.data, big.mark = ','), NA_character_))
+        mutate(label = if_else(last.week.var == max(last.week.var), format(state.data, trim = TRUE, big.mark = ','), NA_character_))
 
     my.plot <- my.plot.data %>%
         #
@@ -212,7 +216,9 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
                                      color = 'white',
                                      size = 3.5,
                                      segment.alpha = .4,
-                                     segment.colour = 'black') +
+                                     segment.colour = 'black',
+                                     min.segment.length = 0,
+                                     nudge_y = 1000) +
             labs(title = lab.t,
                  subtitle = lab.s,
                  y = lab.y,

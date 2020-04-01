@@ -21,7 +21,7 @@ filter.last.days <- function(dat, days) {
         return()
 }
 
-filter.last.days.cumulative <- function(dat, days = 4) {
+filter.last.days.cumulative <- function(dat, days = 4, fun = mean) {
 
     last.week.tmp <- dat %>%
         group_by(state, type) %>%
@@ -48,14 +48,16 @@ filter.last.days.cumulative <- function(dat, days = 4) {
         mutate(cumul.death = cumsum(cases.death),
                cumul.confirmed = cumsum(cases.confirmed)) %>%
         arrange(desc(date)) %>%
-        mutate(last.week.cases.confirmed = rollapply(cases.confirmed, days, sum, align = 'left', fill = c(0,0,0), partial = TRUE)) %>%
-        mutate(last.week.cases.death = rollapply(cases.death, days, sum, align = 'left', fill = c(0,0,0), partial = TRUE)) %>%
+        mutate(last.week.cases.confirmed = rollapply(cases.confirmed, days, fun, align = 'left', fill = c(0,0,0), partial = TRUE) %>%
+                   round()) %>%
+        mutate(last.week.cases.death = rollapply(cases.death, days, fun, align = 'left', fill = c(0,0,0), partial = TRUE) %>%
+                   round()) %>%
         #
         #
         #left_join(populations, by = 'state') %>%
         group_by(state) %>%
         arrange(date) %>%
-        filter(difftime(date, '2020-03-01', units = 'days') >= 0) %>%
+        filter(difftime(date, anydate(date()) - 30, units = 'days') >= 0) %>%
         #
         mutate(deaths.per.100k = last.week.cases.death / population * 100000,
                confirmed.per.100k = last.week.cases.confirmed / population * 100000,
