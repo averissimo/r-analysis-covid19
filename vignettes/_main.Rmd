@@ -369,7 +369,7 @@ last.days.data(my.corona.last.days, 'confirmed') %>% datatable
 last.days.data(my.corona.last.days, 'death') %>% datatable
 ```
 
-# Sum of previous 4 days *(tracking over time)* {.tabset .tabset-fade .tabset-pills}
+# Rolling average of previous 4 days *(tracking over time)* {.tabset .tabset-fade .tabset-pills}
 
 **Warning**: This visualization is not very intuitive, use it to see the trend over the last days.
 

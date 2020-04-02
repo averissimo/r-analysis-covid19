@@ -202,7 +202,7 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
 last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE) {
     lab.y <- 'Number of cases confirmed in previous {days} days' %>% glue
     lab.t <- 'Rolling Average \'{proper.cases(case.type, capitalize = TRUE)}\' for the last {days} days' %>% glue
-    lab.s <- 'WARNING:: Each point is an average from previous {days} days *(only showing data from {format(min(dat$date), \'%B %d\')})' %>% glue
+    lab.s <- 'WARNING:: Each point is an average from previous {days} days (only showing data from {format(min(dat$date), \'%B %d\')})' %>% glue
 
     if (per.100k.flag) {
         lab.y <- paste0(lab.y, ' -- per 100k population')

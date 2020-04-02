@@ -139,7 +139,7 @@ convert.names <- list(
 region.code        <- 'Country'
 region.code.plural <- 'Countries'
 
-countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'United States of America', 'France', 'Switzerland', 'Iran') %>% sort
+countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'United States of America', 'France', 'Switzerland') %>% sort
 
 countries.eu <- c('Italy', 'Spain','Germany', 'Portugal', 'France',  
                   'United Kingdom', 'Poland', 'Greece', 'Croatia', 'Slovenia', 
