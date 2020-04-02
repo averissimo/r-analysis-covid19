@@ -12,6 +12,7 @@ download.de.data <- function() {
         group_by(state, type) %>%
         mutate(date = anydate(format(date, '%Y/%m/%d')),
                cumul = cases,
+               state.code = 'DEU',
                # need to break down differences between days
                cases = rollapply(cases, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE))
 

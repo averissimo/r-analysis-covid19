@@ -58,7 +58,8 @@ It's not realtime data and data presented may have 1 or more days of difference 
 ```{r buildCorona, echo=FALSE, message=FALSE, warning=FALSE}
 eu.it <- download.it.data()
 
-my.corona.original <- eu.it$data
+my.corona.original <- eu.it$data %>% 
+    mutate(state.code = state)
 
 source.by = eu.it$source
 ```
