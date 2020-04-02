@@ -222,7 +222,7 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
             mutate(last.week.var = last.week.cases.death)
     } else {
         dat %>%
-            melt(id.vars = c('state', 'date', 'population'),
+            melt(id.vars = c('state', 'state.code', 'date', 'population'),
                  measure.vars = c('last.week.cases.confirmed', 'last.week.cases.death'),
                  variable.name = 'type', value.name = 'last.week.var') %>%
             mutate(type.aux = if_else(type == 'last.week.cases.confirmed', 'confirmed', 'death'),
