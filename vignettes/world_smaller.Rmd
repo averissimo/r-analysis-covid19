@@ -185,6 +185,12 @@ countries.extended <- c(countries.eu, countries.europe.non.eu, countries.cplp, c
     unique
 ```
 
+```{r, child='_data.Rmd'}
+```
+
+```{r, child='_world.Rmd'}
+```
+
 ```{r, child='_world.Rmd'}
 ```
 

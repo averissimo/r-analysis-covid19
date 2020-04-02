@@ -1,22 +1,3 @@
-```{r, collapse=TRUE}
-flog.info('### Summary of data ###')
-flog.info('')
-flog.info('  %s: %d', region(2), my.corona.original %>% filter(cases > 0) %>% pull(state) %>% unique %>% length)
-flog.info('')
-flog.info('      Cases: %d', sum((my.corona.original %>% filter(type == 'confirmed'))$cases))
-flog.info('     Deaths: %d', sum((my.corona.original %>% filter(type == 'death'))$cases))
-flog.info('')
-flog.info('     Latest: %s from %s', last.date, source.by)
-```
-
-
-## Main `r region(2)` in visualizations
-
-The plots presented get very complex as more `r region(2, TRUE)` are added. I'm focusing mainly on Europe and comparing against Portugal and Germany *(where I'm from vs. where I live)*
-
-```{r, collapse=TRUE}
-flog.info('Looking only at the following %s: \n\n  %s' , region(2, TRUE), paste0(countries, collapse = ', '))
-```
 
 # Top 30 `r region(2)` {.tabset .tabset-fade .tabset-pills}
 

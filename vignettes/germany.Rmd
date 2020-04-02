@@ -113,7 +113,9 @@ countries.extended       <- countries.always.include
 #
 #
 #
+```
 
+```{r, child='_data.Rmd'}
 ```
 
 ```{r, child='_main.Rmd'}
