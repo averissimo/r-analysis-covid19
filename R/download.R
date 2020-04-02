@@ -28,15 +28,17 @@ download.it.data <- function() {
         mutate(codice_regione = as.double(codice_regione)) %>%
         left_join(it.nuts.codici, by = 'codice_regione') %>%
         mutate(state = label_eurostat(nuts_2, dic = 'geo'),
-               date =  anydate(data)) %>%
+               date =  anydate(data),
+               state.code = 'ITA') %>%
         select(state,
                date,
                confirmed = totale_casi,
-               death = deceduti) %>%
-        group_by(state, date) %>%
+               death = deceduti,
+               state.code) %>%
+        group_by(state, state.code, date) %>%
         summarise(confirmed = sum(confirmed),
                   death = sum(death)) %>%
-        melt(id.vars = c('state', 'date'), variable.name = 'type', value.name = 'cases', factorsAsStrings = FALSE) %>%
+        melt(id.vars = c('state', 'state.code', 'date'), variable.name = 'type', value.name = 'cases', factorsAsStrings = FALSE) %>%
         as_tibble %>%
         #
         arrange(desc(date)) %>%
@@ -133,20 +135,20 @@ download.eucdc.data <- function() {
     eu.data <- eu.data.raw %>%
         mutate(date = anydate(glue('{year}/{month}/{day}')) - 1,
                state = countriesAndTerritories) %>%
-        select(state, date, cases, deaths, popData2018) %>%
+        select(state, date, cases, deaths, popData2018, state.code = countryterritoryCode) %>%
         mutate(state = iconv(state, to = 'UTF-8')) %>%
         arrange(date) %>%
-        melt(id.vars = c('state', 'popData2018', 'date'),
+        melt(id.vars = c('state', 'state.code', 'popData2018', 'date'),
              variable.name = 'type',
              value.name = 'cases') %>%
         mutate(type = if_else(type == 'cases', 'confirmed', 'death')) %>%
-        group_by(state, type, date, popData2018) %>%
+        group_by(state, state.code, type, date, popData2018) %>%
         summarise(cases = sum(cases)) %>%
         group_by(state, type) %>%
         mutate(cumul = cumsum(cases)) %>%
         ungroup() %>%
         mutate(state = gsub('_', ' ', state)) %>%
-        select(state, date, type, cases, cumul, population = popData2018)
+        select(state, date, type, cases, cumul, population = popData2018, state.code)
 
     list(data = eu.data, source = 'EU CDC') %>%
         return()

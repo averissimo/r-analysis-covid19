@@ -61,20 +61,20 @@ Data was retrieved from *'RamiKrispin/coronavirus'* R data package which is upda
 It's not realtime data and data presented may have 1 or more days of difference from real-time data. Check the caption on the figures to check when was the last data point.
 
 ```{r, message=FALSE, warning=FALSE}
-world.dat <- download.eucdc.data()
-it.dat    <- download.it.data() 
+world.dat  <- download.eucdc.data()
+it.dat.raw <- download.it.data() 
 
-source.by       <- '{world.dat$source} and {it.dat$source}' %>% glue
+source.by       <- '{world.dat$source} and {it.dat.raw$source}' %>% glue
 last.date.world <- format(max(world.dat$data$date), '%Y/%m/%d')
-last.date.it    <- format(max(it.dat$data$date), '%Y/%m/%d')
+last.date.it    <- format(max(it.dat.raw$data$date), '%Y/%m/%d')
 
 last.date        <- '{last.date.world} (EU CDC) and {last.date.it} (Protezione Civile)' %>% glue
 last.date.string <- paste0('Latest date from ', last.date)
 
-it.dat <- it.dat$data %>%
+it.dat <- it.dat.raw$data %>%
     ungroup() %>%
     mutate(state = 'Italy') %>%
-    group_by(state, date, type) %>%
+    group_by(state, state.code, date, type) %>%
     summarise(cases = sum(cases),
               cumul = sum(cumul)) %>% 
     ungroup() %>%
@@ -86,7 +86,9 @@ my.corona.original <- world.dat$data %>%
     filter(state != 'Diamond Princess') %>%
     filter(state != 'Italy') %>%
     ungroup() %>%
-    add_row(state = it.dat$state, type = it.dat$type, date = it.dat$date, cases = it.dat$cases, cumul = it.dat$cumul, population = it.population) %>%
+    add_row(state = it.dat$state, type = it.dat$type, date = it.dat$date, cases = it.dat$cases, cumul = it.dat$cumul, population = it.population, state.code = it.dat$state.code) %>%
+    mutate(state = if_else(state == 'United States of America', 'USA', state)) %>% 
+    mutate(state.code = tolower(state.code)) %>% 
     arrange(date, state, type) %>%
     group_by(state, type)
 
@@ -127,7 +129,7 @@ convert.names <- list(
   'Timor-Leste' =  'Timor Leste',
   'Turks and Caicos Islands' =  'Turks and Caicos islands',
   'Tanzania' =  'United Republic of Tanzania',
-  'United States' =  'United States of America',
+  'United States' =  'USA',
   'Virgin Islands (U.S.)' =  'United States Virgin Islands',
   'Venezuela, RB' =  'Venezuela'
     )
@@ -139,7 +141,7 @@ convert.names <- list(
 region.code        <- 'Country'
 region.code.plural <- 'Countries'
 
-countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'United States of America', 'France', 'Switzerland') %>% sort
+countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'USA', 'France', 'Switzerland') %>% sort
 
 countries.eu <- c('Italy', 'Spain','Germany', 'Portugal', 'France',  
                   'United Kingdom', 'Poland', 'Greece', 'Croatia', 'Slovenia', 
@@ -153,12 +155,12 @@ countries.cplp <- c('Angola', 'Mozambique', 'Cabo Verde', 'Timor-Leste',
                     )
 countries.europe.non.eu <- c('Norway', 'Switzerland', 'Ukraine', 'Serbia', 'Russia', 
                              'Albania', 'Iceland', 'Turkey', 'Belarus')
-countries.non.europe <- c('United States of America', 'China', 'Canada', 
+countries.non.europe <- c('USA', 'China', 'Canada', 
                           'Australia', 'New Zealand', 
                           'Korea, South', 'Japan', 'Argentina', 'Chile', 'Thailand',
                           'Iran', 'China', countries.cplp)
 
-countries.always.include <- c('Portugal', 'Iran', 'Germany', 'Spain', 'Italy', 'Korea, South')
+countries.always.include <- c('Portugal', 'USA', 'Germany', 'Spain', 'Italy', 'Korea, South')
 countries.extended <- c(countries.eu, countries.europe.non.eu, countries.cplp, countries.non.europe, countries.always.include) %>%
     unique
 ```

@@ -27,13 +27,13 @@ filter.last.days.cumulative <- function(dat, days = 4, fun = mean) {
         group_by(state, type) %>%
         arrange(desc(date)) %>%
         ungroup() %>%
-        select(state, date, type, cases, population)
+        select(state, date, type, cases, population, state.code)
 
     last.week <-
         # Join confirmed and death cases
         left_join(last.week.tmp %>% filter(type == 'confirmed') %>% select(-type),
                   last.week.tmp %>% filter(type == 'death') %>% select(-type),
-                  by = c('state', 'date', 'population'),
+                  by = c('state', 'state.code', 'date', 'population'),
                   suffix = c('.confirmed', '.death')) %>%
         #
         # Replace any NA from join
@@ -42,7 +42,7 @@ filter.last.days.cumulative <- function(dat, days = 4, fun = mean) {
         #
         # Calculate cumulative sum over date
         arrange(date) %>%
-        group_by(state) %>%
+        group_by(state, state.code) %>%
         #
         # calculate cumulative cases (i.e. all cases reported up to that day)
         mutate(cumul.death = cumsum(cases.death),
@@ -55,7 +55,7 @@ filter.last.days.cumulative <- function(dat, days = 4, fun = mean) {
         #
         #
         #left_join(populations, by = 'state') %>%
-        group_by(state) %>%
+        group_by(state, state.code) %>%
         arrange(date) %>%
         filter(difftime(date, anydate(date()) - 30, units = 'days') >= 0) %>%
         #

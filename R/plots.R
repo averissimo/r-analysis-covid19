@@ -25,7 +25,7 @@ top30 <- function(dat, case.type, n = 30) {
 }
 
 
-ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE, double.every = NULL, digits = 1) {
+ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE, double.every = NULL, digits = 2, state.code.flag = TRUE) {
     lab.y <- proper.cases(case.type, capitalize = TRUE)
     lab.t <- '\'{proper.cases(case.type, capitalize = TRUE)}\' over time' %>% glue
     lab.s <- 'Only showing after each {region.code} had more than {start_of} {proper.cases(case.type)}' %>% glue
@@ -54,22 +54,24 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
         filter(case.type == 'all' | type == case.type) %>%
         group_by(state, type) %>%
         mutate(cumul = if_else(rep(per.100k.flag, length(cumul)),
-                               round(cumul * 100000 / population, digits = digits),
-                               as.double(cumul))) %>%
-        group_by(state) %>%
+                               cumul * 100000 / population,
+                               as.double(cumul)),
+               cumul.round = round(cumul, digits = digits)) %>%
+        mutate(state.code.var = ifelse(state.code.flag, state.code, state)) %>%
+        group_by(state, state.code.var) %>%
         arrange(-cases) %>% {
-            tmp <- summarise(., cases = max(cumul))
+            tmp <- summarise(., cases = max(cumul.round))
             tmp <- arrange(tmp, cases)
             tmp <- mutate(tmp,
                           cases.str = format(cases, trim = TRUE, big.mark = ','),
-                          state.data = paste0(state, ' (', cases, ')'),
-                          state.data.str = paste0(state, ' (', cases.str, ')'))
+                          state.data = paste0(state.code.var, ' (', cases, ')'),
+                          state.data.str = paste0(state.code.var, ' (', cases.str, ')'))
 
-            mutate(., state.data = factor(paste0(state, ' (', max(cumul), ')'),
+            mutate(., state.data = factor(paste0(state.code.var, ' (', max(cumul.round), ')'),
                                           levels = rev(pull(tmp, state.data)),
                                           labels = rev(pull(tmp, state.data.str))))
         } %>%
-        mutate(label = if_else(cumul == max(cumul), as.character(state.data), NA_character_)) %>%
+        mutate(label = if_else(cumul.round == max(cumul.round), as.character(state.data), NA_character_)) %>%
         ungroup
 
     my.plot <- my.plot.data %>%
@@ -84,6 +86,7 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
                          color = 'white',
                          size = 3.5,
                          min.segment.length = 0,
+                         alpha = .9,
                          segment.alpha = .4,
                          segment.colour = 'black') +
 
@@ -123,7 +126,7 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
     }
 }
 
-last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE, new.flag = FALSE) {
+last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE, new.flag = FALSE, digits = 2, state.code.flag = TRUE) {
     lab.y <- proper.cases(case.type, capitalize = TRUE)
     lab.t <- '\'{proper.cases(case.type, capitalize = TRUE)}\' of the last {days} days' %>% glue
 
@@ -147,21 +150,23 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
         filter(length(filter.states) == 0 | state %in% filter.states) %>%
         filter(case.type == 'all' | type == case.type) %>%
         mutate(cumul = if_else(rep(per.100k.flag, length(cumul)),
-                               round(cumul / population * 100000, digits = 1),
-                               as.double(cumul))) %>%
-        group_by(state, type) %>% {
-            tmp <- summarise(., cases = max(cumul))
+                               cumul / population * 100000,
+                               as.double(cumul)),
+               cumul.round = round(cumul, digits = digits)) %>%
+        mutate(state.code.var = ifelse(state.code.flag, state.code, state)) %>%
+        group_by(state, state.code.var, type) %>% {
+            tmp <- summarise(., cases = max(cumul.round))
             tmp <- arrange(tmp, cases)
             tmp <- mutate(tmp,
                           cases.str = format(cases, trim = TRUE, big.mark = ','),
-                          state.data = paste0(state, ' (', cases, ')'),
-                          state.data.str = paste0(state, ' (', cases.str, ')'))
+                          state.data = paste0(state.code.var, ' (', cases, ')'),
+                          state.data.str = paste0(state.code.var, ' (', cases.str, ')'))
 
-            mutate(., state.data = factor(paste0(state, ' (', max(cumul), ')'),
+            mutate(., state.data = factor(paste0(state.code.var, ' (', max(cumul.round), ')'),
                                           levels = rev(pull(tmp, state.data)),
                                           labels = rev(pull(tmp, state.data.str))))
             } %>%
-        mutate(label = if_else(cumul == max(cumul), format(state.data, trim = TRUE, big.mark = ','), NA_character_)) %>%
+        mutate(label = if_else(cumul.round == max(cumul.round), format(state.data, trim = TRUE, big.mark = ','), NA_character_)) %>%
         filter(cumul > 0) %>%
         ungroup
 
@@ -199,7 +204,7 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
 }
 
 
-last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE) {
+last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE, digits = 2, state.code.flag = TRUE) {
     lab.y <- 'Number of cases confirmed in previous {days} days' %>% glue
     lab.t <- 'Rolling Average \'{proper.cases(case.type, capitalize = TRUE)}\' for the last {days} days' %>% glue
     lab.s <- 'WARNING:: Each point is an average from previous {days} days (only showing data from {format(min(dat$date), \'%B %d\')})' %>% glue
@@ -227,21 +232,23 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
     my.plot.data <- dat.norm %>%
         filter(length(filter.states) == 0 | state %in% filter.states) %>%
         mutate(last.week.var = if_else(rep(per.100k.flag, length(last.week.var)),
-                                       round(last.week.var / population * 100000, digits = 1),
-                                       as.double(last.week.var))) %>%
-        group_by(state) %>% {
-            tmp <- summarise(., cases = max(last.week.var))
+                                       last.week.var / population * 100000,
+                                       as.double(last.week.var)),
+               last.week.var.round = round(last.week.var, digits = digits)) %>%
+        mutate(state.code.var = ifelse(state.code.flag, state.code, state)) %>%
+        group_by(state, state.code.var) %>% {
+            tmp <- summarise(., cases = max(last.week.var.round))
             tmp <- arrange(tmp, cases)
             tmp <- mutate(tmp,
                           cases.str = format(cases, trim = TRUE, big.mark = ','),
-                          state.data = paste0(state, ' (', cases, ')'),
-                          state.data.str = paste0(state, ' (', cases.str, ')'))
+                          state.data = paste0(state.code.var, ' (', cases, ')'),
+                          state.data.str = paste0(state.code.var, ' (', cases.str, ')'))
 
-            mutate(., state.data = factor(paste0(state, ' (', max(last.week.var), ')'),
+            mutate(., state.data = factor(paste0(state.code.var, ' (', max(last.week.var.round), ')'),
                                           levels = rev(pull(tmp, state.data)),
                                           labels = rev(pull(tmp, state.data.str))))
         } %>%
-        mutate(label = if_else(last.week.var == max(last.week.var), format(state.data, trim = TRUE, big.mark = ','), NA_character_))
+        mutate(label = if_else(last.week.var.round == max(last.week.var.round), format(state.data, trim = TRUE, big.mark = ','), NA_character_))
 
     my.plot <- my.plot.data %>%
         #
@@ -253,6 +260,7 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
                                      na.rm = TRUE,
                                      color = 'white',
                                      size = 3.5,
+                                     alpha = .9,
                                      segment.alpha = .4,
                                      segment.colour = 'black',
                                      min.segment.length = 0) +
@@ -282,6 +290,7 @@ death.vs.cases.plot <- function(dat, state.filter = c(), always.include = c()) {
                              color = 'white',
                              size = 3,
                              min.segment.length = 0,
+                             alpha = .9,
                              segment.alpha = .4,
                              segment.colour = 'black',
                              force = 2) +
@@ -339,6 +348,7 @@ plot.what.vs.cases <- function(data,
                              color = 'white',
                              size = 3,
                              min.segment.length = 0,
+                             alpha = .9,
                              segment.alpha = .4,
                              segment.colour = 'black',
                              force = 2) +

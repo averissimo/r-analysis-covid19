@@ -1,28 +1,27 @@
-
 # Top 30 `r region(2)` {.tabset .tabset-fade .tabset-pills}
 
 ## Total Cases
 
 ```{r, message=FALSE}
-top30(my.corona.original, 'confirmed')
+top30(my.corona, 'confirmed')
 ```
 
 ## Total Deaths
 
 ```{r, message=FALSE}
-top30(my.corona.original, 'death')
+top30(my.corona, 'death')
 ```
 
 ## Data Cases
 
 ```{r}
-my.corona.original %>% top30.data('confirmed') %>% datatable
+my.corona %>% top30.data('confirmed') %>% datatable
 ```
 
 ## Data Deaths
 
 ```{r}
-my.corona.original %>% top30.data('death') %>% datatable
+my.corona %>% top30.data('death') %>% datatable
 ```
 
 # Confirmed cases / Deaths {.tabset .tabset-fade .tabset-pills}
