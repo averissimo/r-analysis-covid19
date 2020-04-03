@@ -1,3 +1,9 @@
+#' Download Germany data (DE)
+#'
+#' @return data frame with latest data
+#' @export
+#'
+#' @examples
 download.de.data <- function() {
     eu.de.raw <- read_csv('https://github.com/covid19-eu-zh/covid19-eu-data/raw/master/dataset/covid-19-de.csv')
 
@@ -207,8 +213,8 @@ download.john.hopkins <- function() {
         dplyr::group_by(iso3c) %>%
         dplyr::filter(date == max(date)) %>%
         dplyr::select(population = value, state = country, iso3c) %>%
-        dplyr::ungroup() 
-    dplyr::mutate(state = eu.convert.names(state)) %>%
+        dplyr::ungroup() %>% 
+        dplyr::mutate(state = eu.convert.names(state)) %>%
         dplyr::mutate(state = jh.convert.names(state)) %>%
         dplyr::arrange(state)
     
