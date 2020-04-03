@@ -1,65 +1,65 @@
 filter.after <- function(dat, death.start, confirmed.start) {
     dat %>%
         #
-        filter((type == 'death' & cumul >= death.start ) |
+        dplyr::filter((type == 'death' & cumul >= death.start ) |
                    (type == 'confirmed' & cumul >= confirmed.start) |
                    (type == 'recovered' & cumul >= 0)) %>%
-        arrange(date) %>%
-        mutate(days.after.100 = as.numeric(difftime(date, min(date), units = 'days'))) %>%
+        dplyr::arrange(date) %>%
+        dplyr::mutate(days.after.100 = as.numeric(difftime(date, min(date), units = 'days'))) %>%
         return
 }
 
 filter.last.days <- function(dat, days) {
     dat %>%
-        arrange(state) %>%
-        mutate(days.before.now = as.numeric(difftime(date, max(date), units = 'days'))) %>%
-        filter(days.before.now > -days) %>%
-        arrange(date) %>%
-        group_by(state, type) %>%
-        mutate(cumul = cumsum(cases)) %>%
-        arrange(desc(date), state) %>%
+        dplyr::arrange(state) %>%
+        dplyr::mutate(days.before.now = as.numeric(difftime(date, max(date), units = 'days'))) %>%
+        dplyr::filter(days.before.now > -days) %>%
+        dplyr::arrange(date) %>%
+        dplyr::group_by(state, type) %>%
+        dplyr::mutate(cumul = cumsum(cases)) %>%
+        dplyr::arrange(desc(date), state) %>%
         return()
 }
 
 filter.last.days.cumulative <- function(dat, days = 4, fun = mean) {
 
     last.week.tmp <- dat %>%
-        group_by(state, type) %>%
-        arrange(desc(date)) %>%
-        ungroup() %>%
-        select(state, date, type, cases, population, state.code)
+        dplyr::group_by(state, type) %>%
+        dplyr::arrange(desc(date)) %>%
+        dplyr::ungroup() %>%
+        dplyr::select(state, date, type, cases, population, state.code)
 
     last.week <-
         # Join confirmed and death cases
-        left_join(last.week.tmp %>% filter(type == 'confirmed') %>% select(-type),
-                  last.week.tmp %>% filter(type == 'death') %>% select(-type),
+        left_join(last.week.tmp %>% dplyr::filter(type == 'confirmed') %>% dplyr::select(-type),
+                  last.week.tmp %>% dplyr::filter(type == 'death') %>% dplyr::select(-type),
                   by = c('state', 'state.code', 'date', 'population'),
                   suffix = c('.confirmed', '.death')) %>%
         #
         # Replace any NA from join
-        mutate(cases.confirmed = replace(cases.confirmed, is.na(cases.confirmed), 0),
+        dplyr::mutate(cases.confirmed = replace(cases.confirmed, is.na(cases.confirmed), 0),
                cases.death = replace(cases.death, is.na(cases.death), 0)) %>%
         #
         # Calculate cumulative sum over date
-        arrange(date) %>%
-        group_by(state, state.code) %>%
+        dplyr::arrange(date) %>%
+        dplyr::group_by(state, state.code) %>%
         #
         # calculate cumulative cases (i.e. all cases reported up to that day)
-        mutate(cumul.death = cumsum(cases.death),
+        dplyr::mutate(cumul.death = cumsum(cases.death),
                cumul.confirmed = cumsum(cases.confirmed)) %>%
-        arrange(desc(date)) %>%
-        mutate(last.week.cases.confirmed = rollapply(cases.confirmed, days, fun, align = 'left', fill = c(0,0,0), partial = TRUE) %>%
+        dplyr::arrange(desc(date)) %>%
+        dplyr::mutate(last.week.cases.confirmed = rollapply(cases.confirmed, days, fun, align = 'left', fill = c(0,0,0), partial = TRUE) %>%
                    round()) %>%
-        mutate(last.week.cases.death = rollapply(cases.death, days, fun, align = 'left', fill = c(0,0,0), partial = TRUE) %>%
+        dplyr::mutate(last.week.cases.death = rollapply(cases.death, days, fun, align = 'left', fill = c(0,0,0), partial = TRUE) %>%
                    round()) %>%
         #
         #
         #left_join(populations, by = 'state') %>%
-        group_by(state, state.code) %>%
-        arrange(date) %>%
-        filter(difftime(date, anydate(date()) - 30, units = 'days') >= 0) %>%
+        dplyr::group_by(state, state.code) %>%
+        dplyr::arrange(date) %>%
+        dplyr::filter(difftime(date, anytime::anydate(date()) - 30, units = 'days') >= 0) %>%
         #
-        mutate(deaths.per.100k = last.week.cases.death / population * 100000,
+        dplyr::mutate(deaths.per.100k = last.week.cases.death / population * 100000,
                confirmed.per.100k = last.week.cases.confirmed / population * 100000,
                ratio.deaths.per.confirmed = last.week.cases.death / last.week.cases.confirmed)
 
@@ -68,9 +68,9 @@ filter.last.days.cumulative <- function(dat, days = 4, fun = mean) {
 
 filter.death.vs.cases <- function(dat) {
     dat %>%
-        group_by(state, population) %>%
-        summarise(ratio = max(cumul.death) / max(cumul.confirmed),
+        dplyr::group_by(state, population) %>%
+        dplyr::summarise(ratio = max(cumul.death) / max(cumul.confirmed),
                   cases.death = max(cumul.death / population * 100000),
                   cases.confirmed = max(cumul.confirmed / population * 100000)) %>%
-        filter(cases.death > 0)
+        dplyr::filter(cases.death > 0)
 }

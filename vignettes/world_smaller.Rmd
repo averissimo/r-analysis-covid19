@@ -252,7 +252,7 @@ This visualization shows the number of cases/deaths per 100k of the population.
 *note*: It always shows Portugal, Spain, Italy, South Korea, Iran and Germany.
 
 ```{r}
-beds.vs.cases <- wb.indicator(death.vs.cases, 'SH.MED.BEDS.ZS', 'Hospital beds')
+beds.vs.cases <- wb.indicator(death.vs.cases, 'SH.MED.BEDS.ZS', 'Hospital beds', convert.names)
 ```
 
 ```{r}
@@ -297,7 +297,7 @@ something.vs.cases.data(beds.vs.cases, 'Beds') %>% datatable()
 # Nurses and Midwifes *(per 100k population)*  {.tabset .tabset-fade .tabset-pills}
 
 ```{r}
-nurses.vs.cases <- wb.indicator(death.vs.cases, 'SH.MED.NUMW.P3', 'Nurses and midwives')
+nurses.vs.cases <- wb.indicator(death.vs.cases, 'SH.MED.NUMW.P3', 'Nurses and midwives', convert.names)
 ```
 
 ```{r}
@@ -339,7 +339,7 @@ something.vs.cases.data(nurses.vs.cases, 'Nurses') %>% datatable()
 
 
 ```{r}
-physicians.vs.cases <- wb.indicator(death.vs.cases, 'SH.MED.PHYS.ZS', 'Physicians')
+physicians.vs.cases <- wb.indicator(death.vs.cases, 'SH.MED.PHYS.ZS', 'Physicians', convert.names)
 ```
 
 ```{r}

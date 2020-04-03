@@ -22,7 +22,6 @@ Imports:
   dplyr,
   tibble,
   ggplot2,
-  viridis, 
   ggrepel,
   zoo,
   glue,

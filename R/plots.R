@@ -2,24 +2,24 @@ doubling.every <- function(date.vector, days) { return(function(a) {return(1/day
 
 top30 <- function(dat, case.type, n = 30) {
     my.plot <- dat %>%
-        filter(type == case.type) %>%
-        group_by(state, type) %>%
-        summarise(cases = sum(cases)) %>%
-        arrange(cases) %>%
-        ungroup() %>%
-        mutate(state = paste0(state, ' (', format(cases, big.mark = ',', trim = TRUE), ')')) %>%
-        mutate(state = factor(state, levels = unique(.$state))) %>%
+        dplyr::filter(type == case.type) %>%
+        dplyr::group_by(state, type) %>%
+        dplyr::summarise(cases = sum(cases)) %>%
+        dplyr::arrange(cases) %>%
+        dplyr::ungroup() %>%
+        dplyr::mutate(state = paste0(state, ' (', format(cases, big.mark = ',', trim = TRUE), ')')) %>%
+        dplyr::mutate(state = factor(state, levels = unique(.$state))) %>%
         top_n(n) %>%
-        ggplot() +
-        geom_bar(aes(state, cases, fill = state), stat = 'identity') +
+        ggplot2::ggplot() +
+        ggplot2::geom_bar(ggplot2::aes(state, cases, fill = state), stat = 'identity') +
         # scale_y_continuous(trans = 'log10') +
-        coord_flip() +
-        labs(x = '{proper.cases(case.type, capitalize = TRUE)}' %>% glue,
+        ggplot2::coord_flip() +
+        ggplot2::labs(x = '{proper.cases(case.type, capitalize = TRUE)}' %>% glue::glue(),
              y = region.code,
-             title = '\'{proper.cases(case.type, capitalize.all = TRUE)}\' by {region.code}' %>% glue ,
+             title = '\'{proper.cases(case.type, capitalize.all = TRUE)}\' by {region.code}' %>% glue::glue() ,
              caption = last.date.string) +
-        theme_minimal() +
-        theme(legend.position = 'none')
+        ggplot2::theme_minimal() +
+        ggplot2::theme(legend.position = 'none')
 
     return(my.plot)
 }
@@ -27,9 +27,9 @@ top30 <- function(dat, case.type, n = 30) {
 
 ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE, double.every = NULL, digits = 2, state.code.flag = TRUE) {
     lab.y <- proper.cases(case.type, capitalize = TRUE)
-    lab.t <- '\'{proper.cases(case.type, capitalize = TRUE)}\' over time' %>% glue
-    lab.s <- 'Only showing after each {region.code} had more than {start_of} {proper.cases(case.type)}' %>% glue
-    lab.x <- 'Number of days since \u2265 {start_of} {proper.cases(case.type)}' %>% glue
+    lab.t <- '\'{proper.cases(case.type, capitalize = TRUE)}\' over time' %>% glue::glue()
+    lab.s <- 'Only showing after each {region.code} had more than {start_of} {proper.cases(case.type)}' %>% glue::glue()
+    lab.x <- 'Number of days since \u2265 {start_of} {proper.cases(case.type)}' %>% glue::glue()
 
     if (per.100k.flag) {
         lab.y <- paste0(lab.y, ' -- per 100k population')
@@ -39,48 +39,50 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
     if (!any(colnames(dat) == 'days.after.100')) {
         lab.s <- 'Showing cases since start of epidemic'
         lab.x <- 'Day'
-        dat <- dat %>% mutate(days.after.100 = date)
+        dat <- dat %>% dplyr::mutate(days.after.100 = date)
     }
 
     if (case.type == 'all') {
         dat <- dat %>%
-            ungroup() %>%
-            mutate(state = paste0(state, ' - ', type))
+            dplyr::ungroup() %>%
+            dplyr::mutate(state = paste0(state, ' - ', type))
     }
 
     my.plot.data <- dat %>%
-        filter(cumul > 0) %>%
-        filter(length(filter.states) == 0 | state %in% filter.states) %>%
-        filter(case.type == 'all' | type == case.type) %>%
-        group_by(state, type) %>%
-        mutate(cumul = if_else(rep(per.100k.flag, length(cumul)),
+        dplyr::filter(cumul > 0) %>%
+        dplyr::filter(length(filter.states) == 0 | state %in% filter.states) %>%
+        dplyr::filter(case.type == 'all' | type == case.type) %>%
+        dplyr::group_by(state, type) %>%
+        dplyr::mutate(cumul = dplyr::if_else(rep(per.100k.flag, length(cumul)),
                                cumul * 100000 / population,
                                as.double(cumul)),
                cumul.round = round(cumul, digits = digits)) %>%
-        mutate(state.code.var = ifelse(state.code.flag, state.code, state)) %>%
-        group_by(state, state.code.var) %>%
-        arrange(-cases) %>% {
-            tmp <- summarise(., cases = max(cumul.round))
-            tmp <- arrange(tmp, cases)
-            tmp <- mutate(tmp,
+        dplyr::mutate(state.code.var = ifelse(state.code.flag, state.code, state)) %>%
+        dplyr::group_by(state, state.code.var) %>%
+        dplyr::arrange(-cases) %>% {
+            tmp <- dplyr::summarise(., cases = max(cumul.round))
+            tmp <- dplyr::arrange(tmp, cases)
+            tmp <- dplyr::mutate(tmp,
                           cases.str = format(cases, trim = TRUE, big.mark = ','),
                           state.data = paste0(state.code.var, ' (', cases, ')'),
                           state.data.str = paste0(state.code.var, ' (', cases.str, ')'))
 
-            mutate(., state.data = factor(paste0(state.code.var, ' (', max(cumul.round), ')'),
-                                          levels = rev(pull(tmp, state.data)),
-                                          labels = rev(pull(tmp, state.data.str))))
-        } %>%
-        mutate(label = if_else(cumul.round == max(cumul.round), as.character(state.data), NA_character_)) %>%
+            dplyr::mutate(., state.data = factor(paste0(state.code.var, ' (', max(cumul.round), ')'),
+                                          levels = rev(dplyr::pull(tmp, state.data)),
+                                          labels = rev(dplyr::pull(tmp, state.data.str))))
+        } %>% 
+        dplyr::mutate(label = dplyr::if_else(cumul.round == max(cumul.round), as.character(state.data), NA_character_)) %>% 
+        arrange(., label, desc(date)) %>% 
+        mutate(label = if_else(date == first(date), label, NA_character_)) %>% 
         ungroup
 
     my.plot <- my.plot.data %>%
-        ggplot(aes(x = days.after.100, y = cumul, color = state.data)) +
+        ggplot2::ggplot(ggplot2::aes(x = days.after.100, y = cumul, color = state.data)) +
 
-        geom_line(size = 1.2) +
-        geom_point(size = 1.2) +
+        ggplot2::geom_line(size = 1.2) +
+        ggplot2::geom_point(size = 1.2) +
 
-        geom_label_repel(aes(label = label,
+        ggrepel::geom_label_repel(ggplot2::aes(label = label,
                              fill = state.data),
                          na.rm = TRUE,
                          color = 'white',
@@ -90,22 +92,22 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
                          segment.alpha = .4,
                          segment.colour = 'black') +
 
-        labs(y = lab.y,
+        ggplot2::labs(y = lab.y,
              x = lab.x,
              title = lab.t,
              subtitle = lab.s,
              caption = last.date.string) +
-        scale_color_viridis(discrete = TRUE, end = .85, option = 'A') +
-        scale_fill_viridis(discrete = TRUE, end = .85, option = 'A') +
-        theme_minimal() +
-        theme(legend.position = 'none', legend.title = element_blank())
+        ggplot2::scale_color_viridis_d(end = .85, option = 'A') +
+        ggplot2::scale_fill_viridis_d(end = .85, option = 'A') +
+        ggplot2::theme_minimal() +
+        ggplot2::theme(legend.position = 'none', legend.title = element_blank())
 
     if(log2.flag && !per.100k.flag) {
         my.plot <- my.plot +
-            scale_y_continuous('{lab.y} (log2 scale)' %>% glue, trans = 'log2' %>% glue)
+            scale_y_continuous('{lab.y} (log2 scale)' %>% glue::glue(), trans = 'log2' %>% glue::glue())
     } else if (log2.flag) {
         my.plot <- my.plot +
-            scale_y_continuous('{lab.y} (log2 scale)' %>% glue, trans = 'log2' %>% glue, labels = function(val) { round(val, digits = 6) })
+            scale_y_continuous('{lab.y} (log2 scale)' %>% glue::glue(), trans = 'log2' %>% glue::glue(), labels = function(val) { round(val, digits = 6) })
     }
 
 
@@ -116,11 +118,11 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
             stat_function(fun = doubling.every(my.plot.data$date, double.every),
                           color = 'gray',
                           linetype = 'dashed') +
-            geom_label_repel(data = tibble(days.after.100 = median(my.plot.data$date),
+            ggrepel::geom_label_repel(data = tibble(days.after.100 = median(my.plot.data$date),
                                            cumul = doubling.every(my.plot.data$date, 1)(median(my.plot.data$date)),
                                            label = 'Gray line doubles every 3 days',
                                            state.data = 'gray'),
-                             mapping = aes(x = days.after.100, y = cumul, label = label),
+                             mapping = ggplot2::aes(x = days.after.100, y = cumul, label = label),
                              color = 'white', fill = 'gray') %>%
             return()
     }
@@ -128,11 +130,13 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
 
 last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE, new.flag = FALSE, digits = 2, state.code.flag = TRUE) {
     lab.y <- proper.cases(case.type, capitalize = TRUE)
-    lab.t <- '\'{proper.cases(case.type, capitalize = TRUE)}\' of the last {days} days' %>% glue
+    lab.t <- '\'{proper.cases(case.type, capitalize = TRUE)}\' of the last {days} days' %>% glue::glue()
 
     if (new.flag) {
-        lab.t <- 'New {lab.t}' %>% glue
-        dat <- dat %>% mutate(cumul = cases)
+        lab.t <- 'New {lab.t}' %>% glue::glue()
+        dat.norm <- dat %>% dplyr::mutate(cumul = cases)
+    } else {
+        dat.norm <- dat
     }
 
     if (per.100k.flag) {
@@ -141,40 +145,44 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
     }
 
     if (case.type == 'all') {
-        dat <- dat %>%
-            ungroup() %>%
-            mutate(state = paste0(state, ' - ', type))
+        dat.norm <- dat.norm %>%
+            dplyr::ungroup() %>%
+            dplyr::mutate(state = paste0(state, ' - ', type))
     }
 
-    my.plot.data <- dat %>%
-        filter(length(filter.states) == 0 | state %in% filter.states) %>%
-        filter(case.type == 'all' | type == case.type) %>%
-        mutate(cumul = if_else(rep(per.100k.flag, length(cumul)),
+    my.plot.data <- dat.norm %>%
+        dplyr::filter(length(filter.states) == 0 | state %in% filter.states) %>%
+        dplyr::filter(case.type == 'all' | type == case.type) %>%
+        dplyr::mutate(cumul = dplyr::if_else(rep(per.100k.flag, length(cumul)),
                                cumul / population * 100000,
                                as.double(cumul)),
                cumul.round = round(cumul, digits = digits)) %>%
-        mutate(state.code.var = ifelse(state.code.flag, state.code, state)) %>%
-        group_by(state, state.code.var, type) %>% {
-            tmp <- summarise(., cases = max(cumul.round))
-            tmp <- arrange(tmp, cases)
-            tmp <- mutate(tmp,
+        dplyr::mutate(state.code.var = ifelse(state.code.flag, state.code, state)) %>%
+        dplyr::group_by(state, state.code.var, type) %>% {
+            tmp <- dplyr::summarise(., cases = max(cumul.round))
+            tmp <- dplyr::arrange(tmp, cases)
+            tmp <- dplyr::mutate(tmp,
                           cases.str = format(cases, trim = TRUE, big.mark = ','),
                           state.data = paste0(state.code.var, ' (', cases, ')'),
                           state.data.str = paste0(state.code.var, ' (', cases.str, ')'))
 
-            mutate(., state.data = factor(paste0(state.code.var, ' (', max(cumul.round), ')'),
-                                          levels = rev(pull(tmp, state.data)),
-                                          labels = rev(pull(tmp, state.data.str))))
+            dplyr::mutate(., state.data = factor(paste0(state.code.var, ' (', max(cumul.round), ')'),
+                                          levels = rev(dplyr::pull(tmp, state.data)),
+                                          labels = rev(dplyr::pull(tmp, state.data.str))))
             } %>%
-        mutate(label = if_else(cumul.round == max(cumul.round), format(state.data, trim = TRUE, big.mark = ','), NA_character_)) %>%
-        filter(cumul > 0) %>%
+        dplyr::mutate(label = dplyr::if_else(cumul.round == max(cumul.round), 
+                                             format(state.data, trim = TRUE, big.mark = ','), 
+                                             NA_character_)) %>%
+        arrange(., label, desc(date)) %>% 
+        mutate(label = if_else(date == first(date), label, NA_character_)) %>% 
+        dplyr::filter(cumul > 0) %>%
         ungroup
 
     my.plot <- my.plot.data %>%
-        ggplot(aes(x = days.before.now, y = cumul, color = state.data)) +
-            geom_line(size = 1.2) +
-            geom_point(size = 1.2) +
-            geom_label_repel(aes(label = label,
+        ggplot2::ggplot(ggplot2::aes(x = days.before.now, y = cumul, color = state.data)) +
+            ggplot2::geom_line(size = 1.2) +
+            ggplot2::geom_point(size = 1.2) +
+            ggrepel::geom_label_repel(ggplot2::aes(label = label,
                                      fill = state.data),
                              na.rm = TRUE,
                              color = 'white',
@@ -182,22 +190,22 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
                              min.segment.length = 0,
                              segment.colour = 'black',
                              segment.alpha = .4) +
-            labs(x = 'Last {days} days' %>% glue,
+            ggplot2::labs(x = 'Last {days} days' %>% glue::glue(),
                  y = lab.y,
                  title = lab.t,
                  caption = last.date.string) +
-            scale_color_viridis(discrete = TRUE, end = .85, option = 'A') +
-            scale_fill_viridis(discrete = TRUE, end = .85, option = 'A') +
+            ggplot2::scale_color_viridis_d(end = .85, option = 'A') +
+            ggplot2::scale_fill_viridis_d(end = .85, option = 'A') +
             #
-            theme_minimal() +
-            theme(legend.position = 'none', legend.title = element_blank())
+            ggplot2::theme_minimal() +
+            ggplot2::theme(legend.position = 'none', legend.title = element_blank())
 
     if(log2.flag && !per.100k.flag) {
         my.plot <- my.plot +
-            scale_y_continuous('{lab.y} (log2 scale)' %>% glue, trans = 'log2' %>% glue)
+            scale_y_continuous('{lab.y} (log2 scale)' %>% glue::glue(), trans = 'log2' %>% glue::glue())
     } else if (log2.flag) {
         my.plot <- my.plot +
-            scale_y_continuous('{lab.y} (log2 scale)' %>% glue, trans = 'log2' %>% glue, labels = function(val) { round(val, digits = 6) })
+            scale_y_continuous('{lab.y} (log2 scale)' %>% glue::glue(), trans = 'log2' %>% glue::glue(), labels = function(val) { round(val, digits = 6) })
     }
 
     return(my.plot)
@@ -205,9 +213,9 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
 
 
 last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE, digits = 2, state.code.flag = TRUE) {
-    lab.y <- 'Number of cases confirmed in previous {days} days' %>% glue
-    lab.t <- 'Rolling Average \'{proper.cases(case.type, capitalize = TRUE)}\' for the last {days} days' %>% glue
-    lab.s <- 'WARNING:: Each point is an average from previous {days} days (only showing data from {format(min(dat$date), \'%B %d\')})' %>% glue
+    lab.y <- 'Number of cases confirmed in previous {days} days' %>% glue::glue()
+    lab.t <- 'Rolling Average \'{proper.cases(case.type, capitalize = TRUE)}\' for the last {days} days' %>% glue::glue()
+    lab.s <- 'WARNING:: Each point is an average from previous {days} days (only showing data from {format(min(dat$date), \'%B %d\')})' %>% glue::glue()
 
     if (per.100k.flag) {
         lab.y <- paste0(lab.y, ' -- per 100k population')
@@ -216,46 +224,48 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
 
     dat.norm <- if (case.type == 'confirmed') {
         dat %>%
-            mutate(last.week.var = last.week.cases.confirmed)
+            dplyr::mutate(last.week.var = last.week.cases.confirmed)
     } else if (case.type == 'death') {
         dat %>%
-            mutate(last.week.var = last.week.cases.death)
+            dplyr::mutate(last.week.var = last.week.cases.death)
     } else {
         dat %>%
-            melt(id.vars = c('state', 'state.code', 'date', 'population'),
+            reshape2::melt(id.vars = c('state', 'state.code', 'date', 'population'),
                  measure.vars = c('last.week.cases.confirmed', 'last.week.cases.death'),
                  variable.name = 'type', value.name = 'last.week.var') %>%
-            mutate(type.aux = if_else(type == 'last.week.cases.confirmed', 'confirmed', 'death'),
+            dplyr::mutate(type.aux = dplyr::if_else(type == 'last.week.cases.confirmed', 'confirmed', 'death'),
                    state = paste0(state, ' - ', proper.cases(type.aux, capitalize = TRUE)))
     }
 
     my.plot.data <- dat.norm %>%
-        filter(length(filter.states) == 0 | state %in% filter.states) %>%
-        mutate(last.week.var = if_else(rep(per.100k.flag, length(last.week.var)),
+        dplyr::filter(length(filter.states) == 0 | state %in% filter.states) %>%
+        dplyr::mutate(last.week.var = dplyr::if_else(rep(per.100k.flag, length(last.week.var)),
                                        last.week.var / population * 100000,
                                        as.double(last.week.var)),
                last.week.var.round = round(last.week.var, digits = digits)) %>%
-        mutate(state.code.var = ifelse(state.code.flag, state.code, state)) %>%
-        group_by(state, state.code.var) %>% {
-            tmp <- summarise(., cases = max(last.week.var.round))
-            tmp <- arrange(tmp, cases)
-            tmp <- mutate(tmp,
+        dplyr::mutate(state.code.var = ifelse(state.code.flag, state.code, state)) %>%
+        dplyr::group_by(state, state.code.var) %>% {
+            tmp <- dplyr::summarise(., cases = max(last.week.var.round))
+            tmp <- dplyr::arrange(tmp, cases)
+            tmp <- dplyr::mutate(tmp,
                           cases.str = format(cases, trim = TRUE, big.mark = ','),
                           state.data = paste0(state.code.var, ' (', cases, ')'),
                           state.data.str = paste0(state.code.var, ' (', cases.str, ')'))
 
-            mutate(., state.data = factor(paste0(state.code.var, ' (', max(last.week.var.round), ')'),
-                                          levels = rev(pull(tmp, state.data)),
-                                          labels = rev(pull(tmp, state.data.str))))
+            dplyr::mutate(., state.data = factor(paste0(state.code.var, ' (', max(last.week.var.round), ')'),
+                                          levels = rev(dplyr::pull(tmp, state.data)),
+                                          labels = rev(dplyr::pull(tmp, state.data.str))))
         } %>%
-        mutate(label = if_else(last.week.var.round == max(last.week.var.round), format(state.data, trim = TRUE, big.mark = ','), NA_character_))
+        dplyr::mutate(label = dplyr::if_else(last.week.var.round == max(last.week.var.round), format(state.data, trim = TRUE, big.mark = ','), NA_character_)) %>% 
+        arrange(., label, desc(date)) %>% 
+        mutate(label = if_else(date == first(date), label, NA_character_))
 
     my.plot <- my.plot.data %>%
         #
-        ggplot(aes(x = date, y = last.week.var, color = state.data)) +
-            geom_line(size = 1.2) +
-            geom_point(size = 1.2) +
-                    geom_label_repel(aes(label = label,
+        ggplot2::ggplot(ggplot2::aes(x = date, y = last.week.var, color = state.data)) +
+            ggplot2::geom_line(size = 1.2) +
+            ggplot2::geom_point(size = 1.2) +
+                    ggrepel::geom_label_repel(ggplot2::aes(label = label,
                                          fill = state.data),
                                      na.rm = TRUE,
                                      color = 'white',
@@ -264,67 +274,66 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
                                      segment.alpha = .4,
                                      segment.colour = 'black',
                                      min.segment.length = 0) +
-            labs(title = lab.t,
+            ggplot2::labs(title = lab.t,
                  subtitle = lab.s,
                  y = lab.y,
                  x = 'Date',
                  caption = last.date.string) +
-            scale_color_viridis(discrete = TRUE, end = .85, option = 'A') +
-            scale_fill_viridis(discrete = TRUE, end = .85, option = 'A') +
-            theme_minimal() +
-            theme(legend.position = 'none') +
-            if(log2.flag) { scale_y_continuous('{lab.y} (log2 scale)' %>% glue, trans = 'log2' %>% glue) } else { scale_y_continuous() }
+            ggplot2::scale_color_viridis_d(end = .85, option = 'A') +
+            ggplot2::scale_fill_viridis_d(end = .85, option = 'A') +
+            ggplot2::theme_minimal() +
+            ggplot2::theme(legend.position = 'none') +
+            if(log2.flag) { scale_y_continuous('{lab.y} (log2 scale)' %>% glue::glue(), trans = 'log2' %>% glue::glue()) } else { scale_y_continuous() }
 
     return(my.plot)
 }
 
 death.vs.cases.plot <- function(dat, state.filter = c(), always.include = c()) {
     return(dat %>%
-        filter(length(state.filter) == 0  | state %in% (c(always.include, state.filter) %>% unique)) %>%
-        ggplot(aes(x = cases.confirmed, y = cases.death, color = state)) +
-            geom_point(aes(size = population), alpha = .4) +
-            geom_label_repel(aes(label = paste0(state, ' (', percent(ratio, accuracy = .1), ')'),
-                             fill = state),
-                             na.rm = TRUE,
-                             alpha = .8,
-                             color = 'white',
-                             size = 3,
-                             min.segment.length = 0,
-                             alpha = .9,
-                             segment.alpha = .4,
-                             segment.colour = 'black',
-                             force = 2) +
-            expand_limits(x = ceiling(max(dat %>% pull(cases.confirmed))),
-                          y = ceiling(max(dat %>% pull(cases.death)))) +
-            labs(x = 'Confirmed Cases per 100k population',
+        dplyr::filter(length(state.filter) == 0  | state %in% (c(always.include, state.filter) %>% unique)) %>%
+        ggplot2::ggplot(ggplot2::aes(x = cases.confirmed, y = cases.death, color = state)) +
+            ggplot2::geom_point(ggplot2::aes(size = population), alpha = .4) +
+            ggrepel::geom_label_repel(ggplot2::aes(label = paste0(state, ' (', scales::percent(ratio, accuracy = .1), ')'),
+                                      fill = state),
+                                      na.rm = TRUE,
+                                      color = 'white',
+                                      size = 3,
+                                      min.segment.length = 0,
+                                      alpha = .9,
+                                      segment.alpha = .4,
+                                      segment.colour = 'black',
+                                      force = 2) +
+            ggplot2::expand_limits(x = ceiling(max(dat %>% dplyr::pull(cases.confirmed))),
+                                   y = ceiling(max(dat %>% dplyr::pull(cases.death)))) +
+            ggplot2::labs(x = 'Confirmed Cases per 100k population',
                  y = 'Deaths per 100k population',
                  title = 'Deaths vs. Cases per 100k population',
-                 subtitle = 'percentage is the death rate per confirmed cases and size represents size of {region.code} by population' %>% glue,
+                 subtitle = 'scales::percentage is the death rate per confirmed cases and size represents size of {region.code} by population' %>% glue::glue(),
                  caption = last.date.string) +
-            theme_minimal() +
-            theme(legend.position = 'none'))
+            ggplot2::theme_minimal() +
+            ggplot2::theme(legend.position = 'none'))
 }
 
 cases.plot <- function(dat, case.type, filter.states = c()) {
     my.plot <- dat %>%
-        filter(length(filter.states) == 0 | state %in% filter.states) %>%
-        filter(type == case.type) %>%
-        group_by(state, type) %>%
-        summarise(cases = sum(cases)) %>%
-        arrange(cases) %>%
-        ungroup() %>%
-        mutate(state = paste0(state, ' (', cases, ')')) %>%
-        mutate(state = factor(state, levels = unique(.$state))) %>%
-        ggplot() +
-            geom_bar(aes(state, cases, fill = state), stat = 'identity') +
+        dplyr::filter(length(filter.states) == 0 | state %in% filter.states) %>%
+        dplyr::filter(type == case.type) %>%
+        dplyr::group_by(state, type) %>%
+        dplyr::summarise(cases = sum(cases)) %>%
+        dplyr::arrange(cases) %>%
+        dplyr::ungroup() %>%
+        dplyr::mutate(state = paste0(state, ' (', cases, ')')) %>%
+        dplyr::mutate(state = factor(state, levels = unique(.$state))) %>%
+        ggplot2::ggplot() +
+            ggplot2::geom_bar(ggplot2::aes(state, cases, fill = state), stat = 'identity') +
             # scale_y_continuous(trans = 'log10') +
-            coord_flip() +
-            labs(x = region.code,
+            ggplot2::coord_flip() +
+            ggplot2::labs(x = region.code,
                  y = proper.cases(case.type, capitalize = TRUE),
-                 title = '{proper.cases(case.type, capitalize = TRUE)} by {region.code}' %>% glue,
+                 title = '{proper.cases(case.type, capitalize = TRUE)} by {region.code}' %>% glue::glue(),
                  caption = last.date.string) +
-            theme_minimal() +
-            theme(legend.position = 'none')
+            ggplot2::theme_minimal() +
+            ggplot2::theme(legend.position = 'none')
 
     return(my.plot)
 }
@@ -334,17 +343,16 @@ plot.what.vs.cases <- function(data,
                                always.include = c(),
                                what = 'Hospital beds') {
     my.tbl <- data %>%
-        filter(length(always.include) == 0 | state %in% (c(always.include, state.filter) %>% unique))
+        dplyr::filter(length(always.include) == 0 | state %in% (c(always.include, state.filter) %>% unique))
     return(
         my.tbl %>%
-            ggplot(aes(x = cases.confirmed, y = value, color = state)) +
-            geom_point(aes(size = ratio.confirmed), alpha = .4) +
-            geom_label_repel(aes(label = paste0(state,
-                                                ' (', percent(ratio.confirmed, accuracy = .1), '/',
-                                                percent(ratio.death, accuracy = .1), ')'),
+            ggplot2::ggplot(ggplot2::aes(x = cases.confirmed, y = value, color = state)) +
+            ggplot2::geom_point(ggplot2::aes(size = ratio.confirmed), alpha = .4) +
+            ggrepel::geom_label_repel(ggplot2::aes(label = paste0(state,
+                                                ' (', scales::percent(ratio.confirmed, accuracy = .1), '/',
+                                                scales::percent(ratio.death, accuracy = .1), ')'),
                                  fill = state),
                              na.rm = TRUE,
-                             alpha = .8,
                              color = 'white',
                              size = 3,
                              min.segment.length = 0,
@@ -352,16 +360,16 @@ plot.what.vs.cases <- function(data,
                              segment.alpha = .4,
                              segment.colour = 'black',
                              force = 2) +
-            expand_limits(x = ceiling(max(my.tbl %>% pull(cases.confirmed))),
-                          y = ceiling(max(my.tbl %>% pull(value)))) +
-            scale_color_viridis(discrete = TRUE, end = .85) +
-            scale_fill_viridis(discrete = TRUE, end = .85) +
-            labs(x = 'Confirmed Cases per 100k population',
-                 y = glue('{what} per 100k population'),
-                 title = glue('{what} vs. Cases per 100k population'),
-                 subtitle = glue('percentage shows the {tolower(what)} per confirmed cases and deaths, respectively'),
+            ggplot2::expand_limits(x = ceiling(max(my.tbl %>% dplyr::pull(cases.confirmed))),
+                          y = ceiling(max(my.tbl %>% dplyr::pull(value)))) +
+            ggplot2::scale_color_viridis_d(end = .85) +
+            ggplot2::scale_fill_viridis_d(end = .85) +
+            ggplot2::labs(x = 'Confirmed Cases per 100k population',
+                 y = '{what} per 100k population' %>% glue::glue(),
+                 title = '{what} vs. Cases per 100k population' %>% glue::glue(),
+                 subtitle = 'scales::percentage shows the {tolower(what)} per confirmed cases and deaths, respectively' %>% glue::glue(),
                  caption = last.date.string) +
-            theme_minimal() +
-            theme(legend.position = 'none')
+            ggplot2::theme_minimal() +
+            ggplot2::theme(legend.position = 'none')
     )
 }
