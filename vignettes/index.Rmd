@@ -62,13 +62,15 @@ It's not realtime data and data presented may have 1 or more days of difference 
 
 ```{r, message=FALSE, warning=FALSE}
 world.dat  <- download.eucdc.data()
-it.dat.raw <- download.it.data() 
+it.dat.raw <- download.it.data()
+pt.dat.raw <- download.pt.data() 
 
-source.by       <- '{world.dat$source} and {it.dat.raw$source}' %>% glue
+source.by       <- '{world.dat$source}, {it.dat.raw$source} and {pt.dat.raw$source}' %>% glue
 last.date.world <- format(max(world.dat$data$date), '%Y/%m/%d')
 last.date.it    <- format(max(it.dat.raw$data$date), '%Y/%m/%d')
+last.date.pt    <- format(max(pt.dat.raw$data$date), '%Y/%m/%d')
 
-last.date        <- '{last.date.world} (EU CDC) and {last.date.it} (Protezione Civile)' %>% glue
+last.date        <- '{last.date.world} (EU CDC), {last.date.it} (Protezione Civile) and {last.date.pt} (PT DGS)' %>% glue
 last.date.string <- paste0('Latest date from ', last.date)
 
 it.dat <- it.dat.raw$data %>%
@@ -85,7 +87,9 @@ it.population <- world.dat$data %>% filter(state == 'Italy') %>% top_n(1) %>% pu
 my.corona.original <- world.dat$data %>% 
     filter(state != 'Diamond Princess') %>%
     filter(state != 'Italy') %>%
+    filter(state != 'Portugal') %>%
     ungroup() %>%
+    bind_rows(pt.dat.raw$data) %>% 
     add_row(state = it.dat$state, type = it.dat$type, date = it.dat$date, cases = it.dat$cases, cumul = it.dat$cumul, population = it.population, state.code = it.dat$state.code) %>%
     mutate(state = if_else(state == 'United States of America', 'USA', state)) %>% 
     mutate(state.code = tolower(state.code)) %>% 
