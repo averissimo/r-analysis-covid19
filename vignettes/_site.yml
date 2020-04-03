@@ -1,2 +1,2 @@
 name: "covid-19-analysis"
-output_dir: "../docs"
+output_dir: "./docs"
