@@ -253,7 +253,7 @@ download.john.hopkins <- function() {
         dplyr::mutate(cases = zoo::rollapply(cases, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE)) %>%
         dplyr::select(state, date, type, cases, cumul, population, state.code = iso3c)
     
-    source.date <- format(max(eu.data$date), '%Y/%m/%d')
+    source.date <- format(max(jh.data.pop$date), '%Y/%m/%d')
     return(list(data = jh.data.pop, source = '{source.date} (John Hopkins)' %>% glue::glue()))
 }
 
