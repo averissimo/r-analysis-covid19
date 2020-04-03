@@ -9,3 +9,4 @@ render_*.sh
 *.log
 vignettes/*_files
 vignettes/site_libs
+docs/
