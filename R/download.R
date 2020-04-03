@@ -130,6 +130,32 @@ download.nl.data <- function() {
         return()
 }
 
+download.pt.data <- function() {
+    eu.data.raw <- covid19.pt.data::download.updated.pt()
+
+    eu.data <- eu.data.raw$cdc.eu %>%
+        mutate(date = anydate(glue('{year}/{month}/{day}')) - 1,
+               state = countriesAndTerritories) %>%
+        select(state, date, cases, deaths, popData2018, state.code = countryterritoryCode) %>%
+        mutate(state = iconv(state, to = 'UTF-8')) %>%
+        arrange(date) %>%
+        melt(id.vars = c('state', 'state.code', 'popData2018', 'date'),
+             variable.name = 'type',
+             value.name = 'cases') %>%
+        mutate(type = if_else(type == 'cases', 'confirmed', 'death')) %>%
+        group_by(state, state.code, type, date, popData2018) %>%
+        summarise(cases = sum(cases)) %>%
+        group_by(state, type) %>%
+        mutate(cumul = cumsum(cases)) %>%
+        ungroup() %>%
+        mutate(state = gsub('_', ' ', state)) %>%
+        select(state, date, type, cases, cumul, population = popData2018, state.code)
+
+    list(data = eu.data, source = 'PT DGS') %>%
+        return()
+}
+
+
 download.eucdc.data <- function() {
     eu.data.raw <- read_csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
 
