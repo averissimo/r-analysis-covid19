@@ -160,27 +160,28 @@ download.pt.data <- function() {
 }
 
 download.john.hopkins <- function() {
-    jh.data.raw.deaths    <- 'https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv' %>% read_csv()
-    jh.data.raw.confirmed <- 'https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv'%>% read_csv()
-
+    base.url <- 'https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series'
+    jh.data.raw.deaths    <- glue::glue('{base.url}/time_series_covid19_deaths_global.csv') %>% read_csv()
+    jh.data.raw.confirmed <- glue::glue('{base.url}/time_series_covid19_confirmed_global.csv')%>% read_csv()
+    
     jh.data.deaths <- jh.data.raw.deaths %>%
         reshape2::melt(id.vars = c('Province/State', 'Country/Region', 'Lat', 'Long'),
-             variable.name = 'date',
-             value.name = 'cases') %>%
+                       variable.name = 'date',
+                       value.name = 'cases') %>%
         tibble::tibble() %>%
         dplyr::mutate(type = 'deaths',
-               date = str_replace(date, '([0-9]+)/([0-9]+)/([0-9]+)', '20\\3-\\1-\\2'),
-               date = anytime::anydate(date))
-
+                      date = str_replace(date, '([0-9]+)/([0-9]+)/([0-9]+)', '20\\3-\\1-\\2'),
+                      date = anytime::anydate(date))
+    
     jh.data.confirmed <- jh.data.raw.confirmed %>%
         reshape2::melt(id.vars = c('Province/State', 'Country/Region', 'Lat', 'Long'),
-             variable.name = 'date',
-             value.name = 'cases') %>%
+                       variable.name = 'date',
+                       value.name = 'cases') %>%
         tibble::tibble() %>%
         dplyr::mutate(type = 'confirmed',
-               date = str_replace(date, '([0-9]+)/([0-9]+)/([0-9]+)', '20\\3-\\1-\\2'),
-               date = anytime::anydate(date))
-
+                      date = str_replace(date, '([0-9]+)/([0-9]+)/([0-9]+)', '20\\3-\\1-\\2'),
+                      date = anytime::anydate(date))
+    
     jh.data <- bind_rows(jh.data.deaths, jh.data.confirmed) %>%
         dplyr::select(state = 'Country/Region', date, type, cases) %>%
         dplyr::group_by(state, date, type) %>%
@@ -188,30 +189,39 @@ download.john.hopkins <- function() {
         dplyr::ungroup() %>%
         dplyr::mutate(state = jh.convert.names(state)) %>%
         dplyr::mutate(state = eu.convert.names(state))
-
-    populations <- run.cache(wb, indicator = "SP.POP.TOTL", show.message = FALSE) %>%
+    
+    pop.wb <- run.cache(wb, indicator = "SP.POP.TOTL", 
+                        show.message = FALSE)
+    
+    if (pop.wb %>% nrow == 0) {
+        pop.wb <- run.cache(wb, indicator = "SP.POP.TOTL", 
+                            show.message = FALSE,
+                            force.recalc = TRUE)
+        if (pop.wb %>% nrow == 0) {
+            stop('ERROR retrieving World Bank data, please run again.')
+        }
+    }
+    
+    pop.norm <- pop.wb %>%
+        tibble::tibble() %>% 
         dplyr::group_by(iso3c) %>%
         dplyr::filter(date == max(date)) %>%
         dplyr::select(population = value, state = country, iso3c) %>%
-        dplyr::ungroup() %>%
-        #
-        add_row(state = 'Diamond Princess', population = 3711, iso3c = 'Diamond Princess') %>%
-        add_row(state = 'Taiwan', population = 23603121, iso3c = 'TWN') %>%
-        add_row(state = 'Holy See', population = 801, iso3c = 'VAT') %>%
-        add_row(state = 'MS Zaandam', population = 1829, iso3c = 'MS Zaandam') %>%
-        dplyr::mutate(state = eu.convert.names(state)) %>%
+        dplyr::ungroup() 
+    dplyr::mutate(state = eu.convert.names(state)) %>%
         dplyr::mutate(state = jh.convert.names(state)) %>%
         dplyr::arrange(state)
-
-    jh.data.pop <- jh.data %>% left_join(populations, by = 'state') %>%
+    
+    jh.data.pop <- jh.data %>% left_join(pop.norm, by = 'state') %>%
         dplyr::group_by(state, type, population) %>%
         dplyr::arrange(desc(date)) %>%
         dplyr::mutate(cumul = cases) %>%
         dplyr::mutate(cases = zoo::rollapply(cases, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE)) %>%
         dplyr::select(state, date, type, cases, cumul, population, state.code = iso3c)
-
+    
     return(list(data = jh.data.pop, source = 'John Hopkins'))
 }
+
 
 download.eucdc.data <- function() {
     eu.data.raw <- read_csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
