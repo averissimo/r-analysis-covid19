@@ -1,10 +1,10 @@
-#' Title
+#' Maps type of case
 #'
-#' @param value
-#' @param capitalize
-#' @param capitalize.all
+#' @param value one of 3, 'confirmed', 'death', 'all'
+#' @param capitalize only first word
+#' @param capitalize.all all words
 #'
-#' @return
+#' @return a formatted version of value
 #' @export
 #'
 #' @examples

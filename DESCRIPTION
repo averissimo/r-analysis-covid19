@@ -1,11 +1,37 @@
-Package: verissimo.covid19
+Package: analysis.covid19.verissimo
 Type: Package
-Title: What the Package Does (Title Case)
+Title: COVID-19 Data Analysis
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: André Veríssimo
+Maintainer: André Veríssimo <andre.verissimo@tecnico.ulisboa.pt>
+Description: Performs a world analysis of the covid-19 virus propagation.
+    It focus especially on Portugal, Germany and Italy.
+License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
+Depends: R (>= 3.6)
+Remotes: 
+  averissimo/covid19.pt.data,
+  RamiKrispin/coronavirus
+Suggests:
+  DT,
+  knitr,
+  rmarkdown,
+  futile.logger
+Imports:
+  dplyr,
+  tibble,
+  ggplot2,
+  viridis, 
+  ggrepel,
+  zoo,
+  glue,
+  loose.rock,
+  anytime,
+  scales,
+  coronavirus,
+  wbstats,
+  reshape2,
+  eurostat,
+  covid19.pt.data
+RoxygenNote: 7.1.0

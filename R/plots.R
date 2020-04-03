@@ -29,7 +29,7 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
     lab.y <- proper.cases(case.type, capitalize = TRUE)
     lab.t <- '\'{proper.cases(case.type, capitalize = TRUE)}\' over time' %>% glue
     lab.s <- 'Only showing after each {region.code} had more than {start_of} {proper.cases(case.type)}' %>% glue
-    lab.x <- 'Number of days since ≥ {start_of} {proper.cases(case.type)}' %>% glue
+    lab.x <- 'Number of days since \u2265 {start_of} {proper.cases(case.type)}' %>% glue
 
     if (per.100k.flag) {
         lab.y <- paste0(lab.y, ' -- per 100k population')

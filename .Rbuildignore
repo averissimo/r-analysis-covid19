@@ -1,2 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^vignettes/\.nojekyll
+^vignettes\/_site\.yml
+^it\.txt
+^README\.md

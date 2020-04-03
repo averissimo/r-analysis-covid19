@@ -92,7 +92,8 @@ download.eurostat.population <- function(country.code, nuts = 1) {
 
 
 download.world.data <- function() {
-    data('coronavirus')
+    dat <- NULL
+    tryCatch(dat <- coronavirus::coronavirus, error = function(err) {})
 
     my.corona.original <- coronavirus %>% as_tibble() %>%
         mutate(state = Country.Region) %>%
@@ -279,8 +280,6 @@ eu.convert.names.arr <- function() {
     ) %>%
         return()
 }
-
-
 
 download.eucdc.data <- function() {
     eu.data.raw <- read_csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
