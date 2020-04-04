@@ -51,8 +51,7 @@ Sys.setlocale('LC_TIME', 'en_GB.UTF-8')
 ```{r buildCorona, echo=FALSE, message=FALSE, warning=FALSE}
 eu.de <- download.de.data(by.federal.state = TRUE)
 
-my.corona.original <- eu.de$data %>% 
-    mutate(state.code = state)
+my.corona.original <- eu.de$data
 
 source.by = eu.de$source
 ```
