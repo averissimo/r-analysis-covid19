@@ -50,35 +50,35 @@ Sys.setlocale('LC_TIME', 'en_GB.UTF-8')
 .Last.value <- flog.layout(layout.format('~m'))
 ```
 
-# Data
-
-Data was retrieved from *'RamiKrispin/coronavirus'* R data package which is updated daily in github.com.
-
-It's not realtime data and data presented may have 1 or more days of difference from real-time data. Check the caption on the figures to check when was the last data point.
-
 ```{r, message=FALSE, warning=FALSE}
-world.dat <- download.eucdc.data()
+eucdc.dat  <- download.eucdc.data()
+jh.dat     <- download.john.hopkins()
 
-it.dat <- download.it.data() 
+if (max(jh.dat$data$date) > max(eucdc.dat$data$date)) {
+  world.dat <- jh.dat  
+} else {
+  world.dat <- eucdc.dat
+}
 
-source.by <- '{world.dat$source} and {it.dat$source}' %>% glue
+it.dat.raw <- download.it.data()
+pt.dat.raw <- download.pt.data() 
+de.dat.raw <- download.de.data()
 
-it.dat <- it.dat$data %>%
-    ungroup %>%
-    mutate(state = 'Italy') %>%
-    group_by(state, date, type) %>%
-    summarise(cases = sum(cases),
-              cumul = sum(cumul)) %>% 
-    ungroup() %>%
-    arrange(date)
+world.dat.norm <- world.dat
+world.dat.norm <- replace.country.data(world.dat.norm, pt.dat.raw, 'Portugal')
+world.dat.norm <- replace.country.data(world.dat.norm, it.dat.raw, 'Italy')
+world.dat.norm <- replace.country.data(world.dat.norm, de.dat.raw, 'Germany')
 
-it.population <- world.dat$data %>% filter(state == 'Italy') %>% top_n(1) %>% pull(population) %>% unique
+source.by       <- world.dat.norm$source
+
+last.date        <- source.by
+last.date.string <- paste0('Latest date from ', last.date)
 
 my.corona.original <- world.dat$data %>% 
     filter(state != 'Diamond Princess') %>%
-    filter(state != 'Italy') %>%
     ungroup() %>%
-    add_row(state = it.dat$state, type = it.dat$type, date = it.dat$date, cases = it.dat$cases, cumul = it.dat$cumul, population = it.population) %>%
+    mutate(state = if_else(state == 'United States of America', 'USA', state)) %>% 
+    mutate(state.code = tolower(state.code)) %>% 
     arrange(date, state, type) %>%
     group_by(state, type)
 
@@ -87,8 +87,6 @@ my.corona <- my.corona.original
 my.corona <- mutate(my.corona, 
                     state.data = factor(state, 
                                         levels = my.corona %>% filter(type == 'confirmed') %>% summarise(cases = max(cumul)) %>% arrange(cases) %>% pull(state)))
-
-convert.names <- eu.convert.names
 ```
 
 

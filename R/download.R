@@ -5,51 +5,75 @@
 #'
 #' @examples
 #' download.de.data()
-download.de.data <- function() {
-    eu.de.raw2 <- rki.de.district.data::update_dataset() 
+download.de.data <- function(by.federal.state = FALSE) {
+    #
+    ## Package covid19.de.data does not provide accurate last few days
+    #
+    # eu.de.raw2 <- covid19.de.data::update_dataset() 
+    # 
+    # eu.data2 <- eu.de.raw2 %>% 
+    #     arrange(desc(date), state) %>% 
+    #     dplyr::group_by(state, date) %>% 
+    #     dplyr::summarise(cases = sum(cases), deaths = sum(deaths)) %>% 
+    #     arrange(desc(date), state) %>% 
+    #     select(state, date, cases, deaths) %>% 
+    #     arrange(date) %>% 
+    #     reshape2::melt(id.vars = c('state', 'date'), variable.name = 'type', value.name = 'cases') %>% 
+    #     dplyr::mutate(type = dplyr::if_else(type == 'cases', 'confirmed', 'death')) %>%
+    #     dplyr::mutate(state.code = state) %>% 
+    #     tibble::tibble() %>% 
+    #     arrange(state, desc(date))
     
-    eu.data2 <- eu.de.raw2 %>% 
-        dplyr::group_by(date, state) %>% 
-        dplyr::summarise(cases = sum(cases), deaths = sum(deaths)) %>% 
-        select(state, date, cases, deaths) %>% 
-        arrange(date) %>% 
-        reshape2::melt(id.vars = c('state', 'date'), variable.name = 'type', value.name = 'cases') %>% 
-        dplyr::mutate(type = dplyr::if_else(type == 'cases', 'confirmed', 'death')) %>%
-        dplyr::mutate(date = anytime::anydate(format(date, '%Y/%m/%d')),
-                      cumul = cumsum(cases),
-                      state.code = 'DEU') %>% 
-        tibble::tibble() %>% 
-        arrange(desc(date))
     
-    eu.de <- eu.data2
-
     eu.de.raw <- readr::read_csv('https://github.com/covid19-eu-zh/covid19-eu-data/raw/master/dataset/covid-19-de.csv')
-
-    eu.data1 <- eu.de.raw %>%
+    
+    eu.data <- eu.de.raw %>%
+        dplyr::mutate(datetime = anytime::anydate(datetime) - 1,) %>% 
         dplyr::mutate(nuts_1 = gsub('[\u00ad]', '', nuts_1)) %>%
         dplyr::filter(nuts_1 != 'Repatriierte') %>%
         dplyr::select(state = nuts_1, cases, deaths, date = datetime) %>%
         dplyr::group_by(state) %>%
         reshape2::melt(id.vars = c('state', 'date'), variable.name = 'type', value.name = 'cases') %>%
+        tibble::tibble() %>% 
         dplyr::mutate(type = dplyr::if_else(type == 'cases', 'confirmed', 'death')) %>%
         dplyr::arrange(desc(date)) %>%
         dplyr::group_by(state, type) %>%
-        dplyr::mutate(date = anytime::anydate(format(date, '%Y/%m/%d')),
-               cumul = cases,
-               state.code = 'DEU',
+        dplyr::mutate(state.code = state,
                # need to break down differences between days
                cases = zoo::rollapply(cases, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE)) %>% 
-        arrange(desc(date))
-    eu.de <- eu.data1
+        arrange(state, desc(date))
     
-    if (max(eu.data2$date) >= max(eu.data1$date)) {
-        eu.de <- eu.data2
+    # if (max(eu.data2$date) > max(eu.data1$date)) {
+    #     futile.logger::flog.info('DE: Using district data')
+    #     eu.de <- eu.data2
+    # } else {
+    #     eu.de <- eu.data1
+    #     futile.logger::flog.info('DE: Using state data')
+    # }
+
+    if (!by.federal.state) {
+        eu.data.out <- eu.data %>% 
+            dplyr::ungroup() %>% 
+            dplyr::mutate(state = 'Germany', state.code = 'DEU') %>%
+            dplyr::group_by(state, date, type, state.code) %>% 
+            dplyr::summarise(cases = sum(cases)) %>% 
+            dplyr::group_by(state, type, state.code) %>% 
+            dplyr::arrange(date) %>% 
+            dplyr::mutate(cumul = cumsum(cases)) %>% 
+            select(state, date, type, cases, cumul, state.code) %>% 
+            arrange(desc(date))
     } else {
-        eu.de <- eu.data1
+        eu.data.out <- eu.data %>% 
+            dplyr::group_by(state, type, state.code) %>% 
+            dplyr::arrange(date) %>% 
+            dplyr::mutate(cumul = cumsum(cases)) %>% 
+            select(state, date, type, cases, cumul, state.code) %>% 
+            arrange(desc(date))
     }
 
-    source.date <- format(max(eu.de$date), '%Y/%m/%d')
-    return(list(data = eu.de, source = '{source.date} (RKI)' %>% glue::glue()))
+    
+    source.date <- format(max(eu.data.out$date), '%Y/%m/%d')
+    return(list(data = eu.data.out, source = '{source.date} (RKI)' %>% glue::glue()))
 }
 
 download.it.data <- function() {
@@ -143,7 +167,7 @@ download.world.data <- function() {
 }
 
 download.nl.data <- function() {
-    eu.nl.raw <- read_csv('https://github.com/covid19-eu-zh/covid19-eu-data/raw/master/dataset/covid-19-nl.csv')
+    eu.nl.raw <- readr::read_csv('https://github.com/covid19-eu-zh/covid19-eu-data/raw/master/dataset/covid-19-nl.csv')
 
     eu.nl.state <- eu.nl.raw %>%
         dplyr::select(country, state = lau, cases, deaths, date = datetime) %>%
@@ -195,16 +219,16 @@ download.pt.data <- function() {
 
 download.john.hopkins <- function() {
     base.url <- 'https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series'
-    jh.data.raw.deaths    <- glue::glue('{base.url}/time_series_covid19_deaths_global.csv') %>% read_csv()
-    jh.data.raw.confirmed <- glue::glue('{base.url}/time_series_covid19_confirmed_global.csv')%>% read_csv()
+    jh.data.raw.deaths    <- glue::glue('{base.url}/time_series_covid19_deaths_global.csv') %>% readr::read_csv()
+    jh.data.raw.confirmed <- glue::glue('{base.url}/time_series_covid19_confirmed_global.csv')%>% readr::read_csv()
     
     jh.data.deaths <- jh.data.raw.deaths %>%
         reshape2::melt(id.vars = c('Province/State', 'Country/Region', 'Lat', 'Long'),
                        variable.name = 'date',
                        value.name = 'cases') %>%
         tibble::tibble() %>%
-        dplyr::mutate(type = 'deaths',
-                      date = str_replace(date, '([0-9]+)/([0-9]+)/([0-9]+)', '20\\3-\\1-\\2'),
+        dplyr::mutate(type = 'death',
+                      date = stringr::str_replace(date, '([0-9]+)/([0-9]+)/([0-9]+)', '20\\3-\\1-\\2'),
                       date = anytime::anydate(date))
     
     jh.data.confirmed <- jh.data.raw.confirmed %>%
@@ -213,7 +237,7 @@ download.john.hopkins <- function() {
                        value.name = 'cases') %>%
         tibble::tibble() %>%
         dplyr::mutate(type = 'confirmed',
-                      date = str_replace(date, '([0-9]+)/([0-9]+)/([0-9]+)', '20\\3-\\1-\\2'),
+                      date = stringr::str_replace(date, '([0-9]+)/([0-9]+)/([0-9]+)', '20\\3-\\1-\\2'),
                       date = anytime::anydate(date))
     
     jh.data <- bind_rows(jh.data.deaths, jh.data.confirmed) %>%
@@ -242,9 +266,24 @@ download.john.hopkins <- function() {
         dplyr::filter(date == max(date)) %>%
         dplyr::select(population = value, state = country, iso3c) %>%
         dplyr::ungroup() %>% 
+        dplyr::ungroup() %>%
+        #
+        add_row(state = 'Cases on an international conveyance Japan', population = 3711, iso3c = 'Cases on an international conveyance Japan') %>%
+        add_row(state = 'Taiwan', population = 23603121, iso3c = 'TWN') %>%
+        add_row(state = 'Holy See', population = 801, iso3c = 'VAT') %>%
+        add_row(state = 'MS Zaandam', population = 1829, iso3c = 'MS Zaandam') %>%
+        #
         dplyr::mutate(state = eu.convert.names(state)) %>%
         dplyr::mutate(state = jh.convert.names(state)) %>%
         dplyr::arrange(state)
+    
+    # aa <- jh.data$state %>% unique() %>% sort()
+    # bb <- pop.norm$state %>% unique() %>% sort()
+    # cc <- eucdc.dat$data$state %>% unique() %>% sort()
+    
+    # countries.extended[! countries.extended %in% aa]
+    # countries.extended[! countries.extended %in% bb]
+    # countries.extended[! countries.extended %in% cc]
     
     jh.data.pop <- jh.data %>% left_join(pop.norm, by = 'state') %>%
         dplyr::group_by(state, type, population) %>%
@@ -259,7 +298,7 @@ download.john.hopkins <- function() {
 
 
 download.eucdc.data <- function() {
-    eu.data.raw <- read_csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
+    eu.data.raw <- readr::read_csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
 
     eu.data <- eu.data.raw %>%
         dplyr::mutate(date = anytime::anydate(glue::glue('{year}/{month}/{day}')) - 1,
@@ -277,7 +316,8 @@ download.eucdc.data <- function() {
         dplyr::mutate(cumul = cumsum(cases)) %>%
         dplyr::ungroup() %>%
         dplyr::mutate(state = gsub('_', ' ', state)) %>%
-        dplyr::select(state, date, type, cases, cumul, population = popData2018, state.code)
+        dplyr::select(state, date, type, cases, cumul, population = popData2018, state.code) %>% 
+        mutate(state = if_else(state == 'United States of America', 'USA', state))
 
     source.date <- format(max(eu.data$date), '%Y/%m/%d')
     list(data = eu.data, source = '{source.date} (EU CDC)' %>% glue::glue()) %>%
@@ -291,7 +331,7 @@ replace.country.data <- function(all.dat, state.new.dat, state.name) {
     new.max.date <- max(dat.new$date)
     old.max.date <- max(dat %>% filter(state == state.name) %>% top_n(1, date) %>% pull(date))
     
-    if (new.max.date >= old.max.date) {
+    if (new.max.date > old.max.date) {
         new.pop <- dat %>% filter(state == state.name) %>% top_n(1) %>% pull(population) %>% unique
         dat.new.norm <- dat.new %>% 
             group_by(date, type, state.code) %>% 

@@ -11,6 +11,7 @@ jh.convert.names <- function(val) {
     'Congo (Brazzaville)' = 'Congo',
     'Congo (Kinshasa)' = 'Democratic Republic of the Congo',
     'Czechia' = 'Czech Republic',
+    'Diamond Princess' = 'Cases on an international conveyance Japan',
     'Guinea-Bissau' = 'Guinea Bissau',
     'Korea, South' = 'Korea, Rep.',
     # 'Malawi' = 'Malawi',
@@ -19,7 +20,6 @@ jh.convert.names <- function(val) {
     'Timor-Leste' = 'Timor Leste',
     'United States' = 'USA',
     'US' = 'USA',
-    'Diamond Princess' = 'Cases on an international conveyance Japan',
     'West Bank and Gaza' = 'Palestine'
   )
   
@@ -34,6 +34,7 @@ jh.convert.names <- function(val) {
 #' @return
 eu.convert.names <- function(val) {
   convert.tmp <- list(
+    # Unconvertables
     '404-1' =  'Anguilla',
     '404-2' =  'Cases on an international conveyance Japan',
     '404-2' =  'Guernsey',

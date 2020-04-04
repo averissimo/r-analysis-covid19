@@ -10,3 +10,5 @@ render_*.sh
 vignettes/*_files
 vignettes/site_libs
 vignettes/docs/
+*.Rproj
+docs-export

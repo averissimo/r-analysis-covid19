@@ -48,15 +48,8 @@ Sys.setlocale('LC_TIME', 'en_GB.UTF-8')
 .Last.value <- flog.layout(layout.format('~m'))
 ```
 
-# Data
-
-Data was retrieved from *'RamiKrispin/coronavirus'* R data package which is updated daily in github.com.
-
-It's not realtime data and data presented may have 1 or more days of difference from real-time data. Check the caption on the figures to check when was the last data point.
-
-
 ```{r buildCorona, echo=FALSE, message=FALSE, warning=FALSE}
-eu.de <- download.de.data()
+eu.de <- download.de.data(by.federal.state = TRUE)
 
 my.corona.original <- eu.de$data %>% 
     mutate(state.code = state)

@@ -25,10 +25,14 @@ rmarkdown::render_site(quiet = TRUE)
 #rmarkdown::render_site()
 ```
 
+```{r, eval=FALSE, include=FALSE}
+BiocManager::install('averissimo/covid19.pt.data')
+BiocManager::install('averissimo/covid19.de.data')
+```
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, collapse = TRUE, fig.width = 10, fig.height = 8)
-library(tidyverse)
 library(dplyr)
 library(viridis) # color pallete
 library(ggrepel)
@@ -56,7 +60,12 @@ theme_set(
 
 # Data
 
-Data was retrieved from *'RamiKrispin/coronavirus'* R data package which is updated daily in github.com.
+Data was retrieved from oficial sources.
+
+* EU CDC *(if not available it uses John's Hopkins)*
+* Italian Protezione Civil *(IT PC)*
+* Portuguese Direcção Geral da Saúde *(PT DGS)*
+* German Robert Koch's Institute *(DE RKI)*
 
 It's not realtime data and data presented may have 1 or more days of difference from real-time data. Check the caption on the figures to check when was the last data point.
 
@@ -66,8 +75,14 @@ jh.dat     <- download.john.hopkins()
 
 if (max(jh.dat$data$date) > max(eucdc.dat$data$date)) {
   world.dat <- jh.dat  
+  
+#  state.ix <- eucdc.dat$data$state %>% unique()
+#  state.ix[!state.ix %in% (jh.dat$data$state %>% unique())]  
 } else {
   world.dat <- eucdc.dat
+  
+#  state.ix <- jh.dat$data$state %>% unique()
+#  state.ix[!state.ix %in% (eucdc.dat$data$state %>% unique())]  
 }
 
 it.dat.raw <- download.it.data()
@@ -87,7 +102,6 @@ last.date.string <- paste0('Latest date from ', last.date)
 my.corona.original <- world.dat$data %>% 
     filter(state != 'Diamond Princess') %>%
     ungroup() %>%
-    mutate(state = if_else(state == 'United States of America', 'USA', state)) %>% 
     mutate(state.code = tolower(state.code)) %>% 
     arrange(date, state, type) %>%
     group_by(state, type)
@@ -97,8 +111,6 @@ my.corona <- my.corona.original
 my.corona <- mutate(my.corona, 
                     state.data = factor(state, 
                                         levels = my.corona %>% filter(type == 'confirmed') %>% summarise(cases = max(cumul)) %>% arrange(cases) %>% pull(state)))
-
-convert.names <- eu.convert.names
 ```
 
 ```{r}
@@ -107,26 +119,26 @@ convert.names <- eu.convert.names
 region.code        <- 'Country'
 region.code.plural <- 'Countries'
 
-countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'USA', 'France', 'Switzerland') %>% sort
+countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'USA', 'France', 'Switzerland', 'Czech Republic') %>% sort
 
 countries.eu <- c('Italy', 'Spain','Germany', 'Portugal', 'France',  
                   'United Kingdom', 'Poland', 'Greece', 'Croatia', 'Slovenia', 
                   'Hungary', 'Slovakia', 'Ireland', 'Luxembourg', 'Finland', 
                   'Sweden', 'Denmark', 'Romania', 'Netherlands', 'Belgium', 
-                  'Czechia', 'Austria', 'Bulgaria', 'Lithuania', 'Latvia', 
+                  'Czech Republic', 'Austria', 'Bulgaria', 'Lithuania', 'Latvia', 
                   'Malta', 'Estonia', 'Cyprus')
-countries.cplp <- c('Angola', 'Mozambique', 'Cabo Verde', 'Timor-Leste', 
+countries.cplp <- c('Angola', 'Mozambique', 'Cape Verde', 'Timor Leste', 
                     'Brazil'
-                    , 'Macao SAR, China', 'Guinea-Bissau', 'Sao Tome and Principe' # not in corona data
+                    , 'Macao SAR, China', 'Guinea Bissau', 'Sao Tome and Principe' # not in corona data
                     )
 countries.europe.non.eu <- c('Norway', 'Switzerland', 'Ukraine', 'Serbia', 'Russia', 
                              'Albania', 'Iceland', 'Turkey', 'Belarus')
 countries.non.europe <- c('USA', 'China', 'Canada', 
                           'Australia', 'New Zealand', 
-                          'Korea, South', 'Japan', 'Argentina', 'Chile', 'Thailand',
+                          'South Korea', 'Japan', 'Argentina', 'Chile', 'Thailand',
                           'Iran', 'China', countries.cplp)
 
-countries.always.include <- c('Portugal', 'USA', 'Germany', 'Spain', 'Italy', 'Korea, South')
+countries.always.include <- c('Portugal', 'USA', 'Germany', 'Spain', 'Italy', 'South Korea')
 countries.extended <- c(countries.eu, countries.europe.non.eu, countries.cplp, countries.non.europe, countries.always.include) %>%
     unique
 ```

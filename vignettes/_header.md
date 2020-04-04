@@ -23,3 +23,14 @@ The source code is at [github.com/averissimo/covid19-analysis](https://github.co
 1. General weakness - Fraqueza generalizada - 1311
 1. Muscular pain - Dores musculares - 1099
 1. Difficulties breathing - Dificuldade Respiratória - 673
+
+# Data
+
+Data was retrieved from oficial sources.
+
+* EU CDC *(if not available it uses John's Hopkins)*
+* Italian Protezione Civil *(IT PC)*
+* Portuguese Direcção Geral da Saúde *(PT DGS)*
+* German Robert Koch's Institute *(DE RKI)*
+
+It's not realtime data and data presented may have 1 or more days of difference from real-time data. Check the caption on the figures to check when was the last data point.

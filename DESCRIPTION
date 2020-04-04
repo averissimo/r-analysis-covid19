@@ -12,8 +12,7 @@ LazyData: true
 Depends: R (>= 3.6)
 Remotes: 
   averissimo/covid19.pt.data,
-  averissimo/rki.de.district.data,
-  RamiKrispin/coronavirus
+  averissimo/covid19.de.data
 Suggests:
   DT,
   knitr,
@@ -29,10 +28,11 @@ Imports:
   loose.rock,
   anytime,
   scales,
+  stringr,
   coronavirus,
   wbstats,
   reshape2,
   eurostat,
   covid19.pt.data,
-  rki.de.district.data
+  covid19.de.data
 RoxygenNote: 7.1.0
