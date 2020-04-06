@@ -1,2 +1,3 @@
-#' @import dplyr
+#' @importFrom dplyr %>%
+#' @import futile.options
 NULL

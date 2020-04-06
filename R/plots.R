@@ -1,3 +1,14 @@
+plot.options <- futile.options::OptionsManager('logger.options')
+plot.options(point.size = 2, 
+             line.size = 2, 
+             segment.size = .5, 
+             segment.alpha = .8, 
+             label.alpha = .9,
+             segment.color = 'black',
+             label.size = 3.5,
+             min.segment.length = 0,
+             label.force = 2)
+
 doubling.every <- function(date.vector, days) { return(function(a) {return(1/days * as.numeric(difftime(a, min(date.vector), units = 'days')))})}
 
 top30 <- function(dat, case.type, n = 30) {
@@ -65,17 +76,18 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
     my.plot <- my.plot.data %>%
         ggplot2::ggplot(ggplot2::aes(x = days.after.100, y = cumul, color = state.data)) +
 
-        ggplot2::geom_point(size = 2) +
-        ggplot2::geom_line(size = 2) +
+        ggplot2::geom_point(size = plot.options('point.size')) +
+        ggplot2::geom_line(size = plot.options('line.size')) +
 
         ggrepel::geom_label_repel(ggplot2::aes(label = label,
                              fill = state.data),
                          na.rm = TRUE,
                          color = 'white',
                          size = 3.5,
+                         segment.size = 1.5,
                          min.segment.length = 0,
                          alpha = .9,
-                         segment.alpha = .4,
+                         segment.alpha = .6,
                          segment.colour = 'black') +
 
         ggplot2::labs(y = lab.y,
@@ -150,16 +162,19 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
 
     my.plot <- my.plot.data %>%
         ggplot2::ggplot(ggplot2::aes(x = days.before.now, y = cumul, color = state.data)) +
-            ggplot2::geom_point(size = 2) +
-            ggplot2::geom_line(size = 2) +
+            
+            ggplot2::geom_point(size = plot.options('point.size')) +
+            ggplot2::geom_line(size = plot.options('line.size')) +
+        
             ggrepel::geom_label_repel(ggplot2::aes(label = label,
                                      fill = state.data),
                              na.rm = TRUE,
                              color = 'white',
                              size = 3.5,
+                             segment.size = 1.5,
                              min.segment.length = 0,
                              segment.colour = 'black',
-                             segment.alpha = .4) +
+                             segment.alpha = .6) +
             ggplot2::labs(x = 'Last {days} days' %>% glue::glue(),
                  y = lab.y,
                  title = lab.t,
@@ -181,7 +196,6 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
     return(my.plot)
 }
 
-
 build.labels <- function(input, order.by, digits = 2) {
     my.format <- function(val) {
         val %>% 
@@ -191,13 +205,13 @@ build.labels <- function(input, order.by, digits = 2) {
     }
     
     tmp <- input %>% 
-        group_by(state) %>% 
-        arrange(desc(date), desc(!!as.name(order.by))) %>% 
-        mutate(state.data = state.code.var,
+        dplyr::group_by(state) %>% 
+        dplyr::arrange(desc(date), desc(!!as.name(order.by))) %>% 
+        dplyr::mutate(state.data = state.code.var,
                state.data.order = !!as.name(order.by),
                state.data.val.max = max(!!as.name(order.by)),
                state.data.val.last = first(!!as.name(order.by))) %>% 
-        mutate(state.data.label = if_else(state.data.val.max == state.data.val.last,
+        dplyr::mutate(state.data.label = if_else(state.data.val.max == state.data.val.last,
                                           paste0(state.code.var, 
                                                  ': ', 
                                                  state.data.val.max %>% my.format),
@@ -209,10 +223,10 @@ build.labels <- function(input, order.by, digits = 2) {
                                                  ')')))
     
     tmp %>% 
-        mutate(label = if_else(state.data.order == max(state.data.order), state.data.label, NA_character_),
+        dplyr::mutate(label = dplyr::if_else(state.data.order == max(state.data.order), state.data.label, NA_character_),
                state.data = factor(state.data,
                                    levels = .$state.data %>% unique)) %>% 
-        select(-state.data.label, state.data.val.last, state.data.val.max, state.data.order) %>% 
+        dplyr::select(-state.data.label, state.data.val.last, state.data.val.max, state.data.order) %>% 
         return()
 }
 
@@ -254,17 +268,19 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
     my.plot <- my.plot.data %>%
         #
         ggplot2::ggplot(ggplot2::aes(x = date, y = last.week.var, color = state.data)) +
-            ggplot2::geom_point(size = 2) +
-            ggplot2::geom_line(size = 2) +
+            ggplot2::geom_point(size = plot.options('point.size')) +
+            ggplot2::geom_line(size = plot.options('line.size')) +
                     ggrepel::geom_label_repel(ggplot2::aes(label = label,
                                          fill = state.data),
                                      na.rm = TRUE,
                                      color = 'white',
-                                     size = 3.5,
-                                     alpha = .9,
-                                     segment.alpha = .4,
-                                     segment.colour = 'black',
-                                     min.segment.length = 0) +
+                                     size = plot.options('label.size'),
+                                     segment.size = plot.options('segment.size'),
+                                     alpha = plot.options('label.alpha'),
+                                     segment.alpha = plot.options('segment.alha'),
+                                     segment.colour = plot.options('segment.color'),
+                                     min.segment.length = plot.options('min.segment.length'),
+                                     force = plot.options('label.force')) +
             ggplot2::labs(title = lab.t,
                  subtitle = lab.s,
                  y = lab.y,
@@ -288,12 +304,13 @@ death.vs.cases.plot <- function(dat, state.filter = c(), always.include = c(), e
                                       fill = state),
                                       na.rm = TRUE,
                                       color = 'white',
-                                      size = 3,
-                                      min.segment.length = 0,
-                                      alpha = .9,
-                                      segment.alpha = .4,
-                                      segment.colour = 'black',
-                                      force = 2) +
+                                      size = plot.options('label.size'),
+                                      segment.size = plot.options('segment.size'),
+                                      alpha = plot.options('label.alpha'),
+                                      segment.alpha = plot.options('segment.alha'),
+                                      segment.colour = plot.options('segment.color'),
+                                      min.segment.length = plot.options('min.segment.length'),
+                                      force = plot.options('label.force')) +
             
             ggplot2::labs(x = 'Confirmed Cases per 100k population',
                  y = 'Deaths per 100k population',
@@ -350,12 +367,13 @@ plot.what.vs.cases <- function(data,
                                  fill = state),
                              na.rm = TRUE,
                              color = 'white',
-                             size = 3,
-                             min.segment.length = 0,
-                             alpha = .9,
-                             segment.alpha = .4,
-                             segment.colour = 'black',
-                             force = 2) +
+                             size = plot.options('label.size'),
+                             segment.size = plot.options('segment.size'),
+                             alpha = plot.options('label.alpha'),
+                             segment.alpha = plot.options('segment.alha'),
+                             segment.colour = plot.options('segment.color'),
+                             min.segment.length = plot.options('min.segment.length'),
+                             force = plot.options('label.force')) +
             ggplot2::expand_limits(x = ceiling(max(my.tbl %>% dplyr::pull(cases.confirmed))),
                           y = ceiling(max(my.tbl %>% dplyr::pull(value)))) +
             ggplot2::scale_color_viridis_d(end = .85) +

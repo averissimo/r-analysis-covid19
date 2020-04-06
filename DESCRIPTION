@@ -33,6 +33,7 @@ Imports:
   wbstats,
   reshape2,
   eurostat,
+  futile.options,
   covid19.pt.data,
   covid19.de.data
 RoxygenNote: 7.1.0
