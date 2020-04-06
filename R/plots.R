@@ -159,14 +159,14 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
         dplyr::mutate(cumul = dplyr::if_else(rep(per.100k.flag, length(cumul)),
                                cumul / population * 100000,
                                as.double(cumul))) %>%
-        dplyr::mutate(state.code.var = ifelse(state.code.flag, state.code, state)) %>%
+        dplyr::mutate(state.code.var = if_else(rep(state.code.flag, state.code %>% length), state.code, state)) %>%
         dplyr::group_by(state, state.code.var, type) %>% 
         build.labels('cumul', digits = digits) %>% 
         dplyr::filter(cumul > 0) %>%
         ungroup
 
     my.plot <- my.plot.data %>%
-        ggplot2::ggplot(ggplot2::aes(x = days.before.now, y = cumul, color = state.data)) +
+        ggplot2::ggplot(ggplot2::aes(x = date, y = cumul, color = state.data)) +
             
             ggplot2::geom_point(size = plot.options('point.size')) +
             ggplot2::geom_line(size = plot.options('line.size')) +
