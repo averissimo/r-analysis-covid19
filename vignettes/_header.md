@@ -3,6 +3,8 @@
 
 This is a personal analysis of the cases of covid-19.
 
+The report was generated at `r date()`
+
 I'm not an Epidemiologist! I'm a researcher with a background in computer science and bioinformatics.
 
 The source code is at [github.com/averissimo/covid19-analysis](https://github.com/averissimo/covid19-analysis) and [github.com/averissimo/covid19-de_rki-data](https://github.com/averissimo/covid19-de_rki-data)
