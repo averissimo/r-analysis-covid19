@@ -11,7 +11,13 @@
 #' proper.cases(c('death', 'confirmed'))
 #' proper.cases(c('death', 'confirmed'), capitalize = TRUE)
 proper.cases <- function(value, capitalize = FALSE, capitalize.all = FALSE) {
-    val = (dplyr::if_else(value == 'confirmed', 'confirmed cases', dplyr::if_else(value == 'death', 'deaths', dplyr::if_else(value == 'all', 'cases', value))))
+    val = (dplyr::if_else(value == 'confirmed', 
+                          'confirmed cases', 
+                          dplyr::if_else(value == 'death', 
+                                         'deaths', 
+                                         dplyr::if_else(value == 'all', 
+                                                        'cases', 
+                                                        value %>% as.character()))))
     if (capitalize.all) {
         return(loose.rock::proper(val))
     } else if (capitalize) {

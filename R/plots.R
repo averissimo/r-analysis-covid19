@@ -71,7 +71,7 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
         dplyr::mutate(cumul = dplyr::if_else(rep(per.100k.flag, length(cumul)),
                                cumul * 100000 / population,
                                as.double(cumul))) %>%
-        dplyr::mutate(state.code.var = ifelse(state.code.flag, state.code, state)) %>%
+        dplyr::mutate(state.code.var = if_else(rep(state.code.flag, state.code %>% length), state.code, state)) %>%
         dplyr::group_by(state, state.code.var) %>%
         dplyr::arrange(-cases) %>% 
         build.labels('cumul', digits = digits) %>% 
