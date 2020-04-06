@@ -231,6 +231,8 @@ build.labels <- function(input, order.by, digits = 2) {
         dplyr::mutate(label = dplyr::if_else(state.data.order == max(state.data.order), state.data.label, NA_character_),
                state.data = factor(state.data,
                                    levels = .$state.data %>% unique)) %>% 
+        dplyr::arrange(label, desc(date)) %>% 
+        dplyr::mutate(label = if_else(date == first(date), label, NA_character_)) %>% 
         dplyr::select(-state.data.label, state.data.val.last, state.data.val.max, state.data.order) %>% 
         return()
 }
