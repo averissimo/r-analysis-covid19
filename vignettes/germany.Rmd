@@ -60,9 +60,7 @@ source.by = eu.de$source
 ```
 
 ```{r eurostat}
-populations <- download.eurostat.population('DE')
-
-my.corona <- my.corona.original %>% left_join(populations, by = 'state')
+y.corona <- my.corona.original
 
 my.corona <- my.corona %>% 
     ungroup %>%
