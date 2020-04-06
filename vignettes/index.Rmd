@@ -85,9 +85,32 @@ if (max(jh.dat$data$date) > max(eucdc.dat$data$date)) {
 #  state.ix[!state.ix %in% (eucdc.dat$data$state %>% unique())]  
 }
 
-it.dat.raw <- download.it.data()
+it.dat.raw <- download.it.data(by.state = FALSE)
 pt.dat.raw <- download.pt.data() 
 de.dat.raw <- download.de.data()
+
+latest <- function(target, dat, one.dat) { 
+  flog.info('%s', target)
+
+  internal.fun <- function(my.dat) {
+    output <- my.dat$data %>% filter(state == target) %>% group_by(state, type) %>% top_n(1, date) 
+    
+    output.cases <- output %>% filter(type == 'confirmed')
+    output.deaths <- output %>% filter(type == 'death')  
+  
+    flog.info('  %s', my.dat$source)
+    flog.info('     cases: %d (%s)', output.cases %>% pull(cases), output.cases %>% pull(date))
+    flog.info('    deaths: %d (%s)', output.deaths %>% pull(cases), output.deaths %>% pull(date))
+  }
+  
+  internal.fun(dat)
+  internal.fun(one.dat)
+}
+
+latest('Portugal', world.dat, pt.dat.raw)
+latest('Germany', world.dat, de.dat.raw)
+latest('Italy', world.dat, it.dat.raw)
+
 
 world.dat.norm <- world.dat
 world.dat.norm <- replace.country.data(world.dat.norm, pt.dat.raw, 'Portugal')
@@ -95,6 +118,13 @@ world.dat.norm <- replace.country.data(world.dat.norm, it.dat.raw, 'Italy')
 world.dat.norm <- replace.country.data(world.dat.norm, de.dat.raw, 'Germany')
 
 source.by       <- world.dat.norm$source
+
+flog.info('')
+flog.info('Post normalization')
+
+latest('Portugal', world.dat.norm, pt.dat.raw)
+latest('Germany', world.dat.norm, de.dat.raw)
+latest('Italy', world.dat.norm, it.dat.raw)
 
 last.date        <- source.by
 last.date.string <- paste0('Latest date from ', last.date)
@@ -118,8 +148,9 @@ my.corona <- mutate(my.corona,
 #last.date.string   <- paste0('Latest date from ', last.date, ' (source: ', source.by, ')')
 region.code        <- 'Country'
 region.code.plural <- 'Countries'
+region.all         <- 'World'
 
-countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'USA', 'France', 'Switzerland', 'Czech Republic') %>% sort
+countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'USA', 'France', 'Switzerland', 'Czech Republic', 'Sweden') %>% sort
 
 countries.eu <- c('Italy', 'Spain','Germany', 'Portugal', 'France',  
                   'United Kingdom', 'Poland', 'Greece', 'Croatia', 'Slovenia', 
@@ -139,9 +170,32 @@ countries.non.europe <- c('USA', 'China', 'Canada',
                           'Iran', 'China', countries.cplp)
 
 countries.always.include <- c('Portugal', 'USA', 'Germany', 'Spain', 'Italy', 'South Korea')
-countries.extended <- c(countries.eu, countries.europe.non.eu, countries.cplp, countries.non.europe, countries.always.include) %>%
-    unique
+countries.extended <- c(countries.eu, countries.europe.non.eu, countries.cplp, countries.non.europe, countries.always.include) %>% unique
 ```
+
+```{r}
+after.100.dat = list(all = filter.after(my.corona, params$death.start, params$confirmed.start)) # my.corona.after.100
+after.100.dat$confirmed = ommit.data(after.100.dat$all, 'confirmed', countries) # my.corona.after.100.confirmed.dat
+after.100.dat$death = ommit.data(after.100.dat$all, 'death', countries) # my.corona.after.100.death.dat
+
+last.days.dat <- filter.last.days(my.corona, params$last.days) # my.corona.last.days
+last.week.dat <- filter.last.days.cumulative(my.corona, 4) # last.week
+death.vs.cases <- filter.death.vs.cases(last.week.dat) %>% filter(state %in% countries.extended) # death.vs.cases
+
+my.world = list()
+my.world$main <- my.corona %>% 
+    group_by(type, date) %>%
+    summarise(cases = sum(cases), population = sum(population)) %>%
+    arrange(date) %>%
+    group_by(type) %>% 
+    mutate(state = region.all,
+           state.code = region.all,
+           cumul = cumsum(cases),
+           population = max(population, na.rm = TRUE))
+my.world$last.days <- filter.last.days(my.world$main, params$last.days)
+my.world$last.week <- filter.last.days.cumulative(my.world$main, 4)
+```
+
 
 ```{r, child='_data.Rmd'}
 ```

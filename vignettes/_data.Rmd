@@ -4,10 +4,10 @@ flog.info('### Summary of data ###')
 flog.info('')
 flog.info('  %s: %d', region(2), my.corona.original %>% filter(cases > 0) %>% pull(state) %>% unique %>% length)
 flog.info('')
-flog.info('      Cases: %s', sum((my.corona.original %>% filter(type == 'confirmed'))$cases) %>% format(big.mark = ','))
-flog.info('     Deaths: %s', sum((my.corona.original %>% filter(type == 'death'))$cases)%>% format(big.mark = ','))
+flog.info('           Cases: %s', sum((my.corona.original %>% filter(type == 'confirmed'))$cases) %>% format(big.mark = ','))
+flog.info('          Deaths: %s', sum((my.corona.original %>% filter(type == 'death'))$cases)%>% format(big.mark = ','))
 flog.info('')
-flog.info('     Latest: %s from %s', last.date, source.by)
+flog.info('  Source of data: %s', last.date, source.by)
 ```
 
 

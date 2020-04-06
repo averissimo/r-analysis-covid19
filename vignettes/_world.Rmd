@@ -1,37 +1,21 @@
 # World  {.tabset .tabset-fade .tabset-pills}
 
-```{r}
-my.world <- my.corona %>% 
-    group_by(type, date) %>%
-    summarise(cases = sum(cases), population = sum(population)) %>%
-    arrange(date) %>%
-    group_by(type) %>% 
-    mutate(state = 'World',
-           state.code = 'World',
-           cumul = cumsum(cases),
-           population = max(population, na.rm = TRUE))
-```
-
 ## Totals
 
 ```{r}
-ommit.start(my.world, 'all', params$confirmed.start)
+ommit.start(my.world$main, 'all', params$confirmed.start)
 ```
 
 ## log2 scale
 
 ```{r, warning=FALSE}
-ommit.start(my.world, 'all', params$confirmed.start, log2.flag = TRUE)
+ommit.start(my.world$main, 'all', params$confirmed.start, log2.flag = TRUE)
 ```
 
 ## New
 
 ```{r}
-my.world.last.days <- filter.last.days(my.world, params$last.days)
-```
-
-```{r}
-last.days(my.world.last.days, 'all', params$last.days, c(), log2.flag = FALSE, per.100k.flag = FALSE, new.flag = TRUE)
+last.days(my.world$last.days, 'all', params$last.days, c(), log2.flag = FALSE, per.100k.flag = FALSE, new.flag = TRUE)
 ```
 
 ## Average of previous 4 days
@@ -39,17 +23,13 @@ last.days(my.world.last.days, 'all', params$last.days, c(), log2.flag = FALSE, p
 Rolling average of previous 4 days
 
 ```{r}
-last.week.world <- filter.last.days.cumulative(my.world, 4)
-```
-
-```{r}
-last.week.cumulative(last.week.world, 'all', 4, c(), log2.flag = FALSE, per.100k.flag = FALSE)
+last.week.cumulative(my.world$last.week, 'all', 4, c(), log2.flag = FALSE, per.100k.flag = FALSE)
 ```
 
 ## Average of previous 4 days *(log2 scale)*
 
 ```{r}
-last.week.cumulative(last.week.world, 'all', 4, c(), log2.flag = TRUE, per.100k.flag = FALSE)
+last.week.cumulative(my.world$last.week, 'all', 4, c(), log2.flag = TRUE, per.100k.flag = FALSE)
 ```
 
 
@@ -58,30 +38,30 @@ last.week.cumulative(last.week.world, 'all', 4, c(), log2.flag = TRUE, per.100k.
 ## Totals
 
 ```{r}
-ommit.start(my.world, 'all', params$confirmed.start, per.100k.flag = TRUE)
+ommit.start(my.world$main, 'all', params$confirmed.start, per.100k.flag = TRUE)
 ```
 
 ## *log2 scale*
 
 ```{r, warning=FALSE}
-ommit.start(my.world, 'all', params$confirmed.start, per.100k.flag = TRUE, log2.flag = TRUE, digits = 2)
+ommit.start(my.world$main, 'all', params$confirmed.start, per.100k.flag = TRUE, log2.flag = TRUE, digits = 2)
 ```
 
 ## New Cases
 
 ```{r}
-last.days(my.world.last.days, 'all', params$last.days, c(), log2.flag = FALSE, per.100k.flag = TRUE, new.flag = TRUE)
+last.days(my.world$last.days, 'all', params$last.days, c(), log2.flag = FALSE, per.100k.flag = TRUE, new.flag = TRUE)
 ```
 
 ## Average of previous 4 days
 
 ```{r}
-last.week.cumulative(last.week.world, 'all', 4, c(), log2.flag = FALSE, per.100k.flag = TRUE)
+last.week.cumulative(my.world$last.week, 'all', 4, c(), log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
 ## Average of previous 4 days *(log2 scale)*
 
 ```{r}
-last.week.cumulative(last.week.world, 'all', 4, c(), log2.flag = TRUE, per.100k.flag = TRUE)
+last.week.cumulative(my.world$last.week, 'all', 4, c(), log2.flag = TRUE, per.100k.flag = TRUE)
 ```
 

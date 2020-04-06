@@ -64,10 +64,6 @@ ommit.data(my.corona, 'confirmed') %>% datatable
 
 # Confirmed cases / Deaths *(ommiting early start of epidemic)*
 
-```{r}
-my.corona.after.100 <- filter.after(my.corona, params$death.start, params$confirmed.start)
-```
-
 ## Starting point after exceeding `r params$confirmed.start` cases or `r params$death.start` deaths {.tabset .tabset-fade .tabset-pills}
 
 The visualizations presented below have been time-shifted to the day when each `r region(1, TRUE)` exceeded `r params$confirmed.start` cases or `r params$death.start` deaths *(depending on the visualization)*.
@@ -83,39 +79,37 @@ If you do not understand logarythm scale, I recommend this [video](https://www.y
 ### Cases  
 
 ```{r}
-ommit.start(my.corona.after.100, 'confirmed', params$confirmed.start, filter.states = countries)
+ommit.start(after.100.dat$all, 'confirmed', params$confirmed.start, filter.states = countries)
 ```
 
 ### Deaths
 
 ```{r}
-ommit.start(my.corona.after.100, 'death', params$death.start, filter.states = countries)
+ommit.start(after.100.dat$all, 'death', params$death.start, filter.states = countries)
 ```
 
 ### Cases *(log2 scale)*
 
 ```{r}
-ommit.start(my.corona.after.100, 'confirmed', params$confirmer.start, filter.states = countries, log2.flag = TRUE)
+ommit.start(after.100.dat$all, 'confirmed', params$confirmer.start, filter.states = countries, log2.flag = TRUE)
 ```
 
 ### Deaths *(log2 scale)*
 
 ```{r}
-ommit.start(my.corona.after.100, 'death', params$death.start, filter.states = countries, log2.flag = TRUE)
+ommit.start(after.100.dat$all, 'death', params$death.start, filter.states = countries, log2.flag = TRUE)
 ```
 
 ### Data for Cases
 
 ```{r}
-my.corona.after.100.confirmed.dat <- ommit.data(my.corona.after.100, 'confirmed', countries)
-my.corona.after.100.confirmed.dat %>% datatable
+after.100.dat$confirmed %>% datatable
 ```
 
 ### Data for Deaths
 
 ```{r}
-my.corona.after.100.death.dat <- ommit.data(my.corona.after.100, 'death', countries)
-my.corona.after.100.death.dat %>% datatable()
+after.100.dat$death %>% datatable()
 ```
 
 ## Starting point after exceeding `r params$confirmed.start` cases or `r params$death.start` deaths *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
@@ -125,45 +119,40 @@ Showing population for plotted `r region(2, TRUE)` This becomes relevant for the
 ### Cases
 
 ```{r}
-ommit.start(my.corona.after.100, 'confirmed', params$confirmed.start, filter.states = countries, log2.flag = FALSE, per.100k.flag = TRUE)
+ommit.start(after.100.dat$all, 'confirmed', params$confirmed.start, filter.states = countries, log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
 ### Deaths 
 
 ```{r}
-ommit.start(my.corona.after.100, 'death', params$confirmer.start, filter.states = countries, log2.flag = FALSE, per.100k.flag = TRUE)
+ommit.start(after.100.dat$all, 'death', params$confirmer.start, filter.states = countries, log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
 ### Cases *(log2 scale)*
 
 ```{r, warning=FALSE}
-ommit.start(my.corona.after.100, 'confirmed', params$confirmer.start, filter.states = countries, log2.flag = TRUE, per.100k.flag = TRUE)
+ommit.start(after.100.dat$all, 'confirmed', params$confirmer.start, filter.states = countries, log2.flag = TRUE, per.100k.flag = TRUE)
 ```
 
 ### Deaths *(log2 scale)*
 
 ```{r, warning=FALSE}
-ommit.start(my.corona.after.100, 'death', params$confirmer.start, filter.states = countries, log2.flag = TRUE, per.100k.flag = TRUE)
+ommit.start(after.100.dat$all, 'death', params$confirmer.start, filter.states = countries, log2.flag = TRUE, per.100k.flag = TRUE)
 ```
 
 ### Data for Cases
 
 ```{r}
-my.corona.after.100.confirmed.dat %>% datatable
+after.100.dat$confirmed %>% datatable
 ```
 
 ### Data for Deaths
 
 ```{r}
-my.corona.after.100.death.dat %>% datatable
+after.100.dat$death %>% datatable
 ```
 
 # Last `r params$last.days` days
-
-```{r}
-my.corona.last.days <- filter.last.days(my.corona, params$last.days)
-```
-
 
 ## Cases/Deaths by day in Last `r params$last.days` days {.tabset .tabset-fade .tabset-pills}
 
@@ -174,25 +163,25 @@ The first data point is the number of new cases that day.
 ### Cases 
 
 ```{r}
-last.days(my.corona.last.days, 'confirmed', params$last.days, countries, log2.flag = FALSE, per.100k.flag = FALSE, new.flag = TRUE)
+last.days(last.days.dat, 'confirmed', params$last.days, countries, log2.flag = FALSE, per.100k.flag = FALSE, new.flag = TRUE)
 ```
 
 ### Deaths
 
 ```{r, warning=FALSE}
-last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag = FALSE, per.100k.flag = FALSE, new.flag = TRUE)
+last.days(last.days.dat, 'death', params$last.days, countries, log2.flag = FALSE, per.100k.flag = FALSE, new.flag = TRUE)
 ```
 
 ### Cases *(log2 scale)*
 
 ```{r, message=FALSE, warning=FALSE}
-last.days(my.corona.last.days, 'confirmed', params$last.days, countries, log2.flag = TRUE, per.100k.flag = FALSE, new.flag = TRUE)
+last.days(last.days.dat, 'confirmed', params$last.days, countries, log2.flag = TRUE, per.100k.flag = FALSE, new.flag = TRUE)
 ```
 
 ### Deaths
 
 ```{r, warning=FALSE}
-last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag = TRUE, per.100k.flag = FALSE, new.flag = TRUE)
+last.days(last.days.dat, 'death', params$last.days, countries, log2.flag = TRUE, per.100k.flag = FALSE, new.flag = TRUE)
 ```
 
 ### Data for Cases
@@ -200,7 +189,7 @@ last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag =
 **warning**: sub-total is only for last 12 days
 
 ```{r}
-last.days.data(my.corona.last.days, 'confirmed') %>% datatable
+last.days.data(last.days.dat, 'confirmed') %>% datatable
 ```
 
 ### Data for Deaths
@@ -208,7 +197,7 @@ last.days.data(my.corona.last.days, 'confirmed') %>% datatable
 **warning**: sub-total is only for last 12 days
 
 ```{r}
-last.days.data(my.corona.last.days, 'death') %>% datatable
+last.days.data(last.days.dat, 'death') %>% datatable
 ```
 
 ## Cases/Deaths by day in Last `r params$last.days` days (per 100k population) {.tabset .tabset-fade .tabset-pills}
@@ -220,25 +209,25 @@ The first data point is the number of new cases that day.
 ### Cases 
 
 ```{r}
-last.days(my.corona.last.days, 'confirmed', params$last.days, countries, log2.flag = FALSE, per.100k.flag = TRUE, new.flag = TRUE)
+last.days(last.days.dat, 'confirmed', params$last.days, countries, log2.flag = FALSE, per.100k.flag = TRUE, new.flag = TRUE)
 ```
 
 ### Deaths
 
 ```{r, warning=FALSE}
-last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag = FALSE, per.100k.flag = TRUE, new.flag = TRUE)
+last.days(last.days.dat, 'death', params$last.days, countries, log2.flag = FALSE, per.100k.flag = TRUE, new.flag = TRUE)
 ```
 
 ### Cases *(log2 scale)*
 
 ```{r, message=FALSE, warning=FALSE}
-last.days(my.corona.last.days, 'confirmed', params$last.days, countries, log2.flag = TRUE, per.100k.flag = TRUE, new.flag = TRUE)
+last.days(last.days.dat, 'confirmed', params$last.days, countries, log2.flag = TRUE, per.100k.flag = TRUE, new.flag = TRUE)
 ```
 
 ### Deaths
 
 ```{r, warning=FALSE}
-last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag = TRUE, per.100k.flag = TRUE, new.flag = TRUE)
+last.days(last.days.dat, 'death', params$last.days, countries, log2.flag = TRUE, per.100k.flag = TRUE, new.flag = TRUE)
 ```
 
 ### Data for Cases
@@ -246,7 +235,7 @@ last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag =
 **warning**: sub-total is only for last 12 days
 
 ```{r}
-last.days.data(my.corona.last.days, 'confirmed') %>% datatable
+last.days.data(last.days.dat, 'confirmed') %>% datatable
 ```
 
 ### Data for Deaths
@@ -254,7 +243,7 @@ last.days.data(my.corona.last.days, 'confirmed') %>% datatable
 **warning**: sub-total is only for last 12 days
 
 ```{r}
-last.days.data(my.corona.last.days, 'death') %>% datatable
+last.days.data(last.days.dat, 'death') %>% datatable
 ```
 
 ## Total Cases/Deaths in the last `r params$last.days` days {.tabset .tabset-fade .tabset-pills}
@@ -266,25 +255,25 @@ The first data point is the number of new cases that day.
 ### Cases 
 
 ```{r}
-last.days(my.corona.last.days, 'confirmed', params$last.days, countries, log2.flag = FALSE, per.100k.flag = FALSE)
+last.days(last.days.dat, 'confirmed', params$last.days, countries, log2.flag = FALSE, per.100k.flag = FALSE)
 ```
 
 ### Deaths
 
 ```{r, warning=FALSE}
-last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag = FALSE, per.100k.flag = FALSE)
+last.days(last.days.dat, 'death', params$last.days, countries, log2.flag = FALSE, per.100k.flag = FALSE)
 ```
 
 ### Cases *(log2 scale)*
 
 ```{r, message=FALSE, warning=FALSE}
-last.days(my.corona.last.days, 'confirmed', params$last.days, countries, log2.flag = TRUE, per.100k.flag = FALSE)
+last.days(last.days.dat, 'confirmed', params$last.days, countries, log2.flag = TRUE, per.100k.flag = FALSE)
 ```
 
 ### Deaths
 
 ```{r, warning=FALSE}
-last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag = TRUE, per.100k.flag = FALSE)
+last.days(last.days.dat, 'death', params$last.days, countries, log2.flag = TRUE, per.100k.flag = FALSE)
 ```
 
 ### Data for Cases
@@ -292,7 +281,7 @@ last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag =
 **warning**: sub-total is only for last 12 days
 
 ```{r}
-last.days.data(my.corona.last.days, 'confirmed', countries) %>% datatable
+last.days.data(last.days.dat, 'confirmed', countries) %>% datatable
 ```
 
 ### Data for Deaths
@@ -300,7 +289,7 @@ last.days.data(my.corona.last.days, 'confirmed', countries) %>% datatable
 **warning**: sub-total is only for last 12 days
 
 ```{r}
-last.days.data(my.corona.last.days, 'death', countries) %>% datatable
+last.days.data(last.days.dat, 'death', countries) %>% datatable
 ```
 
 ## Total Cases/Deaths in the last `r params$last.days` days *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
@@ -312,25 +301,25 @@ The first data point is the number of new cases that day.
 ### Cases 
 
 ```{r}
-last.days(my.corona.last.days, 'confirmed', params$last.days, countries, log2.flag = FALSE, per.100k.flag = TRUE)
+last.days(last.days.dat, 'confirmed', params$last.days, countries, log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
 ### Deaths
 
 ```{r, warning=FALSE}
-last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag = FALSE, per.100k.flag = TRUE)
+last.days(last.days.dat, 'death', params$last.days, countries, log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
 ### Cases *(log2 scale)*
 
 ```{r, message=FALSE, warning=FALSE}
-last.days(my.corona.last.days, 'confirmed', params$last.days, countries, log2.flag = TRUE, per.100k.flag = TRUE)
+last.days(last.days.dat, 'confirmed', params$last.days, countries, log2.flag = TRUE, per.100k.flag = TRUE)
 ```
 
 ### Deaths *(log2 scale)*
 
 ```{r, warning=FALSE}
-last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag = TRUE, per.100k.flag = TRUE)
+last.days(last.days.dat, 'death', params$last.days, countries, log2.flag = TRUE, per.100k.flag = TRUE)
 ```
 
 ### Data for Cases
@@ -338,7 +327,7 @@ last.days(my.corona.last.days, 'death', params$last.days, countries, log2.flag =
 **warning**: sub-total is only for last 12 days
 
 ```{r}
-last.days.data(my.corona.last.days, 'confirmed') %>% datatable
+last.days.data(last.days.dat, 'confirmed') %>% datatable
 ```
 
 ### Data for Deaths
@@ -346,51 +335,47 @@ last.days.data(my.corona.last.days, 'confirmed') %>% datatable
 **warning**: sub-total is only for last 12 days
 
 ```{r}
-last.days.data(my.corona.last.days, 'death') %>% datatable
+last.days.data(last.days.dat, 'death') %>% datatable
 ```
 
 # Rolling average of previous 4 days *(tracking over time)* {.tabset .tabset-fade .tabset-pills}
 
 **Warning**: This visualization is not very intuitive, use it to see the trend over the last days.
 
-```{r}
-last.week <- filter.last.days.cumulative(my.corona, 4)
-```
-
 ## Cases
 
 ```{r}
-last.week.cumulative(last.week, 'confirmed', 4, countries, log2.flag = FALSE, per.100k.flag = FALSE)
+last.week.cumulative(last.week.dat, 'confirmed', 4, countries, log2.flag = FALSE, per.100k.flag = FALSE)
 ```
 
 ## Deaths
 
 ```{r}
-last.week.cumulative(last.week, 'death', 4, countries, log2.flag = FALSE, per.100k.flag = FALSE)
+last.week.cumulative(last.week.dat, 'death', 4, countries, log2.flag = FALSE, per.100k.flag = FALSE)
 ```
 
 ## Cases *(per 100k population)*
 
 ```{r}
-last.week.cumulative(last.week, 'confirmed', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE)
+last.week.cumulative(last.week.dat, 'confirmed', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
 ## Deaths *(per 100k population)*
 
 ```{r}
-last.week.cumulative(last.week, 'death', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE)
+last.week.cumulative(last.week.dat, 'death', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
 ## Data for Cases
 
 ```{r}
-cumulative.last.days.data(last.week, 'confirmed', countries, 4) %>% datatable()
+cumulative.last.days.data(last.week.dat, 'confirmed', countries, 4) %>% datatable()
 ```
 
 ## Data for Deaths
 
 ```{r}
-cumulative.last.days.data(last.week, 'death', countries, 4) %>% datatable()
+cumulative.last.days.data(last.week.dat, 'death', countries, 4) %>% datatable()
 ```
 
 # Cases vs. Death visualizations *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
@@ -402,6 +387,9 @@ This visualization shows the number of cases/deaths per 100k of the population.
 * **size of data point**: Total population of the `r region(1, TRUE)`
 * **label**: Rate of deaths per confirmed cases
 
+## `r region(2, TRUE)`
+
 ```{r}
-death.vs.cases <- filter.death.vs.cases(last.week) %>% filter(state %in% countries.extended)
+death.vs.cases.plot(death.vs.cases, state.filter = countries, expand = FALSE)
 ```
+

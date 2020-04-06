@@ -288,8 +288,8 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
     return(my.plot)
 }
 
-death.vs.cases.plot <- function(dat, state.filter = c(), always.include = c()) {
-    return(dat %>%
+death.vs.cases.plot <- function(dat, state.filter = c(), always.include = c(), expand = TRUE) {
+    my.plot <- dat %>%
         dplyr::filter(length(state.filter) == 0  | state %in% (c(always.include, state.filter) %>% unique)) %>%
         ggplot2::ggplot(ggplot2::aes(x = cases.confirmed, y = cases.death, color = state)) +
             ggplot2::geom_point(ggplot2::aes(size = population), alpha = .4) +
@@ -303,15 +303,20 @@ death.vs.cases.plot <- function(dat, state.filter = c(), always.include = c()) {
                                       segment.alpha = .4,
                                       segment.colour = 'black',
                                       force = 2) +
-            ggplot2::expand_limits(x = ceiling(max(dat %>% dplyr::pull(cases.confirmed))),
-                                   y = ceiling(max(dat %>% dplyr::pull(cases.death)))) +
+            
             ggplot2::labs(x = 'Confirmed Cases per 100k population',
                  y = 'Deaths per 100k population',
                  title = 'Deaths vs. Cases per 100k population',
-                 subtitle = 'scales::percentage is the death rate per confirmed cases and size represents size of {region.code} by population' %>% glue::glue(),
+                 subtitle = 'Percentage shown is the death rate per confirmed cases, while size represents population of {region.code}' %>% glue::glue(),
                  caption = last.date.string) +
             ggplot2::theme_minimal() +
-            ggplot2::theme(legend.position = 'none'))
+            ggplot2::theme(legend.position = 'none')
+    
+    if (expand) {
+        my.plot <- my.plot + ggplot2::expand_limits(x = ceiling(max(dat %>% dplyr::pull(cases.confirmed))),
+                                                    y = ceiling(max(dat %>% dplyr::pull(cases.death))))
+    }
+    return(my.plot)
 }
 
 cases.plot <- function(dat, case.type, filter.states = c()) {

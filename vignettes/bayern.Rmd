@@ -73,15 +73,24 @@ last.date          <- format(max(my.corona.original$date), '%Y/%m/%d')
 last.date.string   <- paste0('Latest date from ', last.date, ' (source: ', source.by, ')')
 region.code        <- 'State'
 region.code.plural <- 'States'
+region.all         <- 'Bayern'
 
 countries                <- 'Bayern'
 countries.always.include <- my.corona$state %>% unique
 countries.extended       <- countries.always.include
 ```
 
+```{r}
+after.100.dat = list(all = filter.after(my.corona, params$death.start, params$confirmed.start)) # my.corona.after.100
+after.100.dat$confirmed = ommit.data(after.100.dat$all, 'confirmed', countries) # my.corona.after.100.confirmed.dat
+after.100.dat$death = ommit.data(after.100.dat$all, 'death', countries) # my.corona.after.100.death.dat
 
+last.days.dat <- filter.last.days(my.corona, params$last.days) # my.corona.last.days
+last.week.dat <- filter.last.days.cumulative(my.corona, 4) # last.week
+death.vs.cases <- filter.death.vs.cases(last.week.dat) %>% filter(state %in% countries.extended) # death.vs.cases
 
-
+my.world <- NULL # removed
+```
 
 ```{r, include=FALSE, eval=FALSE}
 #
@@ -117,12 +126,6 @@ countries.extended       <- countries.always.include
 ```
 
 ```{r, child='_main.Rmd'}
-```
-
-## All states
-
-```{r}
-death.vs.cases.plot(death.vs.cases, always.include = countries.always.include)
 ```
 
 ## Data

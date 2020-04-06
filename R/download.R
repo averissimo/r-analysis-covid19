@@ -9,25 +9,29 @@ download.de.data <- function(by.federal.state = FALSE) {
     #
     ## Package covid19.de.data does not provide accurate last few days
     #
-    # eu.de.raw2 <- covid19.de.data::update_dataset() 
-    # 
-    # eu.data2 <- eu.de.raw2 %>% 
-    #     arrange(desc(date), state) %>% 
-    #     dplyr::group_by(state, date) %>% 
-    #     dplyr::summarise(cases = sum(cases), deaths = sum(deaths)) %>% 
-    #     arrange(desc(date), state) %>% 
-    #     select(state, date, cases, deaths) %>% 
-    #     arrange(date) %>% 
-    #     reshape2::melt(id.vars = c('state', 'date'), variable.name = 'type', value.name = 'cases') %>% 
-    #     dplyr::mutate(type = dplyr::if_else(type == 'cases', 'confirmed', 'death')) %>%
-    #     dplyr::mutate(state.code = state) %>% 
-    #     tibble::tibble() %>% 
-    #     arrange(state, desc(date))
+    eu.de.raw2 <- covid19.de.data::update_dataset.no.age()
+
+     eu.data2 <- eu.de.raw2 %>%
+        arrange(desc(date), state) %>%
+        dplyr::group_by(state, date, NUTS_3) %>%
+        dplyr::summarise(cases = sum(cases.sum), deaths = sum(deaths.sum)) %>%
+        arrange(desc(date), state) %>%
+        select(state, NUTS_3, date, cases, deaths) %>%
+        arrange(date) %>%
+        reshape2::melt(id.vars = c('state', 'date', 'NUTS_3'), measure.vars = c('deaths', 'cases'), variable.name = 'type', value.name = 'cases') %>%
+        tibble::tibble() %>%
+        dplyr::mutate(type = dplyr::if_else(type == 'cases', 'confirmed', 'death')) %>%
+        dplyr::mutate(state.code = state) %>%
+        dplyr::group_by(state, NUTS_3, type) %>%
+        dplyr::arrange(state, desc(date)) %>% 
+        dplyr::mutate(state.code = state,
+                       # need to break down differences between days
+                      cases = zoo::rollapply(cases, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE)) %>% 
+        arrange(desc(date), state)
+
+    eu.de.raw1 <- readr::read_csv('https://github.com/covid19-eu-zh/covid19-eu-data/raw/master/dataset/covid-19-de.csv')
     
-    
-    eu.de.raw <- readr::read_csv('https://github.com/covid19-eu-zh/covid19-eu-data/raw/master/dataset/covid-19-de.csv')
-    
-    eu.data <- eu.de.raw %>%
+    eu.data1 <- eu.de.raw1 %>%
         dplyr::mutate(datetime = anytime::anydate(datetime) - 1,) %>% 
         dplyr::mutate(nuts_1 = gsub('[\u00ad]', '', nuts_1)) %>%
         dplyr::filter(nuts_1 != 'Repatriierte') %>%
@@ -43,13 +47,13 @@ download.de.data <- function(by.federal.state = FALSE) {
                cases = zoo::rollapply(cases, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE)) %>% 
         arrange(state, desc(date))
     
-    # if (max(eu.data2$date) > max(eu.data1$date)) {
-    #     futile.logger::flog.info('DE: Using district data')
-    #     eu.de <- eu.data2
-    # } else {
-    #     eu.de <- eu.data1
-    #     futile.logger::flog.info('DE: Using state data')
-    # }
+    if (max(eu.data2 %>% filter(cases != 0) %>% pull(date)) >= max(eu.data1 %>% filter(cases != 0) %>% pull(date))) {
+        futile.logger::flog.info('DE: Using district data')
+        eu.data <- eu.data2
+    } else {
+        eu.data <- eu.data1
+        futile.logger::flog.info('DE: Using state data')
+    }
 
     if (!by.federal.state) {
         eu.data.out <- eu.data %>% 
@@ -64,6 +68,8 @@ download.de.data <- function(by.federal.state = FALSE) {
             arrange(desc(date))
     } else {
         eu.data.out <- eu.data %>% 
+            dplyr::group_by(state, type, state.code, date) %>% 
+            dplyr::summarize(cases = sum(cases)) %>% 
             dplyr::group_by(state, type, state.code) %>% 
             dplyr::arrange(date) %>% 
             dplyr::mutate(cumul = cumsum(cases)) %>% 
@@ -76,7 +82,7 @@ download.de.data <- function(by.federal.state = FALSE) {
     return(list(data = eu.data.out, source = '{source.date} (RKI)' %>% glue::glue()))
 }
 
-download.it.data <- function() {
+download.it.data <- function(by.state = TRUE) {
     eu.raw <- readr::read_csv('https://github.com/pcm-dpc/COVID-19/raw/master/dati-regioni/dpc-covid19-ita-regioni.csv')
 
     it.nuts.codici <- it.nuts.codici %>%
@@ -108,6 +114,29 @@ download.it.data <- function() {
                cumul = cases,
                cases = zoo::rollapply(cases, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE))
 
+    pop.raw <- download.eurostat.population('IT', 2)
+    
+    # see readme.. this is a problem between EU and IT mapping of regions
+    problem.states <- c('Provincia Autonoma di Bolzano/Bozen', 'Provincia Autonoma di Trento')
+    regions.sum <- pop.raw %>% filter(state %in% problem.states) %>% pull(population) %>% sum
+    
+    populations <- pop.raw %>%
+        filter(!state %in% problem.states) %>% 
+        add_row(state = 'Provincia Autonoma di Trento', population = regions.sum, nuts = 'ITH2')
+    
+    eu.data <- eu.data %>% left_join(populations, by = 'state')
+    
+    if (!by.state) {
+        eu.data <- eu.data %>% 
+            dplyr::ungroup() %>% 
+            dplyr::mutate(state = 'Italy') %>% 
+            dplyr::group_by(state, state.code, type, date) %>% 
+            dplyr::summarise(cases = sum(cases),
+                             population = sum(population)) %>% 
+            dplyr::arrange(date) %>% 
+            dplyr::mutate(cumul = cumsum(cases))
+    }
+    
     source.date <- format(max(eu.data$date), '%Y/%m/%d')
     return(list(data = eu.data, source = '{source.date} (IT PC)' %>% glue::glue()))
 }
@@ -148,7 +177,7 @@ download.eurostat.population <- function(country.code, nuts = 1) {
 
     populations <- eu.population.norm %>%
         dplyr::ungroup() %>%
-        dplyr::select(state = nuts_1_label, population = values)
+        dplyr::select(state = nuts_1_label, population = values, nuts = nuts_1)
 }
 
 

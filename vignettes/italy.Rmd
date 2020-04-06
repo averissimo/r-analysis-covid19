@@ -51,28 +51,18 @@ Sys.setlocale('LC_TIME', 'en_GB.UTF-8')
 ```{r buildCorona, echo=FALSE, message=FALSE, warning=FALSE}
 eu.it <- download.it.data()
 
-my.corona.original <- eu.it$data %>% 
-    mutate(state.code = state)
+my.corona.original <- eu.it$data %>% mutate(state.code = state)
 
 source.by = eu.it$source
 ```
 
 ```{r eurostat}
-pop.raw <- download.eurostat.population('IT', 2)
-
-# see readme.. this is a problem between EU and IT mapping of regions
-problem.states <- c('Provincia Autonoma di Bolzano/Bozen', 'Provincia Autonoma di Trento')
-regions.sum <- pop.raw %>% filter(state %in% problem.states) %>% pull(population) %>% sum
-
-populations <- pop.raw %>%
-    add_row(state = 'Trentino-Aalot Adige/Südtirol', population = regions.sum) %>% 
-    filter(!state %in% problem.states)
-    
-my.corona <- my.corona.original %>% left_join(populations, by = 'state')
+my.corona <- my.corona.original
 
 my.corona <- my.corona %>% 
     ungroup %>%
-    mutate(state.data = factor(state, levels = my.corona %>% filter(type == 'confirmed') %>% summarise(cases = max(cumul)) %>% arrange(cases) %>% pull(state)),
+    mutate(state.data = factor(state, 
+                               levels = my.corona %>% filter(type == 'confirmed') %>% summarise(cases = max(cumul)) %>% arrange(cases) %>% pull(state)),
            state = state) %>%
     group_by(state)
 ```
@@ -82,10 +72,34 @@ last.date          <- format(max(my.corona.original$date), '%Y/%m/%d')
 last.date.string   <- paste0('Latest date from ', last.date, ' (source: ', source.by, ')')
 region.code        <- 'State'
 region.code.plural <- 'States'
+region.all         <- 'Italy'
 
 countries                <- my.corona$state %>% unique
 countries.always.include <- my.corona$state %>% unique
 countries.extended       <- countries.always.include
+```
+
+```{r}
+after.100.dat = list(all = filter.after(my.corona, params$death.start, params$confirmed.start)) # my.corona.after.100
+after.100.dat$confirmed = ommit.data(after.100.dat$all, 'confirmed', countries) # my.corona.after.100.confirmed.dat
+after.100.dat$death = ommit.data(after.100.dat$all, 'death', countries) # my.corona.after.100.death.dat
+
+last.days.dat <- filter.last.days(my.corona, params$last.days) # my.corona.last.days
+last.week.dat <- filter.last.days.cumulative(my.corona, 4) # last.week
+death.vs.cases <- filter.death.vs.cases(last.week.dat) %>% filter(state %in% countries.extended) # death.vs.cases
+
+my.world = list()
+my.world$main <- my.corona %>% 
+    group_by(type, date) %>%
+    summarise(cases = sum(cases), population = sum(population)) %>%
+    arrange(date) %>%
+    group_by(type) %>% 
+    mutate(state = region.all,
+           state.code = region.all,
+           cumul = cumsum(cases),
+           population = max(population, na.rm = TRUE))
+my.world$last.days <- filter.last.days(my.world$main, params$last.days)
+my.world$last.week <- filter.last.days.cumulative(my.world$main, 4)
 ```
 
 ```{r, include=FALSE, eval=FALSE}
@@ -117,16 +131,14 @@ countries.extended       <- countries.always.include
 #
 ```
 
+
 ```{r, child='_data.Rmd'}
 ```
 
-```{r, child='_main.Rmd'}
+```{r, child='_world.Rmd'}
 ```
 
-## All states
-
-```{r}
-death.vs.cases.plot(death.vs.cases, always.include = countries.always.include)
+```{r, child='_main.Rmd'}
 ```
 
 ## Data

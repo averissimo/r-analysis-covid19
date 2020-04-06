@@ -124,6 +124,7 @@ last.date          <- format(max(my.corona.original$date), '%Y/%m/%d')
 last.date.string   <- paste0('Latest date from ', last.date, ' (source: ', source.by, ')')
 region.code        <- 'Country'
 region.code.plural <- 'Countries'
+region.all         <- 'World'
 
 countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'France', 'Switzerland') %>% sort
 
@@ -149,6 +150,29 @@ countries.extended <- c(countries.eu, countries.europe.non.eu, countries.cplp, c
     unique
 ```
 
+```{r}
+after.100.dat = list(all = filter.after(my.corona, params$death.start, params$confirmed.start)) # my.corona.after.100
+after.100.dat$confirmed = ommit.data(after.100.dat$all, 'confirmed', countries) # my.corona.after.100.confirmed.dat
+after.100.dat$death = ommit.data(after.100.dat$all, 'death', countries) # my.corona.after.100.death.dat
+
+last.days.dat <- filter.last.days(my.corona, params$last.days) # my.corona.last.days
+last.week.dat <- filter.last.days.cumulative(my.corona, 4) # last.week
+death.vs.cases <- filter.death.vs.cases(last.week.dat) %>% filter(state %in% countries.extended) # death.vs.cases
+
+my.world = list()
+my.world$main <- my.corona %>% 
+    group_by(type, date) %>%
+    summarise(cases = sum(cases), population = sum(population)) %>%
+    arrange(date) %>%
+    group_by(type) %>% 
+    mutate(state = region.all,
+           state.code = region.all,
+           cumul = cumsum(cases),
+           population = max(population, na.rm = TRUE))
+my.world$last.days <- filter.last.days(my.world$main, params$last.days)
+my.world$last.week <- filter.last.days.cumulative(my.world$main, 4)
+```
+
 ```{r, child='_data.Rmd'}
 ```
 
@@ -160,7 +184,6 @@ countries.extended <- c(countries.eu, countries.europe.non.eu, countries.cplp, c
 
 ```{r, child='_main.Rmd'}
 ```
-
 
 ## EU
 
