@@ -1,9 +1,8 @@
+The report was generated at `r format.Date(Sys.time(), '%A, %B %d %Y at %Hh%M')`
 
 # Preface
 
 This is a personal analysis of the cases of covid-19.
-
-The report was generated at `r date()`
 
 I'm not an Epidemiologist! I'm a researcher with a background in computer science and bioinformatics.
 
