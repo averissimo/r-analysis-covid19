@@ -47,8 +47,8 @@ library(wbstats) # world bank data
 library(reshape2)
 library(eurostat)
 
-BiocManager::install('averissimo/covid19.de.data')
-BiocManager::install('averissimo/covid19.pt.data')
+BiocManager::install('averissimo/covid19.de.data', ask = FALSE)
+BiocManager::install('averissimo/covid19.pt.data', ask = FALSE)
 
 devtools::load_all()
 
@@ -60,17 +60,6 @@ theme_set(
     theme(legend.position = "none")
   )
 ```
-
-# Data
-
-Data was retrieved from oficial sources.
-
-* EU CDC *(if not available it uses John's Hopkins)*
-* Italian Protezione Civil *(IT PC)*
-* Portuguese Direcção Geral da Saúde *(PT DGS)*
-* German Robert Koch's Institute *(DE RKI)*
-
-It's not realtime data and data presented may have 1 or more days of difference from real-time data. Check the caption on the figures to check when was the last data point.
 
 ```{r, message=FALSE, warning=FALSE, include=FALSE}
 eucdc.dat  <- download.eucdc.data()
@@ -153,7 +142,7 @@ region.code        <- 'Country'
 region.code.plural <- 'Countries'
 region.all         <- 'World'
 
-countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'USA', 'France', 'Switzerland', 'Czech Republic', 'Sweden') %>% sort
+countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'USA', 'France', 'Switzerland', 'Czech Republic', 'Sweden', 'United Kingdom') %>% sort
 
 countries.eu <- c('Italy', 'Spain','Germany', 'Portugal', 'France',  
                   'United Kingdom', 'Poland', 'Greece', 'Croatia', 'Slovenia', 
@@ -213,6 +202,10 @@ my.corona %>%
 
 ```{r, child='_data.Rmd'}
 ```
+
+```{r, child='_main_plots.Rmd'}
+```
+
 
 ```{r, child='_world.Rmd'}
 ```

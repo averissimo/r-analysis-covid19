@@ -55,32 +55,18 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
         dplyr::group_by(state, type) %>%
         dplyr::mutate(cumul = dplyr::if_else(rep(per.100k.flag, length(cumul)),
                                cumul * 100000 / population,
-                               as.double(cumul)),
-               cumul.round = round(cumul, digits = digits)) %>%
+                               as.double(cumul))) %>%
         dplyr::mutate(state.code.var = ifelse(state.code.flag, state.code, state)) %>%
         dplyr::group_by(state, state.code.var) %>%
-        dplyr::arrange(-cases) %>% {
-            tmp <- dplyr::summarise(., cases = max(cumul.round))
-            tmp <- dplyr::arrange(tmp, cases)
-            tmp <- dplyr::mutate(tmp,
-                          cases.str = format(cases, trim = TRUE, big.mark = ','),
-                          state.data = paste0(state.code.var, ' (', cases, ')'),
-                          state.data.str = paste0(state.code.var, ' (', cases.str, ')'))
-
-            dplyr::mutate(., state.data = factor(paste0(state.code.var, ' (', max(cumul.round), ')'),
-                                          levels = rev(dplyr::pull(tmp, state.data)),
-                                          labels = rev(dplyr::pull(tmp, state.data.str))))
-        } %>% 
-        dplyr::mutate(label = dplyr::if_else(cumul.round == max(cumul.round), as.character(state.data), NA_character_)) %>% 
-        arrange(., label, desc(date)) %>% 
-        mutate(label = if_else(date == first(date), label, NA_character_)) %>% 
+        dplyr::arrange(-cases) %>% 
+        build.labels('cumul', digits = digits) %>% 
         ungroup
 
     my.plot <- my.plot.data %>%
         ggplot2::ggplot(ggplot2::aes(x = days.after.100, y = cumul, color = state.data)) +
 
-        ggplot2::geom_line(size = 1.2) +
-        ggplot2::geom_point(size = 1.2) +
+        ggplot2::geom_point(size = 2) +
+        ggplot2::geom_line(size = 2) +
 
         ggrepel::geom_label_repel(ggplot2::aes(label = label,
                              fill = state.data),
@@ -155,33 +141,17 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
         dplyr::filter(case.type == 'all' | type == case.type) %>%
         dplyr::mutate(cumul = dplyr::if_else(rep(per.100k.flag, length(cumul)),
                                cumul / population * 100000,
-                               as.double(cumul)),
-               cumul.round = round(cumul, digits = digits)) %>%
+                               as.double(cumul))) %>%
         dplyr::mutate(state.code.var = ifelse(state.code.flag, state.code, state)) %>%
-        dplyr::group_by(state, state.code.var, type) %>% {
-            tmp <- dplyr::summarise(., cases = max(cumul.round))
-            tmp <- dplyr::arrange(tmp, cases)
-            tmp <- dplyr::mutate(tmp,
-                          cases.str = format(cases, trim = TRUE, big.mark = ','),
-                          state.data = paste0(state.code.var, ' (', cases, ')'),
-                          state.data.str = paste0(state.code.var, ' (', cases.str, ')'))
-
-            dplyr::mutate(., state.data = factor(paste0(state.code.var, ' (', max(cumul.round), ')'),
-                                          levels = rev(dplyr::pull(tmp, state.data)),
-                                          labels = rev(dplyr::pull(tmp, state.data.str))))
-            } %>%
-        dplyr::mutate(label = dplyr::if_else(cumul.round == max(cumul.round), 
-                                             format(state.data, trim = TRUE, big.mark = ','), 
-                                             NA_character_)) %>%
-        arrange(., label, desc(date)) %>% 
-        mutate(label = if_else(date == first(date), label, NA_character_)) %>% 
+        dplyr::group_by(state, state.code.var, type) %>% 
+        build.labels('cumul', digits = digits) %>% 
         dplyr::filter(cumul > 0) %>%
         ungroup
 
     my.plot <- my.plot.data %>%
         ggplot2::ggplot(ggplot2::aes(x = days.before.now, y = cumul, color = state.data)) +
-            ggplot2::geom_line(size = 1.2) +
-            ggplot2::geom_point(size = 1.2) +
+            ggplot2::geom_point(size = 2) +
+            ggplot2::geom_line(size = 2) +
             ggrepel::geom_label_repel(ggplot2::aes(label = label,
                                      fill = state.data),
                              na.rm = TRUE,
@@ -212,6 +182,40 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
 }
 
 
+build.labels <- function(input, order.by, digits = 2) {
+    my.format <- function(val) {
+        val %>% 
+            round(digits = digits) %>% 
+            format(big.mark = ',', trim = FALSE) %>% 
+            return()
+    }
+    
+    tmp <- input %>% 
+        group_by(state) %>% 
+        arrange(desc(date), desc(!!as.name(order.by))) %>% 
+        mutate(state.data = state.code.var,
+               state.data.order = !!as.name(order.by),
+               state.data.val.max = max(!!as.name(order.by)),
+               state.data.val.last = first(!!as.name(order.by))) %>% 
+        mutate(state.data.label = if_else(state.data.val.max == state.data.val.last,
+                                          paste0(state.code.var, 
+                                                 ': ', 
+                                                 state.data.val.max %>% my.format),
+                                          paste0(state.code.var, 
+                                                 ': ', 
+                                                 state.data.val.max %>% my.format, 
+                                                 ' (today: ', 
+                                                 state.data.val.last %>% my.format,
+                                                 ')')))
+    
+    tmp %>% 
+        mutate(label = if_else(state.data.order == max(state.data.order), state.data.label, NA_character_),
+               state.data = factor(state.data,
+                                   levels = .$state.data %>% unique)) %>% 
+        select(-state.data.label, state.data.val.last, state.data.val.max, state.data.order) %>% 
+        return()
+}
+
 last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE, digits = 2, state.code.flag = TRUE) {
     lab.y <- 'Number of cases confirmed in previous {days} days' %>% glue::glue()
     lab.t <- 'Rolling Average \'{proper.cases(case.type, capitalize = TRUE)}\' for the last {days} days' %>% glue::glue()
@@ -240,31 +244,18 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
     my.plot.data <- dat.norm %>%
         dplyr::filter(length(filter.states) == 0 | state %in% filter.states) %>%
         dplyr::mutate(last.week.var = dplyr::if_else(rep(per.100k.flag, length(last.week.var)),
-                                       last.week.var / population * 100000,
-                                       as.double(last.week.var)),
-               last.week.var.round = round(last.week.var, digits = digits)) %>%
+                                                     last.week.var / population * 100000,
+                                                     as.double(last.week.var)),
+                      last.week.var.round = round(last.week.var, digits = digits)) %>%
         dplyr::mutate(state.code.var = ifelse(state.code.flag, state.code, state)) %>%
-        dplyr::group_by(state, state.code.var) %>% {
-            tmp <- dplyr::summarise(., cases = max(last.week.var.round))
-            tmp <- dplyr::arrange(tmp, cases)
-            tmp <- dplyr::mutate(tmp,
-                          cases.str = format(cases, trim = TRUE, big.mark = ','),
-                          state.data = paste0(state.code.var, ' (', cases, ')'),
-                          state.data.str = paste0(state.code.var, ' (', cases.str, ')'))
-
-            dplyr::mutate(., state.data = factor(paste0(state.code.var, ' (', max(last.week.var.round), ')'),
-                                          levels = rev(dplyr::pull(tmp, state.data)),
-                                          labels = rev(dplyr::pull(tmp, state.data.str))))
-        } %>%
-        dplyr::mutate(label = dplyr::if_else(last.week.var.round == max(last.week.var.round), format(state.data, trim = TRUE, big.mark = ','), NA_character_)) %>% 
-        arrange(., label, desc(date)) %>% 
-        mutate(label = if_else(date == first(date), label, NA_character_))
-
+        dplyr::group_by(state, state.code.var) %>% 
+        build.labels('last.week.var', digits = digits)
+    
     my.plot <- my.plot.data %>%
         #
         ggplot2::ggplot(ggplot2::aes(x = date, y = last.week.var, color = state.data)) +
-            ggplot2::geom_line(size = 1.2) +
-            ggplot2::geom_point(size = 1.2) +
+            ggplot2::geom_point(size = 2) +
+            ggplot2::geom_line(size = 2) +
                     ggrepel::geom_label_repel(ggplot2::aes(label = label,
                                          fill = state.data),
                                      na.rm = TRUE,

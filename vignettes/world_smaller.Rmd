@@ -179,6 +179,9 @@ my.world$last.week <- filter.last.days.cumulative(my.world$main, 4)
 ```{r, child='_data.Rmd'}
 ```
 
+```{r, child='_main_plots.Rmd'}
+```
+
 ```{r, child='_world.Rmd'}
 ```
 

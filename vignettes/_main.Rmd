@@ -387,7 +387,7 @@ This visualization shows the number of cases/deaths per 100k of the population.
 * **size of data point**: Total population of the `r region(1, TRUE)`
 * **label**: Rate of deaths per confirmed cases
 
-## `r region(2, TRUE)`
+## `r region(2)`
 
 ```{r}
 death.vs.cases.plot(death.vs.cases, state.filter = countries, expand = FALSE)
