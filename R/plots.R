@@ -35,7 +35,10 @@ top30 <- function(dat, case.type, n = 30) {
     return(my.plot)
 }
 
-
+# dat <- my.world$main
+# case.type <- 'all'
+# case.type <- 'confirmed'
+# start_of <- 100 ; filter.states = c() ; log2.flag = FALSE ; per.100k.flag = FALSE ; double.every = NULLdigits = 2 ; state.code.flag = TRUE
 ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag = FALSE, per.100k.flag = FALSE, double.every = NULL, digits = 2, state.code.flag = TRUE) {
     lab.y <- proper.cases(case.type, capitalize = TRUE)
     lab.t <- '\'{proper.cases(case.type, capitalize = TRUE)}\' over time' %>% glue::glue()
@@ -56,7 +59,8 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
     if (case.type == 'all') {
         dat <- dat %>%
             dplyr::ungroup() %>%
-            dplyr::mutate(state = paste0(state, ' - ', type))
+            dplyr::mutate(state = paste0(state, ' - ', proper.cases(type)),
+                          state.code = paste0(state.code, ' - ', proper.cases(type)))
     }
 
     my.plot.data <- dat %>%
@@ -145,7 +149,8 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
     if (case.type == 'all') {
         dat.norm <- dat.norm %>%
             dplyr::ungroup() %>%
-            dplyr::mutate(state = paste0(state, ' - ', type))
+            dplyr::mutate(state = paste0(state, ' - ', proper.cases(type)),
+                          state.code = paste0(state.code, ' - ', proper.cases(type)))
     }
 
     my.plot.data <- dat.norm %>%
@@ -239,7 +244,7 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
         lab.y <- paste0(lab.y, ' -- per 100k population')
         lab.t <- paste0(lab.t, ' -- per 100k population')
     }
-
+    
     dat.norm <- if (case.type == 'confirmed') {
         dat %>%
             dplyr::mutate(last.week.var = last.week.cases.confirmed)
@@ -252,16 +257,16 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
                  measure.vars = c('last.week.cases.confirmed', 'last.week.cases.death'),
                  variable.name = 'type', value.name = 'last.week.var') %>%
             dplyr::mutate(type.aux = dplyr::if_else(type == 'last.week.cases.confirmed', 'confirmed', 'death'),
-                   state = paste0(state, ' - ', proper.cases(type.aux, capitalize = TRUE)))
+                          state = paste0(state, ' - ', proper.cases(type.aux, capitalize = TRUE)),
+                          state.code = paste0(state.code, ' - ', proper.cases(type.aux, capitalize = TRUE)))
     }
 
     my.plot.data <- dat.norm %>%
         dplyr::filter(length(filter.states) == 0 | state %in% filter.states) %>%
         dplyr::mutate(last.week.var = dplyr::if_else(rep(per.100k.flag, length(last.week.var)),
                                                      last.week.var / population * 100000,
-                                                     as.double(last.week.var)),
-                      last.week.var.round = round(last.week.var, digits = digits)) %>%
-        dplyr::mutate(state.code.var = ifelse(state.code.flag, state.code, state)) %>%
+                                                     as.double(last.week.var))) %>%
+        dplyr::mutate(state.code.var = if_else(rep(state.code.flag, length(state.code)), state.code, state)) %>%
         dplyr::group_by(state, state.code.var) %>% 
         build.labels('last.week.var', digits = digits)
     

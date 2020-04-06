@@ -121,7 +121,7 @@ latest('Italy', world.dat.norm, it.dat.raw)
 last.date        <- source.by
 last.date.string <- paste0('Latest date from ', last.date)
 
-my.corona.original <- world.dat$data %>% 
+my.corona.original <- world.dat.norm$data %>% 
     filter(state != 'Diamond Princess') %>%
     ungroup() %>%
     mutate(state.code = tolower(state.code)) %>% 
