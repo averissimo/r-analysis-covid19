@@ -24,6 +24,7 @@ filter.last.days <- function(dat, days) {
 filter.last.days.cumulative <- function(dat, days = 4, fun = mean) {
 
     last.week.tmp <- dat %>%
+        fill.missing() %>% 
         dplyr::group_by(state, type) %>%
         dplyr::arrange(desc(date)) %>%
         dplyr::ungroup() %>%

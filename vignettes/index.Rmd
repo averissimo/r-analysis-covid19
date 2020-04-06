@@ -196,6 +196,17 @@ my.world$last.days <- filter.last.days(my.world$main, params$last.days)
 my.world$last.week <- filter.last.days.cumulative(my.world$main, 4)
 ```
 
+```{r, eval=FALSE, include=FALSE}
+my.corona %>% 
+  top_n(3, date) %>% 
+  dcast(state + date ~ type, value.var = 'cases')
+
+my.corona %>% 
+  filter(cases != 0) %>% 
+  top_n(2, date) %>% 
+  dcast(state + date ~ type, value.var = 'cases')
+```
+
 
 ```{r, child='_data.Rmd'}
 ```
