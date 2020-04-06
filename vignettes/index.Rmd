@@ -47,6 +47,9 @@ library(wbstats) # world bank data
 library(reshape2)
 library(eurostat)
 
+BiocManager::install('averissimo/covid19.de.data')
+BiocManager::install('averissimo/covid19.pt.data')
+
 devtools::load_all()
 
 Sys.setlocale('LC_TIME', 'en_GB.UTF-8')
