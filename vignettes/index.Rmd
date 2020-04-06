@@ -47,8 +47,8 @@ library(wbstats) # world bank data
 library(reshape2)
 library(eurostat)
 
-BiocManager::install('averissimo/covid19.de.data', ask = FALSE)
-BiocManager::install('averissimo/covid19.pt.data', ask = FALSE)
+BiocManager::install('averissimo/covid19.de.data', ask = FALSE, update = TRUE)
+BiocManager::install('averissimo/covid19.pt.data', ask = FALSE, update = TRUE)
 
 devtools::load_all()
 
