@@ -26,16 +26,16 @@ Source code is available at
 All the data and analysis was processed in [R programming
 language](https://www.r-project.org/).
 
-Data is retrieved from official sources and is not in real time. It is
-updated once or twice a day in those sources, which reflect in the
-reports in under an hour.
+Data is retrieved from official sources and they are usually updated
+once or twice every 24h. The report itself is updated every 15minutes,
+even if there are no changes in the data.
 
 #### Data
 
 World data is retrieved from [EU
 CDC](https://data.europa.eu/euodp/en/data/dataset/covid-19-coronavirus-data)
-and unless it’s delayed this is the main source. When the release is
-delayed we use [John
+and is used as the main data source. When there is a delay on the
+release, we alternatively use [John
 Hopkin’s](https://github.com/CSSEGISandData/COVID-19/).
 
 Currently, the only exception is for Portugal’s data, which is updated
