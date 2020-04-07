@@ -57,8 +57,7 @@ Mapping for Italy codici\_regione taken from
 [istat](https://www.istat.it/it/archivio/6789) *(note: two regions are
 mapped to same NUTS 2, we chose one – see `download.it.data`)*
 
-Badge showing problems with report generation
-
+Badge showing problems with report generation:
 ![<https://github.com/averissimo/covid19-analysis/actions>](https://github.com/averissimo/covid19-analysis/workflows/.github/workflows/main.yml/badge.svg)
 
 ## Some Interesting plots

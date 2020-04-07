@@ -36,9 +36,7 @@ We also use Eurostat and World Bank for relevant statistics and populations.
 
 Mapping for Italy codici_regione taken from [istat](https://www.istat.it/it/archivio/6789) *(note: two regions are mapped to same NUTS 2, we chose one -- see `download.it.data`)*
 
-Badge showing problems with report generation
-
-![https://github.com/averissimo/covid19-analysis/actions](https://github.com/averissimo/covid19-analysis/workflows/.github/workflows/main.yml/badge.svg)
+Badge showing problems with report generation: ![https://github.com/averissimo/covid19-analysis/actions](https://github.com/averissimo/covid19-analysis/workflows/.github/workflows/main.yml/badge.svg)
 
 ```{r, include=FALSE, eval=FALSE}
 rmarkdown::render("/home/averissimo/work/covid19/r-analysis/vignettes/_README.Rmd", output_file = 'README.md')
