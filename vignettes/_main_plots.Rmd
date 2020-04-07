@@ -1,6 +1,6 @@
-# Main results
+# Main results {.tabset .tabset-fade .tabset-pills}
 
-The plots below show the most informative taken from existing data for confirmed cases and deaths.
+The 3 plots below show the most informative taken from existing data for confirmed cases and deaths.
 
 ## Deaths / Confirmed rate per `r region(2)`
 
