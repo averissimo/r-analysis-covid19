@@ -3,8 +3,8 @@ COVID19 Analysis by @averissimo
 
 This is an exploratory analysis of worldwide COVID-19 cases/deaths.
 
-The full analysis can be found in one of the links below and updated 2
-times a day
+The full analysis can be found in one of the links below and is updated
+as the data is updated.
 
   - [World](https://averissimo.github.io/covid19-analysis/)
   - [Germany](https://averissimo.github.io/covid19-analysis/germany.html)
