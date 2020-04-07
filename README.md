@@ -60,3 +60,27 @@ mapped to same NUTS 2, we chose one – see `download.it.data`)*
 Badge showing problems with report generation
 
 ![<https://github.com/averissimo/covid19-analysis/actions>](https://github.com/averissimo/covid19-analysis/workflows/.github/workflows/main.yml/badge.svg)
+
+## Some Interesting plots
+
+These are included in the full analysis. They are showing data for a
+select group of countries.
+
+### Death / Confirmed cases rate
+
+Percentage shows the Death rate per cases. Size of circle represents the
+size of the population.
+
+![](https://averissimo.github.io/covid19-analysis/index_files/figure-html/main_plots_death_cases-1.svg)
+
+### Rolling average of past 4 days
+
+Each data point is an average of the previous 4 days
+
+![](https://averissimo.github.io/covid19-analysis/index_files/figure-html/main_plots_last_week_cumulative_cases-1.svg)
+
+### Rolling average of deaths *(per 100k population)*
+
+Each data point is an average of the previous 4 days
+
+![](https://averissimo.github.io/covid19-analysis/index_files/figure-html/main_plots_last_week_cumulative_deaths-1.svg)
