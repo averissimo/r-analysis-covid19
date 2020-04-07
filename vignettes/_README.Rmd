@@ -1,0 +1,31 @@
+---
+title: COVID19 Analysis by @averissimo
+output: github_document
+---
+
+This is an exploratory analysis of worldwide COVID-19 cases/deaths.
+
+Full analysis in one of the links below and updated 2 times a day
+
+* [World](https://averissimo.github.io/covid19-analysis/)
+* [Germany](https://averissimo.github.io/covid19-analysis/germany.html) *(by state)*
+* [Italy](https://averissimo.github.io/covid19-analysis/italy.html) *(by regione)*
+* [Bavaria](https://averissimo.github.io/covid19-analysis/bayer.html) *(Germany)*
+
+Analysis by age group:
+
+* [Germany](https://averissimo.github.io/covid19.de.data/) *(by district)*
+
+### Notes
+
+Data is mainly from EU CDC with some updates from Italy, Portugal and Germany's institutes responsible with this pandemic.
+
+We also use Eurostat and World Bank for relevant statistics and populations.
+
+Mapping for Italy codici_regione taken from [istat](https://www.istat.it/it/archivio/6789) *(note: two regions are mapped to same NUTS 2, we chose one -- see `download.it.data`)*
+
+```{r, include=FALSE, eval=FALSE}
+rmarkdown::render("/home/averissimo/work/covid19/r-analysis/vignettes/_README.Rmd", output_file = 'README.md')
+file.rename('README.md', '../README.md')
+```
+

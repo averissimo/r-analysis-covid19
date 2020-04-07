@@ -1,8 +1,19 @@
-## covid-19 analysis
+COVID19 Analysis by @averissimo
+================
 
-See analysis:
+This is an exploratory analysis of worldwide COVID-19 cases/deaths.
 
-* Global: https://averissimo.github.io/covid19-analysis/ 
-* Germany: https://averissimo.github.io/covid19-analysis/germany.html
+Full analysis in one of the links below and updated 2 times a day
 
-Mapping for Italy codici_regione taken from [istat](https://www.istat.it/it/archivio/6789) *(note: two regions are mapped to same NUTS 2, we chose one -- see `download.it.data`)*
+  - [World](https://averissimo.github.io/covid19-analysis/)
+  - [Germany](https://averissimo.github.io/covid19-analysis/germany.html)
+    *(by state)*
+  - [Italy](https://averissimo.github.io/covid19-analysis/italy.html)
+    *(by regione)*
+  - [Bavaria](https://averissimo.github.io/covid19-analysis/bayer.html)
+    *(Germany)*
+
+Analysis by age group:
+
+  - [Germany](https://averissimo.github.io/covid19.de.data/) *(by
+    district)*
