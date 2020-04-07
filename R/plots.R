@@ -96,10 +96,10 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
                          force = plot.options('label.force')) +
 
         ggplot2::labs(y = lab.y,
-             x = lab.x,
-             title = lab.t,
-             subtitle = lab.s,
-             caption = last.date.string) +
+                      x = lab.x,
+                      title = lab.t,
+                      subtitle = lab.s,
+                      caption = last.date.string) +
         ggplot2::scale_color_viridis_d(end = .85, option = 'A') +
         ggplot2::scale_fill_viridis_d(end = .85, option = 'A') +
         ggplot2::theme_minimal() +
@@ -110,7 +110,9 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
             scale_y_continuous('{lab.y} (log2 scale)' %>% glue::glue(), trans = 'log2' %>% glue::glue())
     } else if (log2.flag) {
         my.plot <- my.plot +
-            scale_y_continuous('{lab.y} (log2 scale)' %>% glue::glue(), trans = 'log2' %>% glue::glue(), labels = function(val) { round(val, digits = 6) })
+            scale_y_continuous('{lab.y} (log2 scale)' %>% glue::glue(), 
+                               trans = 'log2', 
+                               labels = function(val) { round(val, digits = 6) })
     }
 
 
