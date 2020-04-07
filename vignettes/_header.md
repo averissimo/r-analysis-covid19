@@ -1,4 +1,4 @@
-The report was generated on `r format.Date(Sys.time(), '%A, %B %d, %Y at %Hh%M %Z')`
+The report was generated on `r format.Date(Sys.time(), '%A, %B %d, %Y at %Hh%M %Z (%z)')`
 
 # Preface
 
