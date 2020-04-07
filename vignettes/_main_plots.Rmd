@@ -2,7 +2,7 @@
 
 The 3 plots below show the most informative taken from existing data for confirmed cases and deaths.
 
-## Deaths / Confirmed rate per `r region(2)`
+## Deaths / Confirmed rate
 
 Rate of death per number of confirmed case. Note that this is heavily dependand on the number of tests being performed *(data not available in this report)*
 
@@ -10,7 +10,7 @@ Rate of death per number of confirmed case. Note that this is heavily dependand 
 death.vs.cases.plot(death.vs.cases, state.filter = countries, expand = FALSE)
 ```
 
-## Rolling Average of Confirmed Cases *(per 100k population)*
+## Average of Confirmed Cases *(per 100k population)*
 
 Each data point is an average of new cases from the previous 4 days
 
@@ -18,7 +18,7 @@ Each data point is an average of new cases from the previous 4 days
 last.week.cumulative(last.week.dat, 'confirmed', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
-## Rolling Average of Deaths *(per 100k population)*
+## Average of Deaths *(per 100k population)*
 
 Each data point is an average of new cases from the previous 4 days.
 
