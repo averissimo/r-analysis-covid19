@@ -23,10 +23,14 @@ Analysis by age group:
 
 Source code is available at
 [averissimo/r-analysis-covid19](https://github.com/averissimo/r-analysis-covid19).
-The design of the report was made in [R programming
+All the data and analysis was processed in [R programming
 language](https://www.r-project.org/).
 
-Data is retrieved from official sources.
+Data is retrieved from official sources and is not in real time. It is
+updated once or twice a day in those sources, which reflect in the
+reports in under an hour.
+
+#### Data
 
 World data is retrieved from [EU
 CDC](https://data.europa.eu/euodp/en/data/dataset/covid-19-coronavirus-data)
@@ -41,7 +45,7 @@ report](https://covid19.min-saude.pt/relatorio-de-situacao/) and store
 the updated dataset in a data package
 [averissimo/covid19.pt.data](https://github.com/averissimo/covid19.pt.data).
 
-### Notes
+**Notes**
 
 Data is mainly from EU CDC with some updates from Italy, Portugal and
 Germany’s institutes responsible with this pandemic.
