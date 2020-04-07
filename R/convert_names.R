@@ -47,6 +47,7 @@ eu.convert.names <- function(val) {
     'Congo, Rep.' =  'Congo',
     'Cote d\'Ivoire' =  'Cote dIvoire',
     'Congo, Dem. Rep.' =  'Democratic Republic of the Congo',
+    'Czechia' = 'Czech Republic',
     'Egypt, Arab Rep.' =  'Egypt',
     'Gambia, The' =  'Gambia',
     'Guinea-Bissau' =  'Guinea Bissau',
