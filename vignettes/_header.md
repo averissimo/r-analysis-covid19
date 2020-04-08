@@ -14,7 +14,7 @@ The source code is at [github.com/averissimo/covid19-analysis](https://github.co
 * [Germany](https://averissimo.github.io/covid19-analysis/germany.html) *(by state)*
 * [Italy](https://averissimo.github.io/covid19-analysis/italy.html) *(by regione)*
 * [Bavaria](https://averissimo.github.io/covid19-analysis/bayer.html) *(Germany)*
-* [Germany](https://averissimo.github.io/covid19-de_rki-data/) *(by district)*
+* [Germany](https://averissimo.github.io/covid19.de.data/) *(by district)*
 
 ## Symptoms *(count)* for Portugal
 
