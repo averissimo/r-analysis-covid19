@@ -75,8 +75,7 @@ size of the population.
 ### Rolling average of past 4 days
 
 Each data point is an average of the previous 4 days
-
-![](https://averissimo.github.io/covid19-analysis/index_files/figure-html/main_plots_last_week_cumulative_cases-1.svg)
+![](https://averissimo.github.io/covid19-analysis/index_files/figure-html/main_plots_last_week_cumulative_confirmed-1.svg)
 
 ### Rolling average of deaths *(per 100k population)*
 
