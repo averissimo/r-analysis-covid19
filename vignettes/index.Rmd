@@ -80,8 +80,6 @@ if (max(jh.dat$data$date) > max(eucdc.dat$data$date)) {
 #  state.ix[!state.ix %in% (eucdc.dat$data$state %>% unique())]  
 }
 
-world.dat <- jh.dat  
-
 it.dat.raw <- download.it.data(by.state = FALSE)
 pt.dat.raw <- download.pt.data() 
 de.dat.raw <- download.de.data()
