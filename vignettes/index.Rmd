@@ -34,6 +34,8 @@ BiocManager::install('averissimo/covid19.de.data')
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, collapse = TRUE, fig.width = 10, fig.height = 8)
 library(dplyr)
+library(purrr)
+library(tibble)
 library(viridis) # color pallete
 library(ggrepel)
 library(zoo)
@@ -76,6 +78,8 @@ if (max(jh.dat$data$date) > max(eucdc.dat$data$date)) {
 #  state.ix <- jh.dat$data$state %>% unique()
 #  state.ix[!state.ix %in% (eucdc.dat$data$state %>% unique())]  
 }
+
+world.dat <- jh.dat  
 
 it.dat.raw <- download.it.data(by.state = FALSE)
 pt.dat.raw <- download.pt.data() 
@@ -185,6 +189,14 @@ my.world$main <- my.corona %>%
            state.code = region.all,
            cumul = cumsum(cases),
            population = max(population, na.rm = TRUE))
+
+# Only for world population
+my.world$main$population <- run.cache(wb, indicator = "SP.POP.TOTL", show.message = FALSE) %>% 
+  filter(country == 'World') %>% 
+  top_n(1, date) %>%
+  pull(value) %>% 
+  pluck(1)
+
 my.world$last.days <- filter.last.days(my.world$main, params$last.days)
 my.world$last.week <- filter.last.days.cumulative(my.world$main, 4)
 ```

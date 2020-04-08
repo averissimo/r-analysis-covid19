@@ -60,7 +60,7 @@ source.by = eu.de$source
 ```
 
 ```{r eurostat}
-y.corona <- my.corona.original
+my.corona <- my.corona.original
 
 my.corona <- my.corona %>% 
     ungroup %>%
@@ -71,7 +71,7 @@ my.corona <- my.corona %>%
 
 ```{r}
 last.date          <- format(max(my.corona.original$date), '%Y/%m/%d')
-last.date.string   <- paste0('Latest date from ', last.date, ' (source: ', source.by, ')')
+last.date.string   <- paste0('Latest data from ', source.by)
 region.code        <- 'State'
 region.code.plural <- 'States'
 region.all         <- 'Germany'

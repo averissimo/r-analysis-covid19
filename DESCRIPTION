@@ -21,6 +21,7 @@ Suggests:
 Imports:
   dplyr,
   tibble,
+  purrr,
   ggplot2,
   ggrepel,
   zoo,
