@@ -49,7 +49,7 @@ last.week.cumulative(my.world$last.week, 'all', 4, c(), log2.flag = TRUE, per.10
 
 Total cumulative numbers per 100k population. *(warning: data for today is partial)*
 
-```{r rolling.average.per.100k}
+```{r over.time.cases.per.100k}
 ommit.start(my.world$main, 'all', params$confirmed.start, per.100k.flag = TRUE)
 ```
 
@@ -57,7 +57,7 @@ ommit.start(my.world$main, 'all', params$confirmed.start, per.100k.flag = TRUE)
 
 Total cumulative numbers in log2 scale per 100k population. *(warning: data for today is partial)*
 
-```{r rolling.average.log2.per.100k, warning=FALSE}
+```{r over.time.log2.per.100k, warning=FALSE}
 ommit.start(my.world$main, 'all', params$confirmed.start, per.100k.flag = TRUE, log2.flag = TRUE, digits = 2)
 ```
 

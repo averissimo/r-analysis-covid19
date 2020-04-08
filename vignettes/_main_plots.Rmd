@@ -7,21 +7,71 @@ The 3 plots below show the most informative taken from existing data for confirm
 Rate of death per number of confirmed case. Note that this is heavily dependand on the number of tests being performed *(data not available in this report)*
 
 ```{r main_plots_death_cases}
-death.vs.cases.plot(death.vs.cases, state.filter = countries, expand = FALSE)
+death.vs.cases.plot(death.vs.cases, state.filter = countries, expand = FALSE) 
 ```
 
 ## Average of Confirmed Cases *(per 100k population)*
 
 Each data point is an average of new cases from the previous 4 days
 
-```{r main_plots_last_week_cumulative_cases}
-last.week.cumulative(last.week.dat, 'confirmed', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE)
+```{r main_plots_last_week_cumulative_cases.plotly}
+suppressWarnings({
+  p <- last.week.cumulative(last.week.dat, 'confirmed', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE) %>% ggplotly()
+})
+
+d <- plotly_data(p) %>%  
+  mutate(text = format(last.week.var, digits = 2, big.mark = ',')) %>% 
+  select(Country = state,  Date = date,  'Average Cases' = last.week.var, text) %>% 
+  arrange(Date) %>% 
+  highlight_key(~Country)
+
+pal <- viridis(plotly_data(p) %>% nrow, end = .8, option = 'A')
+
+d %>% plot_ly() %>% 
+  add_trace(x = ~Date, 
+            y = ~`Average Cases`, 
+            color = ~Country, 
+            type = 'scatter',
+            mode = 'lines+markers', 
+            colors = pal, 
+            name = ~Country,
+            customdata = '',
+            hovertemplate = paste0('<i>Value:</i> %{y:.2f}', '<br><i> Date:</i> %{x}'),
+            text = ~Country
+            ) %>% 
+  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE) %>% 
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick')
 ```
 
 ## Average of Deaths *(per 100k population)*
 
 Each data point is an average of new cases from the previous 4 days.
 
-```{r main_plots_last_week_cumulative_deaths}
-last.week.cumulative(last.week.dat, 'death', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE)
+```{r main_plots_last_week_cumulative_deaths.plotly}
+suppressWarnings({
+  p <- last.week.cumulative(last.week.dat, 'death', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE) %>% ggplotly()
+})
+
+d <- plotly_data(p) %>%  
+  mutate(text = format(last.week.var, digits = 2, big.mark = ',')) %>% 
+  select(Country = state,  Date = date,  'Average Cases' = last.week.var, text) %>% 
+  arrange(Date) %>% 
+  highlight_key(~Country)
+
+pal <- viridis(plotly_data(p) %>% nrow, end = .8, option = 'A')
+
+d %>% plot_ly() %>% 
+  add_trace(x = ~Date, 
+            y = ~`Average Cases`, 
+            color = ~Country, 
+            type = 'scatter',
+            mode = 'lines+markers', 
+            colors = pal, 
+            name = ~Country,
+            customdata = '',
+            hovertemplate = paste0('<i>Value:</i> %{y:.2f}', '<br><i> Date:</i> %{x}'),
+            text = ~Country
+            ) %>% 
+  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE) %>% 
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick')
 ```

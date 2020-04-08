@@ -283,7 +283,7 @@ death.vs.cases.plot(death.vs.cases, state.filter = countries.cplp, always.includ
 ## Data
 
 ```{r}
-death.vs.cases.data(death.vs.cases) %>% datatable()
+death.vs.cases.data(death.vs.cases) %>% datatable(rownames = FALSE)
 ```
 
 ## Number of Confirmed Cases
@@ -349,7 +349,7 @@ plot.beds.vs.cases(countries.cplp)
 ## Data
 
 ```{r}
-something.vs.cases.data(beds.vs.cases, 'Beds') %>% datatable()
+something.vs.cases.data(beds.vs.cases, 'Beds') %>% datatable(rownames = FALSE)
 ```
 
 # Nurses and Midwifes *(per 100k population)*  {.tabset .tabset-fade .tabset-pills}
@@ -390,7 +390,7 @@ plot.nurses.vs.cases(countries.cplp)
 ## Data
 
 ```{r}
-something.vs.cases.data(nurses.vs.cases, 'Nurses') %>% datatable()
+something.vs.cases.data(nurses.vs.cases, 'Nurses') %>% datatable(rownames = FALSE)
 ```
 
 # Physicians *(per 100k population)*  {.tabset .tabset-fade .tabset-pills}
@@ -431,7 +431,7 @@ plot.physicians.vs.cases(countries.cplp)
 ## Data
 
 ```{r}
-something.vs.cases.data(physicians.vs.cases, 'Nurses') %>% datatable()
+something.vs.cases.data(physicians.vs.cases, 'Nurses') %>% datatable(rownames = FALSE)
 ```
 
 

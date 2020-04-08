@@ -310,7 +310,7 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
 death.vs.cases.plot <- function(dat, state.filter = c(), always.include = c(), expand = TRUE) {
     my.plot <- dat %>%
         dplyr::filter(length(state.filter) == 0  | state %in% (c(always.include, state.filter) %>% unique)) %>%
-        ggplot2::ggplot(ggplot2::aes(x = cases.confirmed, y = cases.death, color = state)) +
+        ggplot2::ggplot(ggplot2::aes(x = cases.confirmed, y = cases.death, color = state, text = paste0('Rate: ', scales::percent(ratio, accuracy = .1)))) +
             ggplot2::geom_point(ggplot2::aes(size = population), alpha = .4) +
             ggrepel::geom_label_repel(ggplot2::aes(label = paste0(state, ' (', scales::percent(ratio, accuracy = .1), ')'),
                                       fill = state),

@@ -15,13 +15,13 @@ top30(my.corona, 'death')
 ## Data Cases
 
 ```{r}
-my.corona %>% top30.data('confirmed') %>% datatable
+my.corona %>% top30.data('confirmed') %>% datatable(rownames = FALSE)
 ```
 
 ## Data Deaths
 
 ```{r}
-my.corona %>% top30.data('death') %>% datatable
+my.corona %>% top30.data('death') %>% datatable(rownames = FALSE)
 ```
 
 # Confirmed cases / Deaths {.tabset .tabset-fade .tabset-pills}
@@ -53,13 +53,13 @@ ommit.start(my.corona, 'death', params$confirmed.start, filter.states = countrie
 ## Data for Confirmed
 
 ```{r}
-ommit.data(my.corona, 'confirmed') %>% datatable
+ommit.data(my.corona, 'confirmed') %>% datatable(rownames = FALSE)
 ```
 
 ## Data for Deaths
 
 ```{r}
-ommit.data(my.corona, 'confirmed') %>% datatable
+ommit.data(my.corona, 'confirmed') %>% datatable(rownames = FALSE)
 ```
 
 # Confirmed cases / Deaths *(ommiting early start of epidemic)*
@@ -103,13 +103,13 @@ ommit.start(after.100.dat$all, 'death', params$death.start, filter.states = coun
 ### Data for Cases
 
 ```{r}
-after.100.dat$confirmed %>% datatable
+after.100.dat$confirmed %>% datatable(rownames = FALSE)
 ```
 
 ### Data for Deaths
 
 ```{r}
-after.100.dat$death %>% datatable()
+after.100.dat$death %>% datatable(rownames = FALSE)
 ```
 
 ## Starting point after exceeding `r params$confirmed.start` cases or `r params$death.start` deaths *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
@@ -143,13 +143,13 @@ ommit.start(after.100.dat$all, 'death', params$confirmer.start, filter.states = 
 ### Data for Cases
 
 ```{r}
-after.100.dat$confirmed %>% datatable
+after.100.dat$confirmed %>% datatable(rownames = FALSE)
 ```
 
 ### Data for Deaths
 
 ```{r}
-after.100.dat$death %>% datatable
+after.100.dat$death %>% datatable(rownames = FALSE)
 ```
 
 # Last `r params$last.days` days
@@ -189,7 +189,7 @@ last.days(last.days.dat, 'death', params$last.days, countries, log2.flag = TRUE,
 **warning**: sub-total is only for last 12 days
 
 ```{r}
-last.days.data(last.days.dat, 'confirmed') %>% datatable
+last.days.data(last.days.dat, 'confirmed') %>% datatable(rownames = FALSE)
 ```
 
 ### Data for Deaths
@@ -197,7 +197,7 @@ last.days.data(last.days.dat, 'confirmed') %>% datatable
 **warning**: sub-total is only for last 12 days
 
 ```{r}
-last.days.data(last.days.dat, 'death') %>% datatable
+last.days.data(last.days.dat, 'death') %>% datatable(rownames = FALSE)
 ```
 
 ## Cases/Deaths by day in Last `r params$last.days` days (per 100k population) {.tabset .tabset-fade .tabset-pills}
@@ -235,7 +235,7 @@ last.days(last.days.dat, 'death', params$last.days, countries, log2.flag = TRUE,
 **warning**: sub-total is only for last 12 days
 
 ```{r}
-last.days.data(last.days.dat, 'confirmed') %>% datatable
+last.days.data(last.days.dat, 'confirmed') %>% datatable(rownames = FALSE)
 ```
 
 ### Data for Deaths
@@ -243,7 +243,7 @@ last.days.data(last.days.dat, 'confirmed') %>% datatable
 **warning**: sub-total is only for last 12 days
 
 ```{r}
-last.days.data(last.days.dat, 'death') %>% datatable
+last.days.data(last.days.dat, 'death') %>% datatable(rownames = FALSE)
 ```
 
 ## Total Cases/Deaths in the last `r params$last.days` days {.tabset .tabset-fade .tabset-pills}
@@ -281,7 +281,7 @@ last.days(last.days.dat, 'death', params$last.days, countries, log2.flag = TRUE,
 **warning**: sub-total is only for last 12 days
 
 ```{r}
-last.days.data(last.days.dat, 'confirmed', countries) %>% datatable
+last.days.data(last.days.dat, 'confirmed', countries) %>% datatable(rownames = FALSE)
 ```
 
 ### Data for Deaths
@@ -289,7 +289,7 @@ last.days.data(last.days.dat, 'confirmed', countries) %>% datatable
 **warning**: sub-total is only for last 12 days
 
 ```{r}
-last.days.data(last.days.dat, 'death', countries) %>% datatable
+last.days.data(last.days.dat, 'death', countries) %>% datatable(rownames = FALSE)
 ```
 
 ## Total Cases/Deaths in the last `r params$last.days` days *(per 100k population)* {.tabset .tabset-fade .tabset-pills}
@@ -327,7 +327,7 @@ last.days(last.days.dat, 'death', params$last.days, countries, log2.flag = TRUE,
 **warning**: sub-total is only for last 12 days
 
 ```{r}
-last.days.data(last.days.dat, 'confirmed') %>% datatable
+last.days.data(last.days.dat, 'confirmed') %>% datatable(rownames = FALSE)
 ```
 
 ### Data for Deaths
@@ -335,7 +335,7 @@ last.days.data(last.days.dat, 'confirmed') %>% datatable
 **warning**: sub-total is only for last 12 days
 
 ```{r}
-last.days.data(last.days.dat, 'death') %>% datatable
+last.days.data(last.days.dat, 'death') %>% datatable(rownames = FALSE)
 ```
 
 # Rolling average of previous 4 days *(tracking over time)* {.tabset .tabset-fade .tabset-pills}
@@ -356,26 +356,26 @@ last.week.cumulative(last.week.dat, 'death', 4, countries, log2.flag = FALSE, pe
 
 ## Cases *(per 100k population)*
 
-```{r}
+```{r main_plots_last_week_cumulative_confirmed}
 last.week.cumulative(last.week.dat, 'confirmed', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
 ## Deaths *(per 100k population)*
 
-```{r}
+```{r main_plots_last_week_cumulative_deaths}
 last.week.cumulative(last.week.dat, 'death', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
 ## Data for Cases
 
 ```{r}
-cumulative.last.days.data(last.week.dat, 'confirmed', countries, 4) %>% datatable()
+cumulative.last.days.data(last.week.dat, 'confirmed', countries, 4) %>% datatable(rownames = FALSE)
 ```
 
 ## Data for Deaths
 
 ```{r}
-cumulative.last.days.data(last.week.dat, 'death', countries, 4) %>% datatable()
+cumulative.last.days.data(last.week.dat, 'death', countries, 4) %>% datatable(rownames = FALSE)
 ```
 
 # Cases vs. Death visualizations *(per 100k population)* {.tabset .tabset-fade .tabset-pills}

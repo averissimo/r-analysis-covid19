@@ -354,7 +354,7 @@ download.john.hopkins <- function() {
         add_row(state = 'Taiwan', population = 23603121, iso3c = 'TWN') %>%
         add_row(state = 'Holy See', population = 801, iso3c = 'VAT') %>%
         add_row(state = 'MS Zaandam', population = 1829, iso3c = 'MS Zaandam') %>%
-        add_row(state = 'Western Sahara', population = 567402, iso3c = 'ESH')
+        add_row(state = 'Western Sahara', population = 567402, iso3c = 'ESH') %>% 
         #
         dplyr::mutate(state = eu.convert.names(state)) %>%
         dplyr::mutate(state = jh.convert.names(state)) %>%
