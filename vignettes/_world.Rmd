@@ -6,7 +6,7 @@ Global data that sums all the `r region.code`-level confirmed cases and deaths.
 
 Total cumulative numbers.
 
-```{r cases.over.time}
+```{r}
 ommit.start(my.world$main, 'all', params$confirmed.start)
 ```
 
@@ -14,7 +14,7 @@ ommit.start(my.world$main, 'all', params$confirmed.start)
 
 Total cumulative numbers in log2 scale.
 
-```{r cases.over.time.log2, warning=FALSE}
+```{r, warning=FALSE}
 ommit.start(my.world$main, 'all', params$confirmed.start, log2.flag = TRUE)
 ```
 
@@ -22,7 +22,7 @@ ommit.start(my.world$main, 'all', params$confirmed.start, log2.flag = TRUE)
 
 New cases per day. *(warning: data for today is partial)*
 
-```{r new.cases}
+```{r}
 last.days(my.world$last.days, 'all', params$last.days, c(), log2.flag = FALSE, per.100k.flag = FALSE, new.flag = TRUE)
 ```
 
@@ -30,7 +30,7 @@ last.days(my.world$last.days, 'all', params$last.days, c(), log2.flag = FALSE, p
 
 Rolling average of previous 4 days. *(warning: data for today is partial)*
 
-```{r rolling.average}
+```{r}
 last.week.cumulative(my.world$last.week, 'all', 4, c(), log2.flag = FALSE, per.100k.flag = FALSE)
 ```
 
@@ -38,7 +38,7 @@ last.week.cumulative(my.world$last.week, 'all', 4, c(), log2.flag = FALSE, per.1
 
 *(warning: data for today is partial)*
 
-```{r rolling.average.log2}
+```{r}
 last.week.cumulative(my.world$last.week, 'all', 4, c(), log2.flag = TRUE, per.100k.flag = FALSE)
 ```
 
@@ -49,7 +49,7 @@ last.week.cumulative(my.world$last.week, 'all', 4, c(), log2.flag = TRUE, per.10
 
 Total cumulative numbers per 100k population. *(warning: data for today is partial)*
 
-```{r over.time.cases.per.100k}
+```{r}
 ommit.start(my.world$main, 'all', params$confirmed.start, per.100k.flag = TRUE)
 ```
 
@@ -57,7 +57,7 @@ ommit.start(my.world$main, 'all', params$confirmed.start, per.100k.flag = TRUE)
 
 Total cumulative numbers in log2 scale per 100k population. *(warning: data for today is partial)*
 
-```{r over.time.log2.per.100k, warning=FALSE}
+```{r, warning=FALSE}
 ommit.start(my.world$main, 'all', params$confirmed.start, per.100k.flag = TRUE, log2.flag = TRUE, digits = 2)
 ```
 
@@ -65,7 +65,7 @@ ommit.start(my.world$main, 'all', params$confirmed.start, per.100k.flag = TRUE, 
 
 New cases per day per 100k population. *(warning: data for today is partial)*
 
-```{r new.cases.last.12.per.100k}
+```{r}
 last.days(my.world$last.days, 'all', params$last.days, c(), log2.flag = FALSE, per.100k.flag = TRUE, new.flag = TRUE, digits = 4)
 ```
 
@@ -73,7 +73,7 @@ last.days(my.world$last.days, 'all', params$last.days, c(), log2.flag = FALSE, p
 
 Rolling average of previous 4 days per 100k population. *(warning: data for today is partial)*
 
-```{r rolling.average.per.100k}
+```{r}
 last.week.cumulative(my.world$last.week, 'all', 4, c(), log2.flag = FALSE, per.100k.flag = TRUE)
 ```
 
@@ -81,7 +81,7 @@ last.week.cumulative(my.world$last.week, 'all', 4, c(), log2.flag = FALSE, per.1
 
 Rolling average of previous 4 days per 100k population. *(warning: data for today is partial)*
 
-```{r rolling.average.log2.per.100k, warning=FALSE}
+```{r, warning=FALSE}
 last.week.cumulative(my.world$last.week, 'all', 4, c(), log2.flag = TRUE, per.100k.flag = TRUE)
 ```
 
