@@ -31,6 +31,9 @@ rmarkdown::clean_site()
 knitr::opts_chunk$set(echo = FALSE, collapse = TRUE, fig.width = 10, fig.height = 8)
 library(tidyverse)
 library(dplyr)
+library(purrr)
+library(tibble)
+library(plotly)
 library(viridis) # color pallete
 library(ggrepel)
 library(zoo)
@@ -172,6 +175,14 @@ my.world$main <- my.corona %>%
            state.code = region.all,
            cumul = cumsum(cases),
            population = max(population, na.rm = TRUE))
+
+# Only for world population
+my.world$main$population <- run.cache(wb, indicator = "SP.POP.TOTL", show.message = FALSE) %>% 
+  filter(country == 'World') %>% 
+  top_n(1, date) %>%
+  pull(value) %>% 
+  pluck(1)
+
 my.world$last.days <- filter.last.days(my.world$main, params$last.days)
 my.world$last.week <- filter.last.days.cumulative(my.world$main, 4)
 ```

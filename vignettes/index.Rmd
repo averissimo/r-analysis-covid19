@@ -36,6 +36,7 @@ knitr::opts_chunk$set(echo = FALSE, collapse = TRUE, fig.width = 10, fig.height 
 library(dplyr)
 library(purrr)
 library(tibble)
+library(plotly)
 library(viridis) # color pallete
 library(ggrepel)
 library(zoo)
