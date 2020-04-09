@@ -31,6 +31,7 @@ BiocManager::install('averissimo/covid19.de.data')
 ```
 
 
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, collapse = TRUE, fig.width = 10, fig.height = 8)
 library(dplyr)
@@ -50,9 +51,6 @@ library(wbstats) # world bank data
 library(reshape2)
 library(eurostat)
 
-BiocManager::install('averissimo/covid19.de.data', ask = FALSE, update = TRUE)
-BiocManager::install('averissimo/covid19.pt.data', ask = FALSE, update = TRUE)
-
 devtools::load_all()
 
 Sys.setlocale('LC_TIME', 'en_GB.UTF-8')
@@ -63,6 +61,13 @@ theme_set(
     theme(legend.position = "none")
   )
 ```
+
+```{r, include=FALSE}
+BiocManager::install('averissimo/covid19.de.data', ask = FALSE, update = TRUE)
+BiocManager::install('averissimo/covid19.pt.data', ask = FALSE, update = TRUE)
+devtools::load_all()
+```
+
 
 ```{r, message=FALSE, warning=FALSE, include=FALSE}
 eucdc.dat  <- download.eucdc.data()
@@ -81,8 +86,9 @@ if (max(jh.dat$data$date) > max(eucdc.dat$data$date)) {
 }
 
 it.dat.raw <- download.it.data(by.state = FALSE)
-pt.dat.raw <- download.pt.data() 
+pt.dat.raw <- download.pt.data()
 de.dat.raw <- download.de.data()
+es.dat.raw <- download.es.data()
 
 latest <- function(target, dat, one.dat) { 
   flog.info('%s', target)
@@ -102,15 +108,20 @@ latest <- function(target, dat, one.dat) {
   internal.fun(one.dat)
 }
 
+latest('Spain', world.dat, es.dat.raw)
 latest('Portugal', world.dat, pt.dat.raw)
 latest('Germany', world.dat, de.dat.raw)
 latest('Italy', world.dat, it.dat.raw)
 
 
 world.dat.norm <- world.dat
+world.dat.norm <- replace.country.data(world.dat.norm, es.dat.raw, 'Spain')
 world.dat.norm <- replace.country.data(world.dat.norm, pt.dat.raw, 'Portugal')
 world.dat.norm <- replace.country.data(world.dat.norm, it.dat.raw, 'Italy')
 world.dat.norm <- replace.country.data(world.dat.norm, de.dat.raw, 'Germany')
+
+# Keep only confirmed and death numbers
+world.dat.norm$data <- world.dat.norm$data %>% filter(type %in% c('confirmed', 'death'))
 
 source.by       <- world.dat.norm$source
 

@@ -12,8 +12,8 @@ The source code is at [averissimo/r-analysis-covid19](https://github.com/averiss
 
 * [World](https://averissimo.github.io/covid19-analysis/)
 * [Germany](https://averissimo.github.io/covid19-analysis/germany.html) *(by state)*
-* [Italy](https://averissimo.github.io/covid19-analysis/italy.html) *(by regione)*
-* [Bavaria](https://averissimo.github.io/covid19-analysis/bayer.html) *(Germany)*
+* [Italy](https://averissimo.github.io/covid19-analysis/italy.html) *(by region)*
+* [Spain](https://averissimo.github.io/covid19-analysis/spain.html) *(by region)*
 
 ## Age group analysis
 

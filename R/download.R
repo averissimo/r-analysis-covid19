@@ -1,42 +1,7 @@
-fill.missing <- function(dat) {
-    days <- tibble::tibble(date = seq.Date(from = min(dat$date %>% unique %>% sort), 
-                                   to = max(dat$date %>% unique %>% sort),
-                                   by = 'day'),
-                   join = 1)
-    states <- dat %>% 
-        dplyr::ungroup() %>% 
-        dplyr::distinct(state, state.code, population) %>% 
-        dplyr::mutate(join = 1)
-    
-    case.types <- tibble(type = dat$type %>% unique() %>% sort(), join = 1)
-    
-    index.tbl <- full_join(days, states, by = 'join') %>% 
-        dplyr::full_join(case.types, by = 'join') %>% 
-        dplyr::select(-join)
-    
-    new.dat <- dplyr::left_join(index.tbl, dat, by = c('date', 'state', 'state.code', 'type', 'population'))
-    
-    new.dat %>% 
-        dplyr::mutate(cases = if_else(is.na(cases), 0 , cases)) %>% 
-        dplyr::arrange(date) %>% 
-        dplyr::group_by(state, type) %>% 
-        # build cumul
-        dplyr::mutate(cumul = cumsum(cases)) %>% 
-        # remove latest day from countries that don't have data
-        dplyr::arrange(desc(date)) %>% 
-        dplyr::mutate(rev.cumul = cumsum(cases)) %>% 
-        dplyr::filter(rev.cumul > 0) %>% 
-        dplyr::select(-rev.cumul) %>% 
-        return()
-}
-
 #' Download Germany data (DE)
 #'
 #' @return data frame with latest data
 #' @export
-#'
-#' @examples
-#' download.de.data()
 download.de.data <- function(by.federal.state = FALSE) {
     
     pop.raw <- download.eurostat.population('DE', 1)
@@ -132,9 +97,69 @@ download.de.data <- function(by.federal.state = FALSE) {
         dplyr::arrange(desc(date))
         
     
-    return(list(data = eu.data.out.cumul, source = '{source.date} (RKI)' %>% glue::glue()))
+    return(list(data = eu.data.out.cumul, source = '{source.date} (DE RKI)' %>% glue::glue()))
 }
 
+#' Download world data from Spain's Ministerio de Sanidad
+#'
+#' @return a list with data and source string
+#' @export
+download.es.data <- function(by.state = FALSE) {
+    es.raw <- readr::read_csv('https://covid19.isciii.es/resources/serie_historica_acumulados.csv') %>% 
+        filter(!is.na(FECHA))
+    
+    es.data <- es.raw %>% 
+        dplyr::mutate(date = stringr::str_replace(FECHA, '([0-9]+)/([0-9]+)/([0-9]+)', '\\3-\\2-\\1') %>% anytime::anydate() + 1,
+                      confirmed = CASOS,
+                      death = Fallecidos,
+                      recovered = Recuperados,
+                      icu = UCI,
+                      hospitalized = Hospitalizados) %>% 
+        dplyr::select(state = CCAA, date, confirmed, death, recovered, icu, hospitalized) %>% 
+        dplyr::mutate_if(~any(is.na(.x)), ~dplyr::if_else(is.na(.x), 0, .x)) %>% # missing values
+        reshape2::melt(id.vars = c('state', 'date'), variable.name = 'type', value.name = 'cases') %>% 
+        dplyr::arrange(desc(date)) %>% 
+        dplyr::group_by(state, type) %>% 
+        dplyr::mutate(cases = zoo::rollapply(cases, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE))
+    
+    source.date <- format(max(es.data %>% dplyr::filter(cases > 0) %>% dplyr::pull(date) %>% max), '%Y/%m/%d')
+    
+    pop.raw <- download.eurostat.population('ES', 2)
+    
+    if (by.state) {
+        es.data.norm <- es.data %>% 
+            dplyr::left_join(es.nuts.ccaa, by = c('state' = 'CCAA')) %>% 
+            dplyr::ungroup() %>% 
+            dplyr::mutate(state = nuts_label,
+                   nuts = nuts_code,
+                   state.code = state) %>% 
+            dplyr::select(-nuts_label, -nuts_code) %>% 
+            dplyr::left_join(pop.raw, by = c('state', 'nuts'))
+    } else {
+        pop <- pop.raw %>% dplyr::pull(population) %>% sum()
+        es.data.norm <- es.data %>%
+            dplyr::ungroup() %>% 
+            #mutate(state = 'Spain') %>% 
+            dplyr::group_by(state, date, type) %>% 
+            dplyr::arrange(date) %>% 
+            dplyr::summarise(cases = sum(cases)) %>% 
+            dplyr::mutate(population = pop,
+                          state.code = 'ESP')
+    }
+    
+    es.data.out <- es.data.norm %>% 
+        dplyr::group_by(state, type) %>%
+        dplyr::arrange(date) %>% 
+        dplyr::mutate(cumul = cumsum(cases)) %>% 
+        dplyr::select(state, date, type, cases, cumul, population, state.code, nuts)
+    
+    return(list(data = es.data.out, source = '{source.date} (ES ISCIII)' %>% glue::glue()))
+}
+
+#' Download world data from Italy's Protezione Civile
+#'
+#' @return a list with data and source string
+#' @export
 download.it.data <- function(by.state = TRUE) {
     eu.raw <- readr::read_csv('https://github.com/pcm-dpc/COVID-19/raw/master/dati-regioni/dpc-covid19-ita-regioni.csv')
 
@@ -145,17 +170,15 @@ download.it.data <- function(by.state = TRUE) {
         dplyr::mutate(codice_regione = as.double(codice_regione)) %>%
         left_join(it.nuts.codici, by = 'codice_regione') %>%
         dplyr::mutate(state = eurostat::label_eurostat(nuts_2, dic = 'geo'),
-               date =  anytime::anydate(data),
-               state.code = 'ITA') %>%
+               date =  anytime::anydate(data)) %>%
         dplyr::select(state,
                date,
                confirmed = totale_casi,
-               death = deceduti,
-               state.code) %>%
-        dplyr::group_by(state, state.code, date) %>%
+               death = deceduti) %>%
+        dplyr::group_by(state, date) %>%
         dplyr::summarise(confirmed = sum(confirmed),
                   death = sum(death)) %>%
-        reshape2::melt(id.vars = c('state', 'state.code', 'date'),
+        reshape2::melt(id.vars = c('state', 'date'),
                        variable.name = 'type',
                        value.name = 'cases',
                        factorsAsStrings = FALSE) %>%
@@ -179,7 +202,10 @@ download.it.data <- function(by.state = TRUE) {
     
     eu.data <- eu.data %>% left_join(populations, by = 'state')
     
-    if (!by.state) {
+    if (by.state) {
+        eu.data <- eu.data %>% 
+            mutate(state.code = state)
+    } else {
         eu.data <- eu.data %>% 
             dplyr::ungroup() %>% 
             dplyr::mutate(state = 'Italy') %>% 
@@ -194,86 +220,10 @@ download.it.data <- function(by.state = TRUE) {
     return(list(data = eu.data, source = '{source.date} (IT PC)' %>% glue::glue()))
 }
 
-download.eurostat.population.nuts_3 <- function(country.code, nuts = 3) {
-    nuts_converter <- list('1' = 3, '2' = 4, '3' = 5)
-    nuts.label <- 'nuts_{nuts}' %>% glue::glue()
-    nuts.label.2 <- 'nuts_{nuts}_label' %>% glue::glue()
-    eu.population.raw <- suppressMessages(eurostat::get_eurostat('cens_11ag_r3')) %>% tibble::tibble()
-
-    eu.population.norm <- eu.population.raw %>%
-        dplyr::filter(grepl('^{country.code}[0-9A-Za-z]{paste0("{", nuts, "}")}' %>% glue::glue(), geo)) %>%
-        dplyr::filter(age == 'TOTAL' & sex == 'T') %>%
-        dplyr::mutate(nuts = substr(geo, 0, nuts_converter[[nuts]])) %>%
-        dplyr::mutate(nuts.label = eurostat::label_eurostat(nuts, dic = 'geo', fix_duplicated = TRUE)) %>%
-        dplyr::group_by(nuts, nuts.label) %>%
-        dplyr::filter(time == max(time)) %>%
-        dplyr::summarise(values = sum(values))
-
-    eu.population.norm %>%
-        dplyr::ungroup() %>%
-        dplyr::select(state = nuts.label, nuts, population = values) %>%
-        return()
-}
-
-download.eurostat.population <- function(country.code, nuts = 1) {
-    nuts_converter <- list('1' = 3, '2' = 4)
-
-    eu.population.raw <- suppressMessages(eurostat::get_eurostat('tgs00096'))
-
-    eu.population.norm <- eu.population.raw %>%
-        dplyr::filter(grepl('^{country.code}' %>% glue::glue(), geo)) %>%
-        dplyr::mutate(nuts_1 = substr(geo, 0, nuts_converter[[nuts]]),
-               nuts_1_label = eurostat::label_eurostat(nuts_1, dic = 'geo')) %>%
-        dplyr::group_by(nuts_1, nuts_1_label) %>%
-        dplyr::filter(time == max(time)) %>%
-        dplyr::summarise(values = sum(values))
-
-    populations <- eu.population.norm %>%
-        dplyr::ungroup() %>%
-        dplyr::select(state = nuts_1_label, population = values, nuts = nuts_1)
-}
-
-
-download.world.data <- function() {
-    dat <- NULL
-    tryCatch(dat <- coronavirus::coronavirus, error = function(err) {})
-
-    my.corona.original <- coronavirus %>% tibble::tibble() %>%
-        dplyr::mutate(state = Country.Region) %>%
-        dplyr::group_by(state, type, date) %>%
-        dplyr::summarise(cases = sum(cases)) %>%
-        dplyr::arrange(date) %>%
-        dplyr::mutate(cumul = cumsum(cases))
-
-    return(list(data = my.corona.original, source = 'RamiKrispin/coronavirus'))
-}
-
-download.nl.data <- function() {
-    eu.nl.raw <- readr::read_csv('https://github.com/covid19-eu-zh/covid19-eu-data/raw/master/dataset/covid-19-nl.csv')
-
-    eu.nl.state <- eu.nl.raw %>%
-        dplyr::select(country, state = lau, cases, deaths, date = datetime) %>%
-        #    dplyr::filter(!is.na(state)) %>%
-        dplyr::mutate(country = 'Netherlands') %>%
-        dplyr::group_by(country, state) %>%
-        reshape2::melt(id.vars = c('country', 'state', 'date'), variable.name = 'type', value.name = 'cases') %>%
-        dplyr::mutate(type = dplyr::if_else(type == 'cases', 'confirmed', 'death')) %>%
-        dplyr::arrange(desc(date)) %>%
-        dplyr::group_by(country, state, type) %>%
-        # need to break down differences between days
-        dplyr::mutate(cases = rollapply(cases, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE)) %>%
-        dplyr::arrange(date) %>%
-        dplyr::mutate(cumul = cumsum(cases))
-
-    eu.nl <- eu.nl.state %>%
-        dplyr::group_by(country, type, date) %>%
-        dplyr::summarise(cases = sum(cases), cumul = sum(cumul)) %>%
-        dplyr::arrange(date)
-
-    list(data = eu.nl, source = '??nl??') %>%
-        return()
-}
-
+#' Download world data from Portugal's Direção Geral da Saúde
+#'
+#' @return a list with data and source string
+#' @export
 download.pt.data <- function() {
     eu.data.raw <- covid19.pt.data::download.updated.pt()
 
@@ -299,6 +249,10 @@ download.pt.data <- function() {
     return(list(data = eu.data, source = '{source.date} (PT DGS)' %>% glue::glue()))
 }
 
+#' Download world data from John Hopkin's University
+#'
+#' @return a list with data and source string
+#' @export
 download.john.hopkins <- function() {
     base.url <- 'https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series'
     jh.data.raw.deaths    <- glue::glue('{base.url}/time_series_covid19_deaths_global.csv') %>% readr::read_csv()
@@ -380,6 +334,10 @@ download.john.hopkins <- function() {
 }
 
 
+#' Download data from EU CDC
+#'
+#' @return a list with data and source string
+#' @export
 download.eucdc.data <- function() {
     eu.data.raw <- readr::read_csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
 
@@ -413,29 +371,36 @@ download.eucdc.data <- function() {
         return()
 }
 
-replace.country.data <- function(all.dat, state.new.dat, state.name) {
-    dat <- all.dat$data
-    dat.new <- state.new.dat$data
-
-    new.max.date <- max(dat.new$date)
-    old.max.date <- max(dat %>% filter(state == state.name) %>% top_n(1, date) %>% pull(date))
+#' Download population for EU States (by NUTS)
+#'
+#' @param country.code 2 letter country code
+#' @param nuts level (1, 2 or 3)
+#'
+#' @return a table with country, population and nuts
+#' @export
+#'
+#' @examples
+#' download.eurostat.population('PT')
+#' download.eurostat.population('PT', 2)
+#' download.eurostat.population('PT', 1)
+download.eurostat.population <- function(country.code, nuts = 3) {
+    country.code <- toupper(country.code)
+    nuts_converter <- list('1' = 3, '2' = 4, '3' = 5)
+    nuts.label <- 'nuts_{nuts}' %>% glue::glue()
+    nuts.label.2 <- 'nuts_{nuts}_label' %>% glue::glue()
+    eu.population.raw <- suppressMessages(eurostat::get_eurostat('cens_11ag_r3')) %>% tibble::tibble()
     
-    if (new.max.date > old.max.date) {
-        new.pop <- dat %>% filter(state == state.name) %>% top_n(1) %>% pull(population) %>% unique
-        dat.new.norm <- dat.new %>% 
-            group_by(date, type, state.code) %>% 
-            summarise(cases = sum(cases)) %>% 
-            group_by(type) %>% 
-            arrange(date) %>% 
-            mutate(cumul = cumsum(cases)) %>% 
-            mutate(state = state.name, population = new.pop) %>% 
-            select(state, date, type, cases, cumul, population, state.code)
-
-        source.by = '{all.dat$source}, {state.new.dat$source}' %>% glue::glue()
-        list(data = dat %>% filter(state != state.name) %>% bind_rows(dat.new.norm),
-             source = source.by) %>% 
-            return()
-    } else {
-        return(all.dat)
-    }
+    eu.population.norm <- eu.population.raw %>%
+        dplyr::filter(grepl('^{country.code}[0-9A-Za-z]{paste0("{", nuts, "}")}' %>% glue::glue(), geo)) %>%
+        dplyr::filter(age == 'TOTAL' & sex == 'T' & stringr::str_length(geo) == nuts_converter[nuts]) %>%
+        dplyr::mutate(nuts = substr(geo, 0, nuts_converter[[nuts]])) %>%
+        dplyr::mutate(nuts.label = eurostat::label_eurostat(nuts, dic = 'geo', fix_duplicated = TRUE)) %>%
+        dplyr::group_by(nuts, nuts.label) %>%
+        dplyr::filter(time == max(time)) %>%
+        dplyr::summarise(values = sum(values))
+    
+    eu.population.norm %>%
+        dplyr::ungroup() %>%
+        dplyr::select(state = nuts.label, nuts, population = values) %>%
+        return()
 }
