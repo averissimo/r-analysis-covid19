@@ -117,7 +117,7 @@ d %>% plot_ly() %>%
   layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
          title = p$x$layout$title$text,
          xaxis = list(title = p$x$layout$xaxis$title$text),
-         yaxis = list(title = gsub('log2', 'log10', p$x$layout$yaxis$title$text), type = 'log')) %>% 
+         yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
   highlight(on = 'plotly_click', off = 'plotly_doubleclick')
 ```
 
@@ -227,7 +227,7 @@ d %>% plot_ly() %>%
   layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
          title = p$x$layout$title$text,
          xaxis = list(title = p$x$layout$xaxis$title$text),
-         yaxis = list(title = gsub('log2', 'log10', p$x$layout$yaxis$title$text), type = 'log')) %>% 
+         yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
   highlight(on = 'plotly_click', off = 'plotly_doubleclick')
 ```
 

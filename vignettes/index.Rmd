@@ -51,22 +51,20 @@ library(futile.logger)
 library(wbstats) # world bank data
 library(reshape2)
 library(eurostat)
-
-devtools::load_all()
-
-Sys.setlocale('LC_TIME', 'en_GB.UTF-8')
-.Last.value <- flog.layout(layout.format('~m'))
-
-theme_set(
-  theme_minimal() +
-    theme(legend.position = "none")
-  )
 ```
 
 ```{r, include=FALSE}
 BiocManager::install('averissimo/covid19.de.data', ask = FALSE)
 BiocManager::install('averissimo/covid19.pt.data', ask = FALSE)
 devtools::load_all()
+
+.Last.value <- Sys.setlocale('LC_TIME', 'en_GB.UTF-8')
+.Last.value <- futile.logger::flog.layout(futile.logger::layout.format('~m'))
+
+ggplot2::theme_set(
+  ggplot2::theme_minimal() +
+    ggplot2::theme(legend.position = "none")
+)
 ```
 
 
