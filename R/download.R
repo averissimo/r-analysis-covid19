@@ -399,7 +399,7 @@ download.john.hopkins <- function() {
 download.eucdc.data <- function() {
     eu.data.raw <- readr::read_csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
 
-    cz.pop <- download.eurostat.population('CZ') %>% dplyr::pull(population) %>% purrr::pluck(1)
+    cz.pop <- download.eurostat.population('CZ') %>% dplyr::pull(population) %>% sum() %>% purrr::pluck(1)
     eu.data.raw <- eu.data.raw %>% 
         dplyr::mutate(popData2018 = dplyr::if_else(countriesAndTerritories == 'Czechia', cz.pop, popData2018),
                       countryterritoryCode = dplyr::if_else(countriesAndTerritories == 'Czechia', 'CZE', countryterritoryCode))
