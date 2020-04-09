@@ -49,7 +49,7 @@ download.us.data <- function(by.state = FALSE) {
         
     }
     
-    return(list(data = us.data, source = '{source.date} (USA CDC)' %>% glue::glue()))
+    return(list(data = us.data, source = '{source.date} (USA covidtracking.com)' %>% glue::glue()))
 }
 
 #' Download Germany data (DE)
