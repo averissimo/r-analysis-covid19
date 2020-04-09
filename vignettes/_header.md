@@ -23,10 +23,12 @@ The source code is at [averissimo/r-analysis-covid19](https://github.com/averiss
 
 Data was retrieved from oficial sources.
 
-* EU CDC *(if not available it uses John's Hopkins)*
-* Italian Protezione Civil *(IT PC)*
-* Portuguese Direcção Geral da Saúde *(PT DGS)*
-* German Robert Koch's Institute *(DE RKI)*
-* Spanish Ministerio de Sanidad *(ES ISCIII)*
+* [EU CDC](https://data.europa.eu/euodp/en/data/dataset/covid-19-coronavirus-data) *(if not available it uses [Johns Hopkins](https://github.com/CSSEGISandData/COVID-19/))*
+* [Italian Protezione Civil](https://github.com/pcm-dpc/COVID-19) *(IT PC)*
+* [Portuguese Direcção Geral da Saúde](https://covid19.min-saude.pt/relatorio-de-situacao/) *(PT DGS)*
+* German Robert Koch's Institute](https://www.arcgis.com/home/item.html?id=dd4580c810204019a7b8eb3e0b329dd6&view=list#overview) *(DE RKI)*
+* [Spanish Ministerio de Sanidad](https://covid19.isciii.es/) *(ES ISCIII)*
+* [COVID Tracking Project](https://covidtracking.com/) for USA
+    * Not a direct official source, but it scrappes from official sources given by individual state's health departments.
 
 It's not realtime data and data presented may have 1 or more days of difference from real-time data. Check the caption on the figures to check when was the last data point.
