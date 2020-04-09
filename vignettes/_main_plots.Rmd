@@ -13,6 +13,8 @@ death.vs.cases.plot(death.vs.cases, state.filter = countries, expand = FALSE)
 
 ### Confirmed cases {.tabset .tabset-fade .tabset-pills}
 
+Latest data from `r source.by`
+
 #### Total values
 
 ```{r}
@@ -120,6 +122,8 @@ d %>% plot_ly() %>%
 ```
 
 ### Deaths {.tabset .tabset-fade .tabset-pills}
+
+Latest data from `r source.by`
 
 #### Total deaths
 
@@ -229,6 +233,8 @@ d %>% plot_ly() %>%
 
 ## New Cases and Deaths {.tabset .tabset-fade .tabset-pills}
 
+Latest data from `r source.by`
+
 ### Cases  {.tabset .tabset-fade .tabset-pills}
 
 #### Total
@@ -305,6 +311,8 @@ d %>% plot_ly() %>%
 ```
 
 ### Deaths {.tabset .tabset-fade .tabset-pills}
+
+Latest data from `r source.by`
 
 #### Total
 
@@ -383,6 +391,8 @@ d %>% plot_ly() %>%
 
 ### Average Cases {.tabset .tabset-fade .tabset-pills}
 
+Latest data from `r source.by`
+
 #### Total
 
 Each data point is an average of new cases from the previous 4 days.
@@ -458,6 +468,8 @@ d %>% plot_ly() %>%
 ```
 
 ### Average Deaths {.tabset .tabset-fade .tabset-pills}
+
+Latest data from `r source.by`
 
 #### Total
 
