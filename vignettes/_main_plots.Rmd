@@ -1,8 +1,8 @@
-# Main results {.tabset .tabset-fade .tabset-pills}
+# Main Analysis {.tabset .tabset-fade .tabset-pills}
 
 The 3 plots below show the most informative taken from existing data for confirmed cases and deaths.
 
-## Deaths / Confirmed rate
+## Deaths / Cases rate
 
 Rate of death per number of confirmed case. Note that this is heavily dependand on the number of tests being performed *(data not available in this report)*
 
@@ -10,7 +10,7 @@ Rate of death per number of confirmed case. Note that this is heavily dependand 
 death.vs.cases.plot(death.vs.cases, state.filter = countries, expand = FALSE) 
 ```
 
-## Confirmed Cases
+## Cases
 
 ```{r}
 suppressWarnings({
@@ -42,7 +42,7 @@ d %>% plot_ly() %>%
   highlight(on = 'plotly_click', off = 'plotly_doubleclick')
 ```
 
-### Deaths
+## Deaths
 
 ```{r, warning=FALSE}
 suppressWarnings({
@@ -109,7 +109,7 @@ d %>% plot_ly() %>%
   highlight(on = 'plotly_click', off = 'plotly_doubleclick')
 ```
 
-### Deaths *(/100k)*
+## Deaths *(/100k)*
 
 New Deaths *(per 100k population)*.
  
@@ -143,6 +143,8 @@ d %>% plot_ly() %>%
   layout(legend = list(x = 0.1, y = 1), dragmode = FALSE) %>% 
   highlight(on = 'plotly_click', off = 'plotly_doubleclick')
 ```
+
+# Rolling averages of last 4 days {.tabset .tabset-fade .tabset-pills}
 
 ## Average Cases
 
