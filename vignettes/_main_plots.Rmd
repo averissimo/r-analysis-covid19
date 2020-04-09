@@ -149,7 +149,7 @@ d %>% plot_ly() %>%
 Each data point is an average of new cases from the previous 4 days.
 
 
-```{r main_plots_last_week_cumulative_cases.plotly}
+```{r}
 suppressWarnings({
   p <- last.week.cumulative(last.week.dat, 'confirmed', 4, countries, log2.flag = FALSE, per.100k.flag = FALSE) %>% ggplotly()
 })
@@ -182,7 +182,7 @@ d %>% plot_ly() %>%
 
 Each data point is an average of new cases from the previous 4 days.
 
-```{r main_plots_last_week_cumulative_deaths.plotly}
+```{r}
 suppressWarnings({
   p <- last.week.cumulative(last.week.dat, 'death', 4, countries, log2.flag = FALSE, per.100k.flag = FALSE) %>% ggplotly()
 })
@@ -216,7 +216,7 @@ d %>% plot_ly() %>%
 Each data point is an average of new cases from the previous 4 days *(per 100k population)*.
 
 
-```{r main_plots_last_week_cumulative_cases.plotly}
+```{r}
 suppressWarnings({
   p <- last.week.cumulative(last.week.dat, 'confirmed', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE) %>% ggplotly()
 })
@@ -252,7 +252,7 @@ d %>% plot_ly() %>%
 Each data point is an average of new cases from the previous 4 days *(per 100k population)*.
 
 
-```{r main_plots_last_week_cumulative_deaths.plotly}
+```{r}
 suppressWarnings({
   p <- last.week.cumulative(last.week.dat, 'death', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE) %>% ggplotly()
 })
