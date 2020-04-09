@@ -16,7 +16,6 @@ Age group analysis
 
 * [Germany](https://averissimo.github.io/covid19.de.data/) *(by state and district)*
 
-
 ### Source code and tecnhology
 
 Source code is available at [averissimo/r-analysis-covid19](https://github.com/averissimo/r-analysis-covid19). All the data and analysis was processed in [R programming language](https://www.r-project.org/).

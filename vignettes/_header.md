@@ -27,5 +27,6 @@ Data was retrieved from oficial sources.
 * Italian Protezione Civil *(IT PC)*
 * Portuguese Direcção Geral da Saúde *(PT DGS)*
 * German Robert Koch's Institute *(DE RKI)*
+* Spanish Ministerio de Sanidad *(ES ISCIII)*
 
 It's not realtime data and data presented may have 1 or more days of difference from real-time data. Check the caption on the figures to check when was the last data point.
