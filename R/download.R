@@ -1,3 +1,57 @@
+download.us.data <- function(by.state = FALSE) {
+    json_data <- httr::GET('https://covidtracking.com/api/us/daily') %>% 
+        httr::content('text') %>% 
+        rjson::fromJSON()
+    
+    us.data.raw <- tibble::tibble()
+    for (ix in seq_along(json_data)) {
+        for (ix.name in names(json_data[[ix]])) {
+            if (is.null(json_data[[ix]][[ix.name]])) {
+                json_data[[ix]][[ix.name]] <- NA
+            }
+        }
+        us.data.raw <- us.data.raw %>% 
+            bind_rows(json_data[[ix]])
+    }
+    
+    pop.wb <- run.cache(wb, indicator = "SP.POP.TOTL", 
+                        show.message = FALSE) %>% 
+        filter(country == 'United States') %>% 
+        top_n(1, date) %>% 
+        pull(value) %>% 
+        pluck(1)
+    
+    us.data <- us.data.raw %>% 
+        mutate(date = anytime::anydate(as.character(date)),
+               state = 'USA') %>% 
+        select(state,
+               date,
+               death = deathIncrease,
+               confirmed = positiveIncrease,
+               recovered,
+               hospitalized = hospitalizedCumulative) %>% 
+        arrange(desc(date)) %>% 
+        mutate(hospitalized = zoo::rollapply(hospitalized, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE)) %>% 
+        reshape2::melt(id.vars = c('state', 'date'), variable.name = 'type', value.name = 'cases') %>% 
+        filter(!is.na(cases)) %>% 
+        tibble() %>% 
+        group_by(state, type) %>% 
+        dplyr::arrange(date) %>% 
+        dplyr::mutate(cumul = cumsum(cases),
+                      state.code = state,
+                      population = pop.wb)
+    
+    source.date <- format(max(us.data %>% dplyr::filter(cases > 0) %>% dplyr::pull(date) %>% max), '%Y/%m/%d')
+    
+    if(by.state){
+        stop('We don\'t have data by state implemented')
+    } else {
+        
+    }
+    
+    return(list(data = us.data, source = '{source.date} (USA CDC)' %>% glue::glue()))
+}
+
 #' Download Germany data (DE)
 #'
 #' @return data frame with latest data
@@ -120,7 +174,8 @@ download.es.data <- function(by.state = FALSE) {
         reshape2::melt(id.vars = c('state', 'date'), variable.name = 'type', value.name = 'cases') %>% 
         dplyr::arrange(desc(date)) %>% 
         dplyr::group_by(state, type) %>% 
-        dplyr::mutate(cases = zoo::rollapply(cases, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE))
+        dplyr::mutate(cases = zoo::rollapply(cases, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE),
+                      cumul = 0)
     
     source.date <- format(max(es.data %>% dplyr::filter(cases > 0) %>% dplyr::pull(date) %>% max), '%Y/%m/%d')
     
@@ -134,24 +189,26 @@ download.es.data <- function(by.state = FALSE) {
                    nuts = nuts_code,
                    state.code = state) %>% 
             dplyr::select(-nuts_label, -nuts_code) %>% 
-            dplyr::left_join(pop.raw, by = c('state', 'nuts'))
+            dplyr::left_join(pop.raw, by = c('state', 'nuts')) %>% 
+            dplyr::select(state, date, type, cases, cumul, population, state.code, nuts)
     } else {
         pop <- pop.raw %>% dplyr::pull(population) %>% sum()
         es.data.norm <- es.data %>%
             dplyr::ungroup() %>% 
-            #mutate(state = 'Spain') %>% 
+            mutate(state = 'Spain') %>% 
             dplyr::group_by(state, date, type) %>% 
             dplyr::arrange(date) %>% 
-            dplyr::summarise(cases = sum(cases)) %>% 
+            dplyr::summarise(cases = sum(cases),
+                             cumul = sum(cumul)) %>% 
             dplyr::mutate(population = pop,
-                          state.code = 'ESP')
+                          state.code = 'ESP') %>% 
+            dplyr::select(state, date, type, cases, cumul, population, state.code)
     }
     
     es.data.out <- es.data.norm %>% 
         dplyr::group_by(state, type) %>%
         dplyr::arrange(date) %>% 
-        dplyr::mutate(cumul = cumsum(cases)) %>% 
-        dplyr::select(state, date, type, cases, cumul, population, state.code, nuts)
+        dplyr::mutate(cumul = cumsum(cases))
     
     return(list(data = es.data.out, source = '{source.date} (ES ISCIII)' %>% glue::glue()))
 }
@@ -208,7 +265,8 @@ download.it.data <- function(by.state = TRUE) {
     } else {
         eu.data <- eu.data %>% 
             dplyr::ungroup() %>% 
-            dplyr::mutate(state = 'Italy') %>% 
+            dplyr::mutate(state = 'Italy',
+                          state.code = 'ITA') %>% 
             dplyr::group_by(state, state.code, type, date) %>% 
             dplyr::summarise(cases = sum(cases),
                              population = sum(population)) %>% 

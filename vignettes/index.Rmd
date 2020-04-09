@@ -89,6 +89,7 @@ it.dat.raw <- download.it.data(by.state = FALSE)
 pt.dat.raw <- download.pt.data()
 de.dat.raw <- download.de.data()
 es.dat.raw <- download.es.data()
+us.dat.raw <- download.us.data()
 
 latest <- function(target, dat, one.dat) { 
   flog.info('%s', target)
@@ -112,6 +113,7 @@ latest('Spain', world.dat, es.dat.raw)
 latest('Portugal', world.dat, pt.dat.raw)
 latest('Germany', world.dat, de.dat.raw)
 latest('Italy', world.dat, it.dat.raw)
+latest('USA', world.dat, us.dat.raw)
 
 
 world.dat.norm <- world.dat
