@@ -1,8 +1,7 @@
-# Main Analysis {.tabset .tabset-fade .tabset-pills}
 
-The 3 plots below show the most informative taken from existing data for confirmed cases and deaths.
+# Main Analysis
 
-## Deaths / Cases rate
+## Deaths / Cases rate {.tabset .tabset-fade .tabset-pills}
 
 Rate of death per number of confirmed case. Note that this is heavily dependand on the number of tests being performed *(data not available in this report)*
 
@@ -10,7 +9,229 @@ Rate of death per number of confirmed case. Note that this is heavily dependand 
 death.vs.cases.plot(death.vs.cases, state.filter = countries, expand = FALSE) 
 ```
 
-## Cases
+## Cases over time {.tabset .tabset-fade .tabset-pills}
+
+### Confirmed cases {.tabset .tabset-fade .tabset-pills}
+
+#### Total values
+
+```{r}
+suppressWarnings({
+  p <- ommit.start(after.100.dat$all, 'confirmed', params$confirmed.start, filter.states = countries) %>% ggplotly() %>% 
+    ggplotly()
+})
+
+d <- plotly_data(p) %>%  
+  mutate(text = format(cumul, big.mark = ',', trim = TRUE)) %>% 
+  select(Country = state,  Date = days.after.100,  'Confirmed Cases' = cumul, text) %>% 
+  arrange(Date) %>% 
+  highlight_key(~Country)
+
+pal <- viridis(plotly_data(p) %>% nrow, end = .8, option = 'A')
+
+d %>% plot_ly() %>% 
+  add_trace(x = ~Date, 
+            y = ~`Confirmed Cases`, 
+            color = ~Country, 
+            type = 'scatter',
+            mode = 'lines+markers', 
+            colors = pal, 
+            name = ~Country,
+            customdata = '',
+            hovertemplate = paste0('<b>%{text}</b>', '<br><i>%{x}</i>'),
+            text = ~text
+            ) %>% 
+  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
+         title = p$x$layout$title$text,
+         xaxis = list(title = p$x$layout$xaxis$title$text),
+         yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick')
+```
+
+#### Log10 scale
+
+```{r}
+suppressWarnings({
+  p <- ommit.start(after.100.dat$all, 'confirmed', params$confirmed.start, filter.states = countries, log2.flag = TRUE) %>% ggplotly() %>% 
+    ggplotly()
+})
+
+d <- plotly_data(p) %>%  
+  mutate(text = format(cumul, big.mark = ',', trim = TRUE)) %>% 
+  select(Country = state,  Date = days.after.100,  'Confirmed Cases' = cumul, text) %>% 
+  arrange(Date) %>% 
+  highlight_key(~Country)
+
+pal <- viridis(plotly_data(p) %>% nrow, end = .8, option = 'A')
+
+d %>% plot_ly() %>% 
+  add_trace(x = ~Date, 
+            y = ~`Confirmed Cases`, 
+            color = ~Country, 
+            type = 'scatter',
+            mode = 'lines+markers', 
+            colors = pal, 
+            name = ~Country,
+            customdata = '',
+            hovertemplate = paste0('<b>%{text}</b>', '<br><i>%{x}</i>'),
+            text = ~text
+            ) %>% 
+  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
+         title = p$x$layout$title$text,
+         xaxis = list(title = p$x$layout$xaxis$title$text),
+         yaxis = list(title = gsub('log2', 'log10', p$x$layout$yaxis$title$text), type = 'log')) %>% 
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick')
+```
+
+#### *per 100k population*
+
+```{r}
+suppressWarnings({
+  p <- ommit.start(after.100.dat$all, 'confirmed', params$confirmed.start, filter.states = countries, per.100k.flag = TRUE) %>% ggplotly() %>% 
+    ggplotly()
+})
+
+d <- plotly_data(p) %>%  
+  mutate(text = format(round(cumul, digits = 2), big.mark = ',', trim = TRUE),
+         absolute = format(cumul * population / 100000, big.mark = ',', trim = TRUE)) %>% 
+  select(Country = state,  Date = days.after.100,  'Confirmed Cases' = cumul, text, absolute) %>% 
+  arrange(Date) %>% 
+  highlight_key(~Country)
+
+pal <- viridis(plotly_data(p) %>% nrow, end = .8, option = 'A')
+
+d %>% plot_ly() %>% 
+  add_trace(x = ~Date, 
+            y = ~`Confirmed Cases`, 
+            color = ~Country, 
+            type = 'scatter',
+            mode = 'lines+markers', 
+            colors = pal, 
+            name = ~Country,
+            customdata = '',
+            hovertemplate = paste0('<b>%{text}</b>', '<br><i>%{x}</i>'),
+            text = ~text
+            ) %>% 
+  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
+         title = p$x$layout$title$text,
+         xaxis = list(title = p$x$layout$xaxis$title$text),
+         yaxis = list(title = gsub('log2', 'log10', p$x$layout$yaxis$title$text), type = 'log')) %>% 
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick')
+```
+
+### Deaths {.tabset .tabset-fade .tabset-pills}
+
+#### Total deaths
+
+```{r}
+suppressWarnings({
+  p <- ommit.start(after.100.dat$all, 'death', params$confirmed.start, filter.states = countries) %>% ggplotly() %>% 
+    ggplotly()
+})
+
+d <- plotly_data(p) %>%  
+  mutate(text = format(cumul, big.mark = ',', trim = TRUE)) %>% 
+  select(Country = state,  Date = days.after.100,  'Confirmed Cases' = cumul, text) %>% 
+  arrange(Date) %>% 
+  highlight_key(~Country)
+
+pal <- viridis(plotly_data(p) %>% nrow, end = .8, option = 'A')
+
+d %>% plot_ly() %>% 
+  add_trace(x = ~Date, 
+            y = ~`Confirmed Cases`, 
+            color = ~Country, 
+            type = 'scatter',
+            mode = 'lines+markers', 
+            colors = pal, 
+            name = ~Country,
+            customdata = '',
+            hovertemplate = paste0('<b>%{text}</b>', '<br><i>%{x}</i>'),
+            text = ~text
+            ) %>% 
+  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
+         title = p$x$layout$title$text,
+         xaxis = list(title = p$x$layout$xaxis$title$text),
+         yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick')
+```
+
+#### Log10 scale
+
+```{r}
+suppressWarnings({
+  p <- ommit.start(after.100.dat$all, 'death', params$confirmed.start, filter.states = countries, log2.flag = TRUE) %>% ggplotly() %>% 
+    ggplotly()
+})
+
+d <- plotly_data(p) %>%  
+  mutate(text = format(cumul, big.mark = ',', trim = TRUE)) %>% 
+  select(Country = state,  Date = days.after.100,  'Confirmed Cases' = cumul, text) %>% 
+  arrange(Date) %>% 
+  highlight_key(~Country)
+
+pal <- viridis(plotly_data(p) %>% nrow, end = .8, option = 'A')
+
+d %>% plot_ly() %>% 
+  add_trace(x = ~Date, 
+            y = ~`Confirmed Cases`, 
+            color = ~Country, 
+            type = 'scatter',
+            mode = 'lines+markers', 
+            colors = pal, 
+            name = ~Country,
+            customdata = '',
+            hovertemplate = paste0('<b>%{text}</b>', '<br><i>%{x}</i>'),
+            text = ~text
+            ) %>% 
+  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
+         title = p$x$layout$title$text,
+         xaxis = list(title = p$x$layout$xaxis$title$text),
+         yaxis = list(title = gsub('log2', 'log10', p$x$layout$yaxis$title$text), type = 'log')) %>% 
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick')
+```
+
+#### *per 100k population*
+
+```{r}
+suppressWarnings({
+  p <- ommit.start(after.100.dat$all, 'death', params$confirmed.start, filter.states = countries, per.100k.flag = TRUE) %>% ggplotly() %>% 
+    ggplotly()
+})
+
+d <- plotly_data(p) %>%  
+  mutate(text = format(round(cumul, digits = 2), big.mark = ',', trim = TRUE),
+         absolute = format(cumul * population / 100000, big.mark = ',', trim = TRUE)) %>% 
+  select(Country = state,  Date = days.after.100,  'Confirmed Cases' = cumul, text, absolute) %>% 
+  arrange(Date) %>% 
+  highlight_key(~Country)
+
+pal <- viridis(plotly_data(p) %>% nrow, end = .8, option = 'A')
+
+d %>% plot_ly() %>% 
+  add_trace(x = ~Date, 
+            y = ~`Confirmed Cases`, 
+            color = ~Country, 
+            type = 'scatter',
+            mode = 'lines+markers', 
+            colors = pal, 
+            name = ~Country,
+            customdata = ~absolute,
+            hovertemplate = paste0('<b>%{text}</b> <i>(%{customdata})</i>', '<br><i>%{x}</i>'),
+            text = ~text
+            ) %>% 
+  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
+         title = p$x$layout$title$text,
+         xaxis = list(title = p$x$layout$xaxis$title$text),
+         yaxis = list(title = gsub('log2', 'log10', p$x$layout$yaxis$title$text), type = 'log')) %>% 
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick')
+```
+
+## New Cases and Deaths {.tabset .tabset-fade .tabset-pills}
+
+### Cases  {.tabset .tabset-fade .tabset-pills}
+
+#### Total
 
 ```{r}
 suppressWarnings({
@@ -19,7 +240,7 @@ suppressWarnings({
 })
 
 d <- plotly_data(p) %>%  
-  mutate(text = format(cumul, big.mark = ',')) %>% 
+  mutate(text = format(cumul, big.mark = ',', trim = TRUE)) %>% 
   select(Country = state,  Date = date,  'Confirmed Cases' = cumul, text) %>% 
   arrange(Date) %>% 
   highlight_key(~Country)
@@ -35,46 +256,17 @@ d %>% plot_ly() %>%
             colors = pal, 
             name = ~Country,
             customdata = '',
-            hovertemplate = paste0('<i>Value:</i> %{text}', '<br><i> Date:</i> %{x}'),
-            text = ~text
-            ) %>% 
-  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE) %>% 
-  highlight(on = 'plotly_click', off = 'plotly_doubleclick')
-```
-
-## Deaths
-
-```{r, warning=FALSE}
-suppressWarnings({
-  p <- last.days(last.days.dat, 'death', params$last.days, countries, log2.flag = FALSE, per.100k.flag = FALSE, new.flag = TRUE) %>% 
-    ggplotly()
-})
-
-d <- plotly_data(p) %>%  
-  mutate(text = format(cumul, big.mark = ',')) %>% 
-  select(Country = state,  Date = date,  'Deaths' = cumul, text) %>% 
-  arrange(Date) %>% 
-  highlight_key(~Country)
-
-pal <- viridis(plotly_data(p) %>% nrow, end = .8, option = 'A')
-
-d %>% plot_ly() %>% 
-  add_trace(x = ~Date, 
-            y = ~`Deaths`, 
-            color = ~Country, 
-            type = 'scatter',
-            mode = 'lines+markers', 
-            colors = pal, 
-            name = ~Country,
-            customdata = '',
             hovertemplate = paste0('<b>%{text}</b>', '<br><i>%{x}</i>'),
             text = ~text
             ) %>% 
-  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE) %>% 
+  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
+         title = p$x$layout$title$text,
+         xaxis = list(title = p$x$layout$xaxis$title$text),
+         yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
   highlight(on = 'plotly_click', off = 'plotly_doubleclick')
 ```
 
-## Cases *(/100k)*
+#### *per 100k population*
 
 New Confirmed Cases *(per 100k population)*.
 
@@ -85,8 +277,8 @@ suppressWarnings({
 })
 
 d <- plotly_data(p) %>%  
-  mutate(text = format(round(cumul, digits = 2), big.mark = ','),
-         absolute = format(cumul * population / 100000, big.mark = ',', trim = FALSE)) %>% 
+  mutate(text = format(round(cumul, digits = 2), big.mark = ',', trim = TRUE),
+         absolute = format(cumul * population / 100000, big.mark = ',', trim = TRUE)) %>% 
   select(Country = state,  Date = date,  'Confirmed Cases' = cumul, text, absolute) %>% 
   arrange(Date) %>% 
   highlight_key(~Country)
@@ -105,11 +297,51 @@ d %>% plot_ly() %>%
             hovertemplate = paste0('<b>%{text}</b> <i>(%{customdata})</i>', '<br><i>%{x}</i>'),
             text = ~text
             ) %>% 
-  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE) %>% 
+  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
+         title = p$x$layout$title$text,
+         xaxis = list(title = p$x$layout$xaxis$title$text),
+         yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
   highlight(on = 'plotly_click', off = 'plotly_doubleclick')
 ```
 
-## Deaths *(/100k)*
+### Deaths {.tabset .tabset-fade .tabset-pills}
+
+#### Total
+
+```{r, warning=FALSE}
+suppressWarnings({
+  p <- last.days(last.days.dat, 'death', params$last.days, countries, log2.flag = FALSE, per.100k.flag = FALSE, new.flag = TRUE) %>% 
+    ggplotly()
+})
+
+d <- plotly_data(p) %>%  
+  mutate(text = format(cumul, big.mark = ',', trim = TRUE)) %>% 
+  select(Country = state,  Date = date,  'Deaths' = cumul, text) %>% 
+  arrange(Date) %>% 
+  highlight_key(~Country)
+
+pal <- viridis(plotly_data(p) %>% nrow, end = .8, option = 'A')
+
+d %>% plot_ly() %>% 
+  add_trace(x = ~Date, 
+            y = ~`Deaths`, 
+            color = ~Country, 
+            type = 'scatter',
+            mode = 'lines+markers', 
+            colors = pal, 
+            name = ~Country,
+            customdata = '',
+            hovertemplate = paste0('<b>%{text}</b>', '<br><i>%{x}</i>'),
+            text = ~text
+            ) %>% 
+  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
+         title = p$x$layout$title$text,
+         xaxis = list(title = p$x$layout$xaxis$title$text),
+         yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick')
+```
+
+#### *per 100k population*
 
 New Deaths *(per 100k population)*.
  
@@ -120,8 +352,8 @@ suppressWarnings({
 })
 
 d <- plotly_data(p) %>%  
-  mutate(text = format(round(cumul, digits = 2), big.mark = ','),
-         absolute = format(cumul * population / 100000, big.mark = ',', trim = FALSE)) %>% 
+  mutate(text = format(round(cumul, digits = 2), big.mark = ',', trim = TRUE),
+         absolute = format(cumul * population / 100000, big.mark = ',', trim = TRUE)) %>% 
   select(Country = state,  Date = date,  'Deaths' = cumul, text, absolute) %>% 
   arrange(Date) %>% 
   highlight_key(~Country)
@@ -140,16 +372,20 @@ d %>% plot_ly() %>%
             hovertemplate = paste0('<b>%{text}</b> <i>(%{customdata})</i>', '<br><i>%{x}</i>'),
             text = ~text
             ) %>% 
-  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE) %>% 
+  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
+         title = p$x$layout$title$text,
+         xaxis = list(title = p$x$layout$xaxis$title$text),
+         yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
   highlight(on = 'plotly_click', off = 'plotly_doubleclick')
 ```
 
-# Rolling averages of last 4 days {.tabset .tabset-fade .tabset-pills}
+## Rolling averages of last 4 days {.tabset .tabset-fade .tabset-pills}
 
-## Average Cases
+### Average Cases {.tabset .tabset-fade .tabset-pills}
+
+#### Total
 
 Each data point is an average of new cases from the previous 4 days.
-
 
 ```{r}
 suppressWarnings({
@@ -157,7 +393,7 @@ suppressWarnings({
 })
 
 d <- plotly_data(p) %>%  
-  mutate(text = format(last.week.var, digits = 2, big.mark = ',')) %>% 
+  mutate(text = format(last.week.var, digits = 2, big.mark = ',', trim = TRUE)) %>% 
   select(Country = state,  Date = date,  'Average Cases' = last.week.var, text) %>% 
   arrange(Date) %>% 
   highlight_key(~Country)
@@ -176,47 +412,16 @@ d %>% plot_ly() %>%
             hovertemplate = paste0('<b>%{text}</b>', '<br><i>%{x}</i>'),
             text = ~text
             ) %>% 
-  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE) %>% 
+  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
+         title = p$x$layout$title$text,
+         xaxis = list(title = p$x$layout$xaxis$title$text),
+         yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
   highlight(on = 'plotly_click', off = 'plotly_doubleclick')
 ```
 
-## Average Deaths
-
-Each data point is an average of new cases from the previous 4 days.
-
-```{r}
-suppressWarnings({
-  p <- last.week.cumulative(last.week.dat, 'death', 4, countries, log2.flag = FALSE, per.100k.flag = FALSE) %>% ggplotly()
-})
-
-d <- plotly_data(p) %>%  
-  mutate(text = format(last.week.var, big.mark = ',')) %>% 
-  select(Country = state,  Date = date,  'Average Cases' = last.week.var, text) %>% 
-  arrange(Date) %>% 
-  highlight_key(~Country)
-
-pal <- viridis(plotly_data(p) %>% nrow, end = .8, option = 'A')
-
-d %>% plot_ly() %>% 
-  add_trace(x = ~Date, 
-            y = ~`Average Cases`, 
-            color = ~Country, 
-            type = 'scatter',
-            mode = 'lines+markers', 
-            colors = pal, 
-            name = ~Country,
-            customdata = '',
-            hovertemplate = paste0('<b>%{text}</b>', '<br><i>%{x}</i>'),
-            text = ~text
-            ) %>% 
-  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE) %>% 
-  highlight(on = 'plotly_click', off = 'plotly_doubleclick')
-```
-
-## Average Cases *(/100k)*
+#### *per 100k population*
 
 Each data point is an average of new cases from the previous 4 days *(per 100k population)*.
-
 
 ```{r}
 suppressWarnings({
@@ -224,8 +429,8 @@ suppressWarnings({
 })
 
 d <- plotly_data(p) %>%  
-  mutate(text = format(round(last.week.var, digits = 2), big.mark = ','),
-         absolute = format(last.week.var * population / 100000, big.mark = ',', trim = FALSE)) %>% 
+  mutate(text = format(round(last.week.var, digits = 2), big.mark = ',', trim = TRUE),
+         absolute = format(last.week.var * population / 100000, big.mark = ',', trim = TRUE)) %>% 
   select(Country = state,  Date = date,  'Average Cases' = last.week.var, text, absolute) %>% 
   arrange(Date) %>% 
   highlight_key(~Country)
@@ -245,11 +450,52 @@ d %>% plot_ly() %>%
             text = ~text
             
             ) %>% 
-  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE) %>% 
+  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
+         title = p$x$layout$title$text,
+         xaxis = list(title = p$x$layout$xaxis$title$text),
+         yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
   highlight(on = 'plotly_click', off = 'plotly_doubleclick')
 ```
 
-## Average Deaths *(/100k)*
+### Average Deaths {.tabset .tabset-fade .tabset-pills}
+
+#### Total
+
+Each data point is an average of new cases from the previous 4 days.
+
+```{r}
+suppressWarnings({
+  p <- last.week.cumulative(last.week.dat, 'death', 4, countries, log2.flag = FALSE, per.100k.flag = FALSE) %>% ggplotly()
+})
+
+d <- plotly_data(p) %>%  
+  mutate(text = format(last.week.var, big.mark = ',', trim = TRUE)) %>% 
+  select(Country = state,  Date = date,  'Average Cases' = last.week.var, text) %>% 
+  arrange(Date) %>% 
+  highlight_key(~Country)
+
+pal <- viridis(plotly_data(p) %>% nrow, end = .8, option = 'A')
+
+d %>% plot_ly() %>% 
+  add_trace(x = ~Date, 
+            y = ~`Average Cases`, 
+            color = ~Country, 
+            type = 'scatter',
+            mode = 'lines+markers', 
+            colors = pal, 
+            name = ~Country,
+            customdata = '',
+            hovertemplate = paste0('<b>%{text}</b>', '<br><i>%{x}</i>'),
+            text = ~text
+            ) %>% 
+  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
+         title = p$x$layout$title$text,
+         xaxis = list(title = p$x$layout$xaxis$title$text),
+         yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick')
+```
+
+#### *per 100k population*
 
 Each data point is an average of new cases from the previous 4 days *(per 100k population)*.
 
@@ -260,8 +506,8 @@ suppressWarnings({
 })
 
 d <- plotly_data(p) %>%  
-  mutate(text = format(round(last.week.var, digits = 2), big.mark = ','),
-         absolute = format(last.week.var * population / 100000, big.mark = ',', trim = FALSE)) %>% 
+  mutate(text = format(round(last.week.var, digits = 2), big.mark = ',', trim = TRUE),
+         absolute = format(last.week.var * population / 100000, big.mark = ',', trim = TRUE)) %>% 
   select(Country = state,  Date = date,  'Average Deaths' = last.week.var, text, absolute) %>% 
   arrange(Date) %>% 
   highlight_key(~Country)
@@ -280,6 +526,9 @@ d %>% plot_ly() %>%
             hovertemplate = paste0('<b>%{text}</b> <i>(%{customdata})</i>', '<br><i>%{x}</i>'),
             text = ~text
             ) %>% 
-  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE) %>% 
+  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
+         title = p$x$layout$title$text,
+         xaxis = list(title = p$x$layout$xaxis$title$text),
+         yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
   highlight(on = 'plotly_click', off = 'plotly_doubleclick')
 ```

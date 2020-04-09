@@ -3,6 +3,7 @@ title: "Bayern covid-19 analysis"
 output: 
     html_document:
         toc: true
+        toc_depth: 2
         dev: 'svg'
 params:
     death.start: !r 5
@@ -151,4 +152,7 @@ my.corona.original %>% filter(state %in% countries.extended) %>% cases.plot('con
 
 ```{r}
 my.corona.original %>% filter(state %in% countries.extended) %>% cases.plot('death')
+```
+
+```{r, child='_details.Rmd'}
 ```

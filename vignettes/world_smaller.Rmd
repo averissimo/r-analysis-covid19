@@ -3,6 +3,7 @@ title: "World covid-19 Analysis"
 output: 
     html_document:
         toc: true
+        toc_depth: 2
         dev: 'svg'
 params:
     death.start: !r 10
@@ -426,4 +427,7 @@ anim <- anim.confirmed.vs.death %>%
 
 ```{r, message=FALSE, eval=FALSE, include=FALSE}
 animate(anim, end_pause = 30)
+```
+
+```{r, child='_details.Rmd'}
 ```
