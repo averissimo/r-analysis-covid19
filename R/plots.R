@@ -7,7 +7,8 @@ plot.options(point.size = 2,
              segment.color = 'black',
              label.size = 3.5,
              min.segment.length = 0,
-             label.force = 2)
+             label.force = 2,
+             seed = 1985)
 
 doubling.every <- function(date.vector, days) { return(function(a) {return(1/days * as.numeric(difftime(a, min(date.vector), units = 'days')))})}
 
@@ -93,7 +94,7 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
                          segment.alpha = plot.options('segment.alha'),
                          segment.colour = plot.options('segment.color'),
                          min.segment.length = plot.options('min.segment.length'),
-                         force = plot.options('label.force')) +
+                         force = plot.options('label.force'), seed = plot.options('seed')) +
 
         ggplot2::labs(y = lab.y,
                       x = lab.x,
@@ -184,7 +185,7 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
                              segment.alpha = plot.options('segment.alha'),
                              segment.colour = plot.options('segment.color'),
                              min.segment.length = plot.options('min.segment.length'),
-                             force = plot.options('label.force')) +
+                             force = plot.options('label.force'), seed = plot.options('seed')) +
             ggplot2::labs(x = 'Last {days} days' %>% glue::glue(),
                  y = lab.y,
                  title = lab.t,
@@ -292,7 +293,7 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
                                      segment.alpha = plot.options('segment.alha'),
                                      segment.colour = plot.options('segment.color'),
                                      min.segment.length = plot.options('min.segment.length'),
-                                     force = plot.options('label.force')) +
+                                     force = plot.options('label.force'), seed = plot.options('seed')) +
             ggplot2::labs(title = lab.t,
                  subtitle = lab.s,
                  y = lab.y,
@@ -322,7 +323,7 @@ death.vs.cases.plot <- function(dat, state.filter = c(), always.include = c(), e
                                       segment.alpha = plot.options('segment.alha'),
                                       segment.colour = plot.options('segment.color'),
                                       min.segment.length = plot.options('min.segment.length'),
-                                      force = plot.options('label.force')) +
+                                      force = plot.options('label.force'), seed = plot.options('seed')) +
             
             ggplot2::labs(x = 'Confirmed Cases per 100k population',
                  y = 'Deaths per 100k population',
@@ -385,7 +386,7 @@ plot.what.vs.cases <- function(data,
                              segment.alpha = plot.options('segment.alha'),
                              segment.colour = plot.options('segment.color'),
                              min.segment.length = plot.options('min.segment.length'),
-                             force = plot.options('label.force')) +
+                             force = plot.options('label.force'), seed = plot.options('seed')) +
             ggplot2::expand_limits(x = ceiling(max(my.tbl %>% dplyr::pull(cases.confirmed))),
                           y = ceiling(max(my.tbl %>% dplyr::pull(value)))) +
             ggplot2::scale_color_viridis_d(end = .85) +
