@@ -110,8 +110,8 @@ d %>% plot_ly() %>%
             mode = 'lines+markers', 
             colors = pal, 
             name = ~Country,
-            customdata = '',
-            hovertemplate = paste0('<b>%{text}</b>', '<br><i>%{x}</i>'),
+            customdata = ~absolute,
+            hovertemplate = paste0('<b>%{text}</b> <i>(%{customdata})</i>', '<br><i>%{x}</i>'),
             text = ~text
             ) %>% 
   layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
