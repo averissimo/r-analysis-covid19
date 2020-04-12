@@ -159,8 +159,11 @@ download.de.data <- function(by.federal.state = FALSE) {
 #' @return a list with data and source string
 #' @export
 download.es.data <- function(by.state = FALSE) {
+    
+    # valid.ccaa <- c('AN', 'AR', 'AS', 'CB', 'CM', 'CT', 'CE', 'EX', 'GA', 'MD', 'ML', 'MC', 'NC', 'PV', 'RI')
+    
     es.raw <- readr::read_csv('https://covid19.isciii.es/resources/serie_historica_acumulados.csv') %>% 
-        filter(!is.na(FECHA))
+        filter(stringr::str_length(stringi::stri_enc_toutf8(CCAA)) == 2)
     
     es.data <- es.raw %>% 
         dplyr::mutate(date = stringr::str_replace(FECHA, '([0-9]+)/([0-9]+)/([0-9]+)', '\\3-\\2-\\1') %>% anytime::anydate() + 1,
