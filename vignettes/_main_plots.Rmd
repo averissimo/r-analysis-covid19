@@ -137,7 +137,7 @@ Latest data from `r source.by`
 
 ```{r}
 suppressWarnings({
-  p <- ommit.start(after.100.dat$all, 'death', params$confirmed.start, filter.states = countries) %>% ggplotly() %>% 
+  p <- ommit.start(after.100.dat$all, 'death', params$death.start, filter.states = countries) %>% ggplotly() %>% 
     ggplotly()
 })
 
@@ -172,7 +172,7 @@ d %>% plot_ly() %>%
 
 ```{r}
 suppressWarnings({
-  p <- ommit.start(after.100.dat$all, 'death', params$confirmed.start, filter.states = countries, log2.flag = TRUE) %>% ggplotly() %>% 
+  p <- ommit.start(after.100.dat$all, 'death', params$death.start, filter.states = countries, log2.flag = TRUE) %>% ggplotly() %>% 
     ggplotly()
 })
 
@@ -207,7 +207,7 @@ d %>% plot_ly() %>%
 
 ```{r}
 suppressWarnings({
-  p <- ommit.start(after.100.dat$all, 'death', params$confirmed.start, filter.states = countries, per.100k.flag = TRUE) %>% ggplotly() %>% 
+  p <- ommit.start(after.100.dat$all, 'death', params$death.start, filter.states = countries, per.100k.flag = TRUE) %>% ggplotly() %>% 
     ggplotly()
 })
 

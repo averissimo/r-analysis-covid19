@@ -6,8 +6,8 @@ output:
         toc_depth: 2
         dev: 'svg'
 params:
-    death.start: !r 10
-    confirmed.start: !r 100
+    death.start: !r 100
+    confirmed.start: !r 1000
     duplicate.every: !r 2
     last.days: !r 12
 ---
@@ -120,6 +120,7 @@ world.dat.norm <- replace.country.data(world.dat.norm, es.dat.raw, 'Spain')
 world.dat.norm <- replace.country.data(world.dat.norm, pt.dat.raw, 'Portugal')
 world.dat.norm <- replace.country.data(world.dat.norm, it.dat.raw, 'Italy')
 world.dat.norm <- replace.country.data(world.dat.norm, de.dat.raw, 'Germany')
+world.dat.norm <- replace.country.data(world.dat.norm, us.dat.raw, 'USA')
 
 # Keep only confirmed and death numbers
 world.dat.norm$data <- world.dat.norm$data %>% filter(type %in% c('confirmed', 'death'))
@@ -158,7 +159,8 @@ region.code.plural <- 'Countries'
 region.all         <- 'World'
 
 countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'USA', 'France', 'Belgium', 'Russia',
-                        'Switzerland', 'Czech Republic', 'Sweden', 'United Kingdom') %>% sort
+                        'Switzerland', 'Czech Republic', 'Sweden', 'United Kingdom', 'Netherlands',
+                        'Austria', 'Greece', 'Denmark', 'Poland', 'Croatia', 'Norway', 'Finland', 'Japan') %>% sort
 
 countries.eu <- c('Italy', 'Spain','Germany', 'Portugal', 'France',  
                   'United Kingdom', 'Poland', 'Greece', 'Croatia', 'Slovenia', 

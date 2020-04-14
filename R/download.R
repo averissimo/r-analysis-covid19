@@ -286,7 +286,9 @@ download.it.data <- function(by.state = TRUE) {
 #' @return a list with data and source string
 #' @export
 download.pt.data <- function() {
-    eu.data.raw <- covid19.pt.data::download.updated.pt()
+
+    eu.data.raw <- list(cdc.eu = covid19.pt.data::covid19.pt)
+    tryCatch(eu.data.raw <- covid19.pt.data::download.updated.pt(), error = function(err) {})
 
     eu.data <- eu.data.raw$cdc.eu %>%
         dplyr::mutate(date = anytime::anydate(glue::glue('{year}/{month}/{day}')) - 1,
@@ -402,6 +404,10 @@ download.john.hopkins <- function() {
 download.eucdc.data <- function() {
     eu.data.raw <- readr::read_csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
 
+    if (ncol(eu.data.raw) == 1) {
+        return(list(data = tibble::tibble(), source = 'Error in EU CDC'))
+    }
+    
     cz.pop <- download.eurostat.population('CZ') %>% dplyr::pull(population) %>% sum() %>% purrr::pluck(1)
     eu.data.raw <- eu.data.raw %>% 
         dplyr::mutate(popData2018 = dplyr::if_else(countriesAndTerritories == 'Czechia', cz.pop, popData2018),
