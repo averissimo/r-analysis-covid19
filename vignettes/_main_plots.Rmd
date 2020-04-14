@@ -102,7 +102,7 @@ d <- plotly_data(p) %>%
 
 pal <- viridis(plotly_data(p) %>% nrow, end = .8, option = 'A')
 
-d %>% plot_ly() %>% 
+d.tmp <- d %>% plot_ly() %>% 
   add_trace(x = ~Date, 
             y = ~`Confirmed Cases`, 
             color = ~Country, 
@@ -119,6 +119,14 @@ d %>% plot_ly() %>%
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
   highlight(on = 'plotly_click', off = 'plotly_doubleclick')
+d.tmp
+```
+
+#### *per 100k population (log10 scale)*
+
+```{r}
+d.tmp %>% 
+  layout(yaxis = list(type = 'log'))
 ```
 
 ### Deaths {.tabset .tabset-fade .tabset-pills}
@@ -212,7 +220,7 @@ d <- plotly_data(p) %>%
 
 pal <- viridis(plotly_data(p) %>% nrow, end = .8, option = 'A')
 
-d %>% plot_ly() %>% 
+d.tmp <- d %>% plot_ly() %>% 
   add_trace(x = ~Date, 
             y = ~`Confirmed Cases`, 
             color = ~Country, 
@@ -229,6 +237,14 @@ d %>% plot_ly() %>%
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
   highlight(on = 'plotly_click', off = 'plotly_doubleclick')
+d.tmp
+```
+
+#### *per 100k population (log10 scale)*
+
+```{r}
+d.tmp %>% 
+  layout(yaxis = list(type = 'log'))
 ```
 
 ## New Cases and Deaths {.tabset .tabset-fade .tabset-pills}
@@ -410,7 +426,7 @@ d <- plotly_data(p) %>%
 
 pal <- viridis(plotly_data(p) %>% nrow, end = .8, option = 'A')
 
-d %>% plot_ly() %>% 
+d.tmp <- d %>% plot_ly() %>% 
   add_trace(x = ~Date, 
             y = ~`Average Cases`, 
             color = ~Country, 
@@ -427,7 +443,18 @@ d %>% plot_ly() %>%
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
   highlight(on = 'plotly_click', off = 'plotly_doubleclick')
+d.tmp
 ```
+
+#### *Log10* scale
+
+Each data point is an average of new cases from the previous 4 days.
+
+```{r}
+d.tmp %>% 
+  layout(yaxis = list(type = 'log'))
+```
+
 
 #### *per 100k population*
 
@@ -447,7 +474,7 @@ d <- plotly_data(p) %>%
 
 pal <- viridis(plotly_data(p) %>% nrow, end = .8, option = 'A')
 
-d %>% plot_ly() %>% 
+d.tmp <- d %>% plot_ly() %>% 
   add_trace(x = ~Date, 
             y = ~`Average Cases`, 
             color = ~Country, 
@@ -465,6 +492,16 @@ d %>% plot_ly() %>%
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
   highlight(on = 'plotly_click', off = 'plotly_doubleclick')
+d.tmp
+```
+
+#### *per 100k population Log10* scale
+
+Each data point is an average of new cases from the previous 4 days.
+
+```{r}
+d.tmp %>% 
+  layout(yaxis = list(type = 'log'))
 ```
 
 ### Average Deaths {.tabset .tabset-fade .tabset-pills}
@@ -488,7 +525,7 @@ d <- plotly_data(p) %>%
 
 pal <- viridis(plotly_data(p) %>% nrow, end = .8, option = 'A')
 
-d %>% plot_ly() %>% 
+d.tmp <- d %>% plot_ly() %>% 
   add_trace(x = ~Date, 
             y = ~`Average Cases`, 
             color = ~Country, 
@@ -505,6 +542,16 @@ d %>% plot_ly() %>%
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
   highlight(on = 'plotly_click', off = 'plotly_doubleclick')
+d.tmp
+```
+
+#### *Log10* scale
+
+Each data point is an average of new cases from the previous 4 days.
+
+```{r}
+d.tmp %>% 
+  layout(yaxis = list(type = 'log'))
 ```
 
 #### *per 100k population*
@@ -526,7 +573,7 @@ d <- plotly_data(p) %>%
 
 pal <- viridis(plotly_data(p) %>% nrow, end = .8, option = 'A')
 
-d %>% plot_ly() %>% 
+d.tmp <- d %>% plot_ly() %>% 
   add_trace(x = ~Date, 
             y = ~`Average Deaths`, 
             color = ~Country, 
@@ -543,4 +590,18 @@ d %>% plot_ly() %>%
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
   highlight(on = 'plotly_click', off = 'plotly_doubleclick')
+d.tmp
 ```
+
+#### *per 100k population Log10* scale
+
+Each data point is an average of new cases from the previous 4 days.
+
+```{r}
+d.tmp %>% 
+  layout(yaxis = list(type = 'log'))
+```
+
+
+
+

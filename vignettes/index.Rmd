@@ -157,7 +157,7 @@ region.code        <- 'Country'
 region.code.plural <- 'Countries'
 region.all         <- 'World'
 
-countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'USA', 'France', 
+countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'USA', 'France', 'Belgium', 'Russia',
                         'Switzerland', 'Czech Republic', 'Sweden', 'United Kingdom') %>% sort
 
 countries.eu <- c('Italy', 'Spain','Germany', 'Portugal', 'France',  
