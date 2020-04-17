@@ -3,6 +3,15 @@ download.us.data <- function(by.state = FALSE) {
         httr::content('text') %>% 
         rjson::fromJSON()
     
+    current <- httr::GET('https://covidtracking.com/api/v1/us/current.json') %>% 
+        httr::content('text') %>% 
+        rjson::fromJSON() %>% 
+        bind_rows() %>% 
+        mutate(date = Sys.Date() %>% format('%Y%m%d') %>% as.integer(),
+               states = 56)
+    
+    
+    
     us.data.raw <- tibble::tibble()
     for (ix in seq_along(json_data)) {
         for (ix.name in names(json_data[[ix]])) {
@@ -14,6 +23,27 @@ download.us.data <- function(by.state = FALSE) {
             bind_rows(json_data[[ix]])
     }
     
+    if (!any(us.data.raw$date == current$date)) {
+        current.norm <-us.data.raw %>% 
+            filter(date == max(date)) %>% 
+            bind_rows(current) %>% 
+            arrange(desc(date)) %>% 
+            mutate(
+                dateChecked = lastModified,
+                hospitalizedIncrease = zoo::rollapply(hospitalized, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE),
+                positiveIncrease = zoo::rollapply(positive, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE),
+                deathIncrease = zoo::rollapply(death, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE),
+                negativeIncrease = zoo::rollapply(negative, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE),
+                totalTestResultsIncrease = zoo::rollapply(totalTestResults, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE),
+            ) %>% 
+            select(-notes, -lastModified) %>% 
+            filter(date == max(date))
+        
+        us.data.raw <- us.data.raw %>% 
+            bind_rows(current.norm) %>% 
+            arrange(desc(date))
+    }
+    
     pop.wb <- run.cache(wb, indicator = "SP.POP.TOTL", 
                         show.message = FALSE) %>% 
         filter(country == 'United States') %>% 
@@ -22,24 +52,25 @@ download.us.data <- function(by.state = FALSE) {
         pluck(1)
     
     us.data <- us.data.raw %>% 
-        mutate(date = anytime::anydate(as.character(date)),
+        dplyr::mutate(date = anytime::anydate(as.character(date)),
                state = 'USA') %>% 
-        select(state,
+        dplyr::select(state,
                date,
                death = deathIncrease,
                confirmed = positiveIncrease,
                recovered,
                hospitalized = hospitalizedCumulative) %>% 
-        arrange(desc(date)) %>% 
-        mutate(hospitalized = zoo::rollapply(hospitalized, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE)) %>% 
+        dplyr::arrange(desc(date)) %>% 
+        dplyr::mutate(hospitalized = zoo::rollapply(hospitalized, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE)) %>% 
         reshape2::melt(id.vars = c('state', 'date'), variable.name = 'type', value.name = 'cases') %>% 
-        filter(!is.na(cases)) %>% 
-        tibble() %>% 
-        group_by(state, type) %>% 
+        dplyr::filter(!is.na(cases)) %>% 
+        tibble::tibble() %>% 
+        dplyr::group_by(state, type) %>% 
         dplyr::arrange(date) %>% 
         dplyr::mutate(cumul = cumsum(cases),
                       state.code = state,
-                      population = pop.wb)
+                      population = pop.wb) %>% 
+        dplyr::arrange()
     
     source.date <- format(max(us.data %>% dplyr::filter(cases > 0) %>% dplyr::pull(date) %>% max), '%Y/%m/%d')
     
