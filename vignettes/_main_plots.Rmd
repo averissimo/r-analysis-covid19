@@ -47,7 +47,7 @@ d %>% plot_ly() %>%
          title = p$x$layout$title$text,
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
-  highlight(on = 'plotly_click', off = 'plotly_doubleclick', defaultValues = countries.highlight, persistent = FALSE)
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick', persistent = FALSE)
 ```
 
 #### Log10 scale
@@ -82,7 +82,7 @@ d %>% plot_ly() %>%
          title = p$x$layout$title$text,
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = gsub('log2', 'log10', p$x$layout$yaxis$title$text), type = 'log')) %>% 
-  highlight(on = 'plotly_click', off = 'plotly_doubleclick', defaultValues = countries.highlight, persistent = FALSE)
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick', persistent = FALSE)
 ```
 
 #### *per 100k population*
@@ -118,7 +118,7 @@ d.tmp <- d %>% plot_ly() %>%
          title = p$x$layout$title$text,
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
-  highlight(on = 'plotly_click', off = 'plotly_doubleclick', defaultValues = countries.highlight, persistent = FALSE)
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick', persistent = FALSE)
 d.tmp
 ```
 
@@ -165,7 +165,7 @@ d %>% plot_ly() %>%
          title = p$x$layout$title$text,
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
-  highlight(on = 'plotly_click', off = 'plotly_doubleclick', defaultValues = countries.highlight, persistent = FALSE)
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick', persistent = FALSE)
 ```
 
 #### Log10 scale
@@ -200,7 +200,7 @@ d %>% plot_ly() %>%
          title = p$x$layout$title$text,
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = gsub('log2', 'log10', p$x$layout$yaxis$title$text), type = 'log')) %>% 
-  highlight(on = 'plotly_click', off = 'plotly_doubleclick', defaultValues = countries.highlight, persistent = FALSE)
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick', persistent = FALSE)
 ```
 
 #### *per 100k population*
@@ -236,7 +236,7 @@ d.tmp <- d %>% plot_ly() %>%
          title = p$x$layout$title$text,
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
-  highlight(on = 'plotly_click', off = 'plotly_doubleclick', defaultValues = countries.highlight, persistent = FALSE)
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick', persistent = FALSE)
 d.tmp
 ```
 
@@ -285,7 +285,7 @@ d %>% plot_ly() %>%
          title = p$x$layout$title$text,
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
-  highlight(on = 'plotly_click', off = 'plotly_doubleclick', defaultValues = countries.highlight, persistent = FALSE)
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick', persistent = FALSE)
 ```
 
 #### *per 100k population*
@@ -323,7 +323,7 @@ d %>% plot_ly() %>%
          title = p$x$layout$title$text,
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
-  highlight(on = 'plotly_click', off = 'plotly_doubleclick', defaultValues = countries.highlight, persistent = FALSE)
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick', persistent = FALSE)
 ```
 
 ### Deaths {.tabset .tabset-fade .tabset-pills}
@@ -362,7 +362,7 @@ d %>% plot_ly() %>%
          title = p$x$layout$title$text,
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
-  highlight(on = 'plotly_click', off = 'plotly_doubleclick', defaultValues = countries.highlight, persistent = FALSE)
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick', persistent = FALSE)
 ```
 
 #### *per 100k population*
@@ -400,7 +400,7 @@ d %>% plot_ly() %>%
          title = p$x$layout$title$text,
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
-  highlight(on = 'plotly_click', off = 'plotly_doubleclick', defaultValues = countries.highlight, persistent = FALSE)
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick', persistent = FALSE)
 ```
 
 ## Rolling averages of last 4 days {.tabset .tabset-fade .tabset-pills}
@@ -442,7 +442,7 @@ d.tmp <- d %>% plot_ly() %>%
          title = p$x$layout$title$text,
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
-  highlight(on = 'plotly_click', off = 'plotly_doubleclick', defaultValues = countries.highlight, persistent = FALSE)
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick', persistent = FALSE)
 d.tmp
 ```
 
@@ -491,7 +491,7 @@ d.tmp <- d %>% plot_ly() %>%
          title = p$x$layout$title$text,
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
-  highlight(on = 'plotly_click', off = 'plotly_doubleclick', defaultValues = countries.highlight, persistent = FALSE)
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick', persistent = FALSE)
 d.tmp
 ```
 
@@ -541,7 +541,7 @@ d.tmp <- d %>% plot_ly() %>%
          title = p$x$layout$title$text,
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
-  highlight(on = 'plotly_click', off = 'plotly_doubleclick', defaultValues = countries.highlight, persistent = FALSE)
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick', persistent = FALSE)
 d.tmp
 ```
 
@@ -589,7 +589,7 @@ d.tmp <- d %>% plot_ly() %>%
          title = p$x$layout$title$text,
          xaxis = list(title = p$x$layout$xaxis$title$text),
          yaxis = list(title = p$x$layout$yaxis$title$text)) %>% 
-  highlight(on = 'plotly_click', off = 'plotly_doubleclick', defaultValues = countries.highlight, persistent = FALSE)
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick', persistent = FALSE)
 d.tmp
 ```
 

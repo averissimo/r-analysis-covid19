@@ -1,0 +1,300 @@
+---
+title: "COVID-19 Portugal data"
+output: 
+  html_document:
+    toc: true
+    dev: svg
+---
+
+```{r, eval=FALSE, include=FALSE}
+rmarkdown::render('portugal.Rmd')
+```
+
+```{r, eval=FALSE, include=FALSE}
+rmarkdown::clean_site()
+rmarkdown::render_site(quiet = TRUE)
+```
+
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+devtools::load_all()
+library(pdftools)
+library(rvest)
+library(dplyr)
+library(tibble)
+library(DT)
+library(anytime)
+library(glue)
+library(reshape2)
+library(zoo)
+library(xml2)
+library(usethis)
+library(ggplot2)
+library(ggrepel)
+library(plotly)
+library(viridis)
+
+Sys.setlocale('LC_TIME', 'en_GB.UTF-8')
+```
+
+```{r, include=FALSE}
+BiocManager::install('averissimo/covid19.pt.data')
+library(covid19.pt.data)
+```
+
+```{r child='_header.md'}
+```
+
+```{r, message=FALSE, include=FALSE}
+dat    <- download.updated.pt()
+dgs.pt <- dat$dgs.pt
+covid19.pt  <- dat$cdc.eu
+```
+
+```{r, include=FALSE}
+age.data <- dgs.pt %>% 
+  reshape2::melt(id.vars = c('country', 'date'), variable.name = 'type') %>% 
+  group_by(country, type) %>% 
+  filter(grepl('(confirmed_|death_)', type)) %>% 
+  arrange(date) %>% 
+  ungroup() %>% 
+  mutate(gender = if_else(grepl('.*_m_*', type), 'men', 'women'),
+         age_type = if_else(grepl('confirmed_', type), 'confirmed', 'death'),
+         type = gsub('.*_(m|w)_', '', type),
+         value = if_else(gender == 'men', value * -1, value %>% as.double))
+```
+
+## Cumulative data for Portugal
+
+```{r, echo=FALSE, warning=FALSE, fig.width=10, fig.height=7}
+my.plot.data <- dgs.pt %>% 
+  reshape2::melt(id.vars = c('country', 'date'), variable.name = 'type', measure.vars = c('tests', 'deaths', 'confirmed', 'hospitalized', 'in.icu', 'recovered')) %>% 
+  filter(!is.na(value)) %>% 
+  mutate(type = 
+           gsub('confirmed', 'Confirmed cases', type) %>% 
+           gsub('deaths', 'Deaths', .) %>% 
+           gsub('recovered', 'Recovered', .) %>% 
+           gsub('hospitalized', 'Hospitalized', .) %>% 
+           gsub('in.icu', 'In ICU', .) %>% 
+           gsub('tests', 'Tests', .)) %>% 
+  mutate(text = format(value, big.mark = ',', trim = TRUE)) %>%
+  ungroup() %>% 
+  select(Date = date, Type = type, value = value, text = text) %>% 
+  arrange(Date) 
+
+d <- my.plot.data  %>%  
+  highlight_key(~Type)
+
+pal <- viridis(my.plot.data$Type %>% length, end = .8, option = 'A')
+
+d %>% plot_ly() %>% 
+  add_trace(x = ~Date, 
+            y = ~value, 
+            color = ~Type, 
+            type = 'scatter',
+            mode = 'lines+markers', 
+            colors = pal, 
+            name = ~Type,
+            customdata = ~text,
+            hovertemplate = paste0('<b>%{customdata}</b>', '<br><i>%{text}</i>', '<br><i>%{x}</i>'),
+            text = ~Type
+            ) %>% 
+  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
+         title = 'Individuals that were Infected, Recovered and Died',
+         xaxis = list(title = 'Date'),
+         yaxis = list(title = 'Number of individuals', type = 'log')) %>% 
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick')
+```
+
+## Data per day
+
+```{r, echo=FALSE, warning=FALSE, fig.width=10, fig.height=7}
+my.plot.data <- dgs.pt %>% 
+  reshape2::melt(id.vars = c('country', 'date'), variable.name = 'type', measure.vars = c('tests', 'deaths', 'confirmed', 'hospitalized', 'in.icu', 'recovered')) %>% 
+  filter(!is.na(value)) %>% 
+  mutate(type = 
+           gsub('confirmed', 'Confirmed cases', type) %>% 
+           gsub('deaths', 'Deaths', .) %>% 
+           gsub('recovered', 'Recovered', .) %>% 
+           gsub('hospitalized', 'Hospitalized', .) %>% 
+           gsub('in.icu', 'In ICU', .) %>% 
+           gsub('tests', 'Tests', .)) %>% 
+  group_by(country, type) %>% 
+  arrange(desc(date)) %>% 
+  mutate(value = zoo::rollapply(value, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE)) %>%
+  mutate(text = format(value, big.mark = ',', trim = TRUE)) %>%
+  ungroup() %>% 
+  #filter(value != 0) %>% 
+  select(Date = date, Type = type, value = value, text = text) %>% 
+  arrange(Date) 
+
+d <- my.plot.data  %>%  
+  highlight_key(~Type)
+
+pal <- viridis(my.plot.data$Type %>% length, end = .8, option = 'A')
+
+d %>% plot_ly() %>% 
+  add_trace(x = ~Date, 
+            y = ~value, 
+            color = ~Type, 
+            type = 'scatter',
+            mode = 'lines+markers', 
+            colors = pal, 
+            name = ~Type,
+            customdata = ~text,
+            hovertemplate = paste0('<b>%{customdata}</b>', '<br><i>%{text}</i>', '<br><i>%{x}</i>'),
+            text = ~Type
+            ) %>% 
+  layout(legend = list(x = 0.1, y = 1), dragmode = FALSE,
+         title = 'Individuals that were Infected, Recovered and Died',
+         xaxis = list(title = 'Date'),
+         yaxis = list(title = 'Number of individuals')) %>% 
+  highlight(on = 'plotly_click', off = 'plotly_doubleclick')
+```
+
+# Cases / Deaths by age groups {.tabset .tabset-fade .tabset-pills}
+
+```{r, results='asis', echo=FALSE,fig.width=4, warning=FALSE}
+ixs <- unique(age.data %>% arrange(desc(date)) %>% pull(date))
+
+confirmed.max <- age.data %>% filter(age_type == 'confirmed') %>%  pull(value) %>% max
+death.max <- age.data %>% filter(age_type == 'death') %>%  pull(value) %>% max
+for (age.ix in seq_along(ixs)) {
+  age.ix.f <- ixs[age.ix]
+  cat('\n')
+  cat('\n')
+  cat('## {age.ix.f}' %>% glue)
+  cat('\n')
+  cat('\n')
+  
+  confi.dat <- age.data %>% 
+    filter(date == age.ix.f & age_type == 'confirmed' & value != 0) %>% 
+    mutate(label = if_else(value != 0, format(abs(value), big.mark = ','), NA_character_))
+
+  death.dat <- age.data %>% 
+    filter(date == age.ix.f & age_type == 'death' & value != 0) %>% 
+    mutate(label = if_else(value != 0, format(abs(value), big.mark = ','), NA_character_))
+  
+  print(confi.dat %>% 
+    ggplot(aes(x = value, y = type, fill = gender)) +
+    geom_bar(stat = 'identity') + 
+    ggrepel::geom_label_repel(aes(label = label, fill = gender), color = 'white', direction = 'x', seed = 1985, size = 3.5,
+                              nudge_x = ifelse(confi.dat$gender == 'men', -1, 1),
+                              show.legend = FALSE) +
+    expand_limits(x =c(-1 * confirmed.max, confirmed.max)) +
+    expand_limits(x =c(-1 * confirmed.max, confirmed.max)) +
+    scale_x_continuous('', labels = function(ix) { return(abs(ix)) }) +
+    scale_y_discrete(limits = age.data$type %>% unique %>% sort) + 
+    scale_fill_viridis_d('',end = .8) + 
+    labs(title = "Confirmed cases up to {age.ix.f}" %>% glue,
+         y = 'Age group',
+         x = 'Confirmed Cases') +
+    theme_minimal() + 
+    theme(legend.position = 'bottom'))
+  print(death.dat %>% 
+    ggplot(aes(x = value, y = type, fill = gender)) +
+    geom_bar(stat = 'identity') + 
+    ggrepel::geom_label_repel(aes(label = label, fill = gender), color = 'white', direction = 'x', seed = 1985, size = 3.5,
+                              nudge_x = ifelse(death.dat$gender == 'men', -1, 1),
+                              show.legend = FALSE) +
+    expand_limits(x =c(-1 * death.max, death.max)) +
+    scale_x_continuous('', labels = function(ix) { return(abs(ix)) }) +
+    scale_y_discrete(limits = age.data$type %>% unique %>% sort) + 
+    scale_fill_viridis_d('',end = .8) + 
+    labs(title = "Deaths up to {age.ix.f}" %>% glue,
+         y = 'Age group',
+         x = 'Deaths') +
+    theme_minimal() + 
+    theme(legend.position = 'bottom'))
+  cat('\n')
+  cat('\n')
+}
+```
+
+# New Cases / Deaths by age groups {.tabset .tabset-fade .tabset-pills}
+
+```{r, results='asis', echo=FALSE,fig.width=4, warning=FALSE}
+age.data.new <- age.data %>% 
+  mutate(value = abs(value)) %>% 
+  group_by(country, type, gender, age_type) %>% 
+  arrange(desc(date)) %>% 
+  mutate(value = zoo::rollapply(value, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE)) %>%
+  filter(value > 0) %>% 
+  mutate(value = if_else(gender == 'men', value * -1, value %>% as.double))
+
+ixs <- unique(age.data.new %>% arrange(desc(date)) %>% pull(date))
+
+confirmed.max <- age.data.new %>% filter(age_type == 'confirmed') %>%  pull(value) %>% max
+death.max <- age.data.new %>% filter(age_type == 'death') %>%  pull(value) %>% max
+for (age.ix in seq_along(ixs)) {
+  age.ix.f <- ixs[age.ix]
+  
+  confi.dat <- age.data.new %>% 
+    filter(date == age.ix.f & age_type == 'confirmed' & value != 0) %>% 
+    mutate(label = if_else(value != 0, format(abs(value), big.mark = ','), NA_character_))
+
+  death.dat <- age.data.new %>% 
+    filter(date == age.ix.f & age_type == 'death' & value != 0) %>% 
+    mutate(label = if_else(value != 0, format(abs(value), big.mark = ','), NA_character_))
+
+  cat('\n')
+  cat('\n')
+  cat('## {age.ix.f}' %>% glue)
+  cat('\n')
+  cat('\n')
+  print(confi.dat %>% 
+    ggplot(aes(x = value, y = type, fill = gender)) +
+    geom_bar(stat = 'identity') + 
+    ggrepel::geom_label_repel(aes(label = label, fill = gender), color = 'white', direction = 'x', seed = 1985, size = 3.5,
+                              nudge_x = ifelse(confi.dat$gender == 'men', -1, 1),
+                              show.legend = FALSE) +
+    expand_limits(x =c(-1 * confirmed.max, confirmed.max)) +
+    scale_x_continuous('', labels = function(ix) { return(abs(ix)) }) +
+    scale_y_discrete(limits = age.data$type %>% unique %>% sort) + 
+    scale_fill_viridis_d('',end = .8) + 
+    labs(title = "Confirmed cases from {age.ix.f}" %>% glue,
+         y = 'Age group',
+         x = 'Confirmed Cases') +
+    theme_minimal() + 
+    theme(legend.position = 'bottom'))
+  print(death.dat %>%
+    ggplot(aes(x = value, y = type, fill = gender)) +
+    geom_bar(stat = 'identity') + 
+    ggrepel::geom_label_repel(aes(label = label, fill = gender), color = 'white', direction = 'x', seed = 1985, size = 3.5,
+                              nudge_x = ifelse(death.dat$gender == 'men', -1, 1),
+                              show.legend = FALSE) +
+    expand_limits(x =c(-1 * death.max, death.max)) +
+    scale_x_continuous('', labels = function(ix) { return(abs(ix)) }) +
+    scale_fill_viridis_d('',end = .8) + 
+    scale_y_discrete(limits = age.data$type %>% unique %>% sort) + 
+    labs(title = "Deaths from {age.ix.f}" %>% glue,
+         y = 'Age group',
+         x = 'Deaths') +
+    theme_minimal() + 
+    theme(legend.position = 'bottom'))
+  cat('\n')
+  cat('\n')
+}
+```
+
+# Data {.tabset .tabset-fade .tabset-pills}
+
+## Data from DGS
+
+```{r, echo=FALSE}
+dgs.pt %>% arrange(desc(date)) %>%  datatable()
+```
+
+## Data from EU CDC updated
+
+```{r, message=FALSE, echo=FALSE}
+covid19.pt %>% datatable()
+```
+
+
+
+
