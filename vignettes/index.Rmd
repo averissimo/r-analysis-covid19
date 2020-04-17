@@ -162,6 +162,8 @@ countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'USA', 'France',
                         'Switzerland', 'Czech Republic', 'Sweden', 'United Kingdom', 'Netherlands',
                         'Austria', 'Greece', 'Denmark', 'Poland', 'Croatia', 'Norway', 'Finland', 'Japan') %>% sort
 
+countries.highlight <- c('Portugal', 'Germany', 'Spain', 'Italy', 'France', 'USA', 'Switzerland', 'Belgium')
+
 countries.eu <- c('Italy', 'Spain','Germany', 'Portugal', 'France',  
                   'United Kingdom', 'Poland', 'Greece', 'Croatia', 'Slovenia', 
                   'Hungary', 'Slovakia', 'Ireland', 'Luxembourg', 'Finland', 
