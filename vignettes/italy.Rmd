@@ -82,6 +82,7 @@ region.code.plural <- 'States'
 region.all         <- 'Italy'
 
 countries                <- my.corona$state %>% unique
+countries.highlight      <- countries
 countries.always.include <- my.corona$state %>% unique
 countries.extended       <- countries.always.include
 ```

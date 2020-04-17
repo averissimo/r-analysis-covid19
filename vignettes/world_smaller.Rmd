@@ -134,6 +134,7 @@ region.code.plural <- 'Countries'
 region.all         <- 'World'
 
 countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'France', 'Switzerland', 'United Kingdom') %>% sort
+countries.highlight      <- countries
 
 countries.eu <- c('Italy', 'Spain','Germany', 'Portugal', 'France',  
                   'United Kingdom', 'Poland', 'Greece', 'Croatia', 'Slovenia', 
