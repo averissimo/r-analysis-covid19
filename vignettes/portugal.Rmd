@@ -171,41 +171,47 @@ for (age.ix in seq_along(ixs)) {
   cat('\n')
   cat('\n')
   
-  confi.dat <- age.data %>% 
-    filter(date == age.ix.f & age_type == 'confirmed' & value != 0) %>% 
-    mutate(label = if_else(value != 0, format(abs(value), big.mark = ','), NA_character_))
-
-  death.dat <- age.data %>% 
-    filter(date == age.ix.f & age_type == 'death' & value != 0) %>% 
-    mutate(label = if_else(value != 0, format(abs(value), big.mark = ','), NA_character_))
+  age.data.all <- age.data %>% 
+    filter(date == age.ix.f & value != 0) %>% 
+    select(type, gender, age_type, value) %>% 
+    reshape2::dcast(type + gender ~ age_type, mean, fill = 0) %>% 
+    mutate(label.confirmed = if_else(confirmed != 0, format(abs(confirmed), big.mark = ',', trim = TRUE), NA_character_),
+           label.death = if_else(death != 0, 
+                                 paste0(format(abs(death), big.mark = ',', trim = TRUE),
+                                        ' (',
+                                        scales::percent(abs(death/confirmed), accuracy = 0.01, big.mark = ','),
+                                        ')'), 
+                                 NA_character_))
   
-  print(confi.dat %>% 
-    ggplot(aes(x = value, y = type, fill = gender)) +
+  print(age.data.all %>%
+    ggplot(aes(x = confirmed, y = type, fill = gender)) +
     geom_bar(stat = 'identity') + 
-    ggrepel::geom_label_repel(aes(label = label, fill = gender), color = 'white', direction = 'x', seed = 1985, size = 3.5,
-                              nudge_x = ifelse(confi.dat$gender == 'men', -1, 1),
-                              show.legend = FALSE) +
-    expand_limits(x =c(-1 * confirmed.max, confirmed.max)) +
+    ggrepel::geom_label_repel(aes(label = label.confirmed, fill = gender), color = 'white', direction = 'x', seed = 1985, size = 3.5,
+                          nudge_x = ifelse(age.data.all$gender == 'men', -1, 1),
+                          show.legend = FALSE,
+                          na.rm = TRUE) +
     expand_limits(x =c(-1 * confirmed.max, confirmed.max)) +
     scale_x_continuous('', labels = function(ix) { return(abs(ix)) }) +
     scale_y_discrete(limits = age.data$type %>% unique %>% sort) + 
-    scale_fill_viridis_d('',end = .8) + 
-    labs(title = "Confirmed cases up to {age.ix.f}" %>% glue,
+    scale_fill_viridis_d('', end = .8) + 
+    labs(title = "Confirmed cases",
          y = 'Age group',
          x = 'Confirmed Cases') +
     theme_minimal() + 
     theme(legend.position = 'bottom'))
-  print(death.dat %>% 
-    ggplot(aes(x = value, y = type, fill = gender)) +
+  print(age.data.all %>%
+    ggplot(aes(x = death, y = type, fill = gender)) +
     geom_bar(stat = 'identity') + 
-    ggrepel::geom_label_repel(aes(label = label, fill = gender), color = 'white', direction = 'x', seed = 1985, size = 3.5,
-                              nudge_x = ifelse(death.dat$gender == 'men', -1, 1),
-                              show.legend = FALSE) +
+    ggrepel::geom_label_repel(aes(label = label.death, fill = gender), color = 'white', direction = 'x', seed = 1985, size = 3.5,
+                              nudge_x = ifelse(age.data.all %>% filter(!is.na(label.death)) %>% pull(gender) == 'men', -1, 1),
+                              show.legend = FALSE,
+                              na.rm = TRUE) +
     expand_limits(x =c(-1 * death.max, death.max)) +
     scale_x_continuous('', labels = function(ix) { return(abs(ix)) }) +
-    scale_y_discrete(limits = age.data$type %>% unique %>% sort) + 
-    scale_fill_viridis_d('',end = .8) + 
-    labs(title = "Deaths up to {age.ix.f}" %>% glue,
+    scale_fill_viridis_d('', end = .8) + 
+    labs(title = "Total number of Deaths by age group",
+         subtitle = 'Percentage shows the mortality rate',
+         caption = 'Mortality rate = \'deaths\' / \'confirmed cases\'',
          y = 'Age group',
          x = 'Deaths') +
     theme_minimal() + 
