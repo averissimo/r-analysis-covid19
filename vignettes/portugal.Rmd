@@ -225,7 +225,7 @@ for (age.ix in seq_along(ixs)) {
 
 # New Cases / Deaths by age groups {.tabset .tabset-fade .tabset-pills}
 
-```{r. echo=FALSE}
+```{r, echo=FALSE}
 age.data.all <- age.data %>% 
   filter(date == max(date) & value != 0) %>% 
   select(type, gender, age_type, value) %>% 
@@ -295,9 +295,9 @@ for (age.ix in seq_along(ixs)) {
     scale_x_continuous('', labels = function(ix) { return(abs(ix)) }) +
     scale_y_discrete(limits = age.data$type %>% unique %>% sort) + 
     scale_fill_viridis_d('', end = .8) + 
-    labs(title = 'New confirmed cases from {format(age.data$date %>% max, "%B %d")}' %>% glue,
+    labs(title = 'New confirmed cases from {format(age.ix.f, "%B %d")}' %>% glue,
            subtitle = 'Predicted deaths for age groups shown in parenthesis' %>% glue,
-         caption = 'Prediction based on current \'mortality rate\' (total for {format(age.data$date %>% max, "%B %d")}: {sum(age.data.all.new$predicted.death) %>% round(digits = 1)})' %>% glue,
+         caption = 'Prediction based on current \'mortality rate\' (total for {format(age.ix.f, "%B %d")}: {sum(age.data.all.new$predicted.death) %>% round(digits = 1)})' %>% glue,
          y = 'Age group',
          x = 'Confirmed Cases') +
     theme_minimal() + 
@@ -312,7 +312,7 @@ for (age.ix in seq_along(ixs)) {
     expand_limits(x =c(-1 * death.max, death.max)) +
     scale_x_continuous('', labels = function(ix) { return(abs(ix)) }) +
     scale_fill_viridis_d('', end = .8) + 
-    labs(title = 'New deaths from {format(age.data$date %>% max, "%B %d")}' %>% glue,
+    labs(title = 'New deaths from {format(age.ix.f, "%B %d")}' %>% glue,
          subtitle = '',
          caption = '',
          y = 'Age group',
