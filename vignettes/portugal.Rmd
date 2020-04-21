@@ -225,7 +225,7 @@ for (age.ix in seq_along(ixs)) {
 
 # New Cases / Deaths by age groups {.tabset .tabset-fade .tabset-pills}
 
-```{r}
+```{r. echo=FALSE}
 age.data.all <- age.data %>% 
   filter(date == max(date) & value != 0) %>% 
   select(type, gender, age_type, value) %>% 
