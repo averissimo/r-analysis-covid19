@@ -225,61 +225,96 @@ for (age.ix in seq_along(ixs)) {
 
 # New Cases / Deaths by age groups {.tabset .tabset-fade .tabset-pills}
 
+```{r}
+age.data.all <- age.data %>% 
+  filter(date == max(date) & value != 0) %>% 
+  select(type, gender, age_type, value) %>% 
+  reshape2::dcast(type + gender ~ age_type, mean, fill = 0) %>% 
+  mutate(label.confirmed = if_else(confirmed != 0, format(abs(confirmed), big.mark = ',', trim = TRUE), NA_character_),
+         label.death = if_else(death != 0, 
+                               paste0(format(abs(death), big.mark = ',', trim = TRUE),
+                                      ' (',
+                                      scales::percent(abs(death/confirmed), accuracy = 0.01, big.mark = ','),
+                                      ')'), 
+                               NA_character_))
+```
+
+
 ```{r, results='asis', echo=FALSE,fig.width=4, warning=FALSE}
-age.data.new <- age.data %>% 
-  mutate(value = abs(value)) %>% 
+age.data.all.new.tmp <- age.data %>% 
   group_by(country, type, gender, age_type) %>% 
   arrange(desc(date)) %>% 
   mutate(value = zoo::rollapply(value, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE)) %>%
-  filter(value > 0) %>% 
-  mutate(value = if_else(gender == 'men', value * -1, value %>% as.double))
+  filter(value != 0)
 
-ixs <- unique(age.data.new %>% arrange(desc(date)) %>% pull(date))
+ixs <- unique(age.data %>% arrange(desc(date)) %>% pull(date))
 
-confirmed.max <- age.data.new %>% filter(age_type == 'confirmed') %>%  pull(value) %>% max
-death.max <- age.data.new %>% filter(age_type == 'death') %>%  pull(value) %>% max
+confirmed.max <- age.data.all.new.tmp %>% filter(age_type == 'confirmed') %>%  pull(value) %>% max
+death.max <- age.data.all.new.tmp %>% filter(age_type == 'death') %>%  pull(value) %>% max
 for (age.ix in seq_along(ixs)) {
   age.ix.f <- ixs[age.ix]
   
-  confi.dat <- age.data.new %>% 
-    filter(date == age.ix.f & age_type == 'confirmed' & value != 0) %>% 
-    mutate(label = if_else(value != 0, format(abs(value), big.mark = ','), NA_character_))
-
-  death.dat <- age.data.new %>% 
-    filter(date == age.ix.f & age_type == 'death' & value != 0) %>% 
-    mutate(label = if_else(value != 0, format(abs(value), big.mark = ','), NA_character_))
-
+  age.data.all.new <- age.data.all.new.tmp %>% 
+    filter(date == age.ix.f & value != 0) %>% 
+    ungroup() %>% 
+    select(type, gender, age_type, value) %>% 
+    group_by(type, gender, age_type) %>% 
+    reshape2::dcast(type + gender ~ age_type, mean, fill = 0) %>% 
+    mutate(label.confirmed = if_else(confirmed != 0, format(abs(confirmed), big.mark = ',', trim = TRUE), NA_character_),
+           label.death = if_else(death != 0, 
+                                 if_else(is.na(confirmed) | confirmed == 0, format(abs(death), big.mark = ',', trim = TRUE),
+                                         paste0(format(abs(death), big.mark = ',', trim = TRUE))),
+                                 NA_character_)) %>% 
+    inner_join(age.data.all %>% select(-label.confirmed, -label.death), by = c('type', 'gender'), suffix = c('', '.all')) %>% 
+    mutate(predicted.death = if_else(death.all != 0,
+                                     abs(confirmed * death.all / confirmed.all),
+                                     0)) %>% 
+    mutate(label.confirmed = if_else(predicted.death == 0,
+                                     paste0(label.confirmed, ' (0)'),
+                                     if_else(predicted.death < 0.01, 
+                                             paste0(label.confirmed, ' (<0.01)'),
+                                             paste0(label.confirmed, 
+                                                    ' (',
+                                                    format(round(predicted.death, digits = 2), big.mark = ','),
+                                                    ')')))) %>% 
+    select(-confirmed.all, -death.all)  
+  
   cat('\n')
   cat('\n')
   cat('## {age.ix.f}' %>% glue)
   cat('\n')
   cat('\n')
-  print(confi.dat %>% 
-    ggplot(aes(x = value, y = type, fill = gender)) +
+  print(age.data.all.new %>%
+    ggplot(aes(x = confirmed, y = type, fill = gender)) +
     geom_bar(stat = 'identity') + 
-    ggrepel::geom_label_repel(aes(label = label, fill = gender), color = 'white', direction = 'x', seed = 1985, size = 3.5,
-                              nudge_x = ifelse(confi.dat$gender == 'men', -1, 1),
-                              show.legend = FALSE) +
+    ggrepel::geom_label_repel(aes(label = label.confirmed, fill = gender), color = 'white', direction = 'x', seed = 1985, size = 3.5,
+                          nudge_x = ifelse(age.data.all.new$gender == 'men', -1, 1),
+                          show.legend = FALSE,
+                          na.rm = TRUE) +
     expand_limits(x =c(-1 * confirmed.max, confirmed.max)) +
     scale_x_continuous('', labels = function(ix) { return(abs(ix)) }) +
     scale_y_discrete(limits = age.data$type %>% unique %>% sort) + 
-    scale_fill_viridis_d('',end = .8) + 
-    labs(title = "Confirmed cases from {age.ix.f}" %>% glue,
+    scale_fill_viridis_d('', end = .8) + 
+    labs(title = 'New confirmed cases from {format(age.data$date %>% max, "%B %d")}' %>% glue,
+         subtitle = 'In parenthesis the predicted deaths based on current mortality rate (total predicted deaths: {sum(age.data.all.new$predicted.death) %>% round(digits = 2)})' %>% glue,
+         caption = 'Mortality rate = \'deaths\' / \'confirmed cases\'',
          y = 'Age group',
          x = 'Confirmed Cases') +
     theme_minimal() + 
     theme(legend.position = 'bottom'))
-  print(death.dat %>%
-    ggplot(aes(x = value, y = type, fill = gender)) +
+  print(age.data.all.new %>%
+    ggplot(aes(x = death, y = type, fill = gender)) +
     geom_bar(stat = 'identity') + 
-    ggrepel::geom_label_repel(aes(label = label, fill = gender), color = 'white', direction = 'x', seed = 1985, size = 3.5,
-                              nudge_x = ifelse(death.dat$gender == 'men', -1, 1),
-                              show.legend = FALSE) +
+    ggrepel::geom_label_repel(aes(label = label.death, fill = gender), color = 'white', direction = 'x', seed = 1985, size = 3.5,
+                              nudge_x = ifelse(age.data.all.new %>% filter(!is.na(label.death)) %>% pull(gender) == 'men', -1, 1),
+                              show.legend = FALSE,
+                              na.rm = TRUE) +
     expand_limits(x =c(-1 * death.max, death.max)) +
     scale_x_continuous('', labels = function(ix) { return(abs(ix)) }) +
-    scale_fill_viridis_d('',end = .8) + 
-    scale_y_discrete(limits = age.data$type %>% unique %>% sort) + 
-    labs(title = "Deaths from {age.ix.f}" %>% glue,
+    scale_fill_viridis_d('', end = .8) + 
+    labs(title = 'New deaths from {format(age.data$date %>% max, "%B %d")}' %>% glue,
+         subtitle = '',
+         caption = '',
          y = 'Age group',
          x = 'Deaths') +
     theme_minimal() + 
