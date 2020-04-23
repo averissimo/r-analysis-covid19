@@ -225,6 +225,21 @@ for (age.ix in seq_along(ixs)) {
 
 # New Cases / Deaths by age groups {.tabset .tabset-fade .tabset-pills}
 
+```{r, include=FALSE}
+# required to get the mortality rate to calculate daily predictions of new deaths
+age.data.all <- age.data %>% 
+  filter(date == max(date) & value != 0) %>% 
+  select(type, gender, age_type, value) %>% 
+  reshape2::dcast(type + gender ~ age_type, mean, fill = 0) %>% 
+  mutate(label.confirmed = if_else(confirmed != 0, format(abs(confirmed), big.mark = ',', trim = TRUE), NA_character_),
+         label.death = if_else(death != 0, 
+                               paste0(format(abs(death), big.mark = ',', trim = TRUE),
+                                      ' (',
+                                      scales::percent(abs(death/confirmed), accuracy = 0.01, big.mark = ','),
+                                      ')'), 
+                               NA_character_))
+```
+
 
 ```{r, results='asis', echo=FALSE,fig.width=4.5, warning=FALSE}
 age.data.all.new.tmp <- age.data %>% 
@@ -291,8 +306,8 @@ for (age.ix in seq_along(ixs)) {
     scale_y_discrete(limits = age.data$type %>% unique %>% sort) + 
     scale_fill_viridis_d('', end = .8) + 
     labs(title = 'New confirmed cases from {format(age.ix.f, "%B %d")}' %>% glue,
-           subtitle = 'Predicted deaths for age groups shown in parenthesis' %>% glue,
-         caption = 'Prediction based on current \'mortality rate\' (total for {format(age.ix.f, "%B %d")}: {sum(age.data.all.new$predicted.death) %>% round(digits = 1)})' %>% glue,
+           subtitle = 'predicted deaths for age groups shown in parenthesis' %>% glue,
+         caption = 'Prediction based on current \'mortality rate\' ({sum(age.data.all.new$predicted.death) %>% round(digits = 1)} deaths for {format(age.ix.f, "%B %d")})' %>% glue,
          y = 'Age group',
          x = 'Confirmed Cases') +
     theme_minimal() + 
