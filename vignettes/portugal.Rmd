@@ -249,7 +249,7 @@ age.data.all.new.tmp <- age.data %>%
   filter(value != 0) %>% 
   filter(date != min(date)) # ignore first day as it shows cumulative cases from before!
 
-ixs <- unique(age.data %>% arrange(desc(date)) %>% pull(date))
+ixs <- unique(age.data.all.new.tmp %>% arrange(desc(date)) %>% pull(date))
 
 confirmed.max <- age.data.all.new.tmp %>% filter(age_type == 'confirmed') %>%  pull(value) %>% max
 death.max <- age.data.all.new.tmp %>% filter(age_type == 'death') %>%  pull(value) %>% max
