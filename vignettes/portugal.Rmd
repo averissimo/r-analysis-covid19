@@ -246,7 +246,8 @@ age.data.all.new.tmp <- age.data %>%
   group_by(country, type, gender, age_type) %>% 
   arrange(desc(date)) %>% 
   mutate(value = zoo::rollapply(value, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE)) %>%
-  filter(value != 0)
+  filter(value != 0) %>% 
+  filter(date != min(date)) # ignore first day as it shows cumulative cases from before!
 
 ixs <- unique(age.data %>% arrange(desc(date)) %>% pull(date))
 
