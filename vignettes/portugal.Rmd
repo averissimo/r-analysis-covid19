@@ -225,20 +225,6 @@ for (age.ix in seq_along(ixs)) {
 
 # New Cases / Deaths by age groups {.tabset .tabset-fade .tabset-pills}
 
-```{r, echo=FALSE}
-age.data.all <- age.data %>% 
-  filter(date == max(date) & value != 0) %>% 
-  select(type, gender, age_type, value) %>% 
-  reshape2::dcast(type + gender ~ age_type, mean, fill = 0) %>% 
-  mutate(label.confirmed = if_else(confirmed != 0, format(abs(confirmed), big.mark = ',', trim = TRUE), NA_character_),
-         label.death = if_else(death != 0, 
-                               paste0(format(abs(death), big.mark = ',', trim = TRUE),
-                                      ' (',
-                                      scales::percent(abs(death/confirmed), accuracy = 0.01, big.mark = ','),
-                                      ')'), 
-                               NA_character_))
-```
-
 
 ```{r, results='asis', echo=FALSE,fig.width=4.5, warning=FALSE}
 age.data.all.new.tmp <- age.data %>% 
@@ -251,6 +237,9 @@ ixs <- unique(age.data %>% arrange(desc(date)) %>% pull(date))
 
 confirmed.max <- age.data.all.new.tmp %>% filter(age_type == 'confirmed') %>%  pull(value) %>% max
 death.max <- age.data.all.new.tmp %>% filter(age_type == 'death') %>%  pull(value) %>% max
+
+dat.predicted <- tibble()
+
 for (age.ix in seq_along(ixs)) {
   age.ix.f <- ixs[age.ix]
   
@@ -278,6 +267,12 @@ for (age.ix in seq_along(ixs)) {
                                                     format(round(predicted.death, digits = 2), big.mark = ','),
                                                     ')')))) %>% 
     select(-confirmed.all, -death.all)  
+  
+  dat.predicted <- dat.predicted %>% bind_rows(
+    tibble(
+    date = age.ix.f,
+    predicted = sum(age.data.all.new$predicted.death)
+  ))
   
   cat('\n')
   cat('\n')
@@ -323,6 +318,29 @@ for (age.ix in seq_along(ixs)) {
   cat('\n')
 }
 ```
+
+```{r, eval=FALSE, include=FALSE}
+# Predicted deaths based on cases and current mortality rate
+
+# note that the predicted deaths are for the future as a result of the confirmed cases on that day
+plot_ly() %>% 
+  add_trace(x = ~date, y = ~predicted, data = dat.predicted, mode = 'scatter+lines')
+
+dat.pred.tmp <- dat.predicted %>% mutate(deaths = predicted) %>% 
+  select(date, deaths) %>% 
+  arrange(date) %>% 
+  mutate(deaths = cumsum(deaths))
+
+tmp.dat <- dgs.pt %>% select(date, deaths) %>% 
+  inner_join(dat.pred.tmp, by = 'date', suffix = c('.dgs', '.predicted')) %>% 
+  melt(id.vars = 'date')
+
+plot_ly() %>% 
+  add_trace(x = ~date, y = ~value, data = tmp.dat, color = ~variable, mode = 'markers+lines', type = 'scatter')
+
+
+```
+
 
 # Data {.tabset .tabset-fade .tabset-pills}
 
