@@ -298,10 +298,13 @@ for (age.ix in seq_along(ixs)) {
   
   
   label.death <- list(men = age.data.all.new %>% filter(gender == 'men') %>% pull(death) %>% sum %>% abs,
-                    women = age.data.all.new %>% filter(gender == 'women') %>% pull(death) %>% sum %>% abs)
+                      women = age.data.all.new %>% filter(gender == 'women') %>% pull(death) %>% sum %>% abs)
 
   label.confirmed <- list(men = age.data.all.new %>% filter(gender == 'men') %>% pull(confirmed) %>% sum %>% abs,
-                        women = age.data.all.new %>% filter(gender == 'women') %>% pull(confirmed) %>% sum %>% abs)
+                          women = age.data.all.new %>% filter(gender == 'women') %>% pull(confirmed) %>% sum %>% abs)
+  
+  label.predicted <- list(men = age.data.all.new %>% filter(gender == 'men') %>% pull(predicted.death) %>% sum %>% abs %>% round(digits = 1),
+                          women = age.data.all.new %>% filter(gender == 'women') %>% pull(predicted.death) %>% sum %>% abs %>% round(digits = 1))
 
   cat('\n')
   cat('\n')
@@ -318,7 +321,7 @@ for (age.ix in seq_along(ixs)) {
     expand_limits(x =c(-1 * confirmed.max, confirmed.max)) +
     scale_x_continuous('', labels = function(ix) { return(abs(ix)) }) +
     scale_y_discrete(limits = age.data$type %>% unique %>% sort) + 
-    scale_fill_viridis_d('', end = .8, labels = function(ix) { return(paste0(ix, ' (', format(label.confirmed[ix], big.mark = ',', trim = TRUE), ')'))}) + 
+    scale_fill_viridis_d('', end = .8, labels = function(ix) { return(paste0(ix, ' ', format(label.confirmed[ix], big.mark = ',', trim = TRUE), ' (', format(label.predicted[ix], big.mark = ',', trim = TRUE), ')'))}) + 
     labs(title = 'New {format(label.confirmed$women + label.confirmed$men, big.mark = ",", trim = TRUE)} confirmed cases from {format(age.ix.f, "%B %d")}' %>% glue,
            subtitle = 'predicted deaths for age groups shown in parenthesis' %>% glue,
          caption = 'Prediction based on current \'mortality rate\' ({sum(age.data.all.new$predicted.death) %>% round(digits = 1)} deaths for {format(age.ix.f, "%B %d")})' %>% glue,
@@ -335,7 +338,7 @@ for (age.ix in seq_along(ixs)) {
                               na.rm = TRUE) +
     expand_limits(x =c(-1 * death.max, death.max)) +
     scale_x_continuous('', labels = function(ix) { return(abs(ix)) }) +
-    scale_fill_viridis_d('', end = .8, labels = function(ix) { return(paste0(ix, ' (', format(label.death[ix], big.mark = ',', trim = TRUE), ')'))}) + 
+    scale_fill_viridis_d('', end = .8, labels = function(ix) { return(paste0(ix, ' ', format(label.death[ix], big.mark = ',', trim = TRUE), ''))}) + 
     labs(title = 'New {format(label.death$women + label.death$women, big.mark = ",", trim = TRUE)} deaths from {format(age.ix.f, "%B %d")}' %>% glue,
          subtitle = '',
          caption = '',
