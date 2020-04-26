@@ -193,18 +193,26 @@ download.es.data <- function(by.state = FALSE) {
     
     # valid.ccaa <- c('AN', 'AR', 'AS', 'CB', 'CM', 'CT', 'CE', 'EX', 'GA', 'MD', 'ML', 'MC', 'NC', 'PV', 'RI')
     
-    es.raw <- readr::read_csv('https://covid19.isciii.es/resources/serie_historica_acumulados.csv') %>% 
+    es.raw <- readr::read_csv('https://covid19.isciii.es/resources/serie_historica_acumulados.csv',
+                              col_types = readr::cols(
+                                  `PCR+` = readr::col_double(),
+                                  `TestAc+` = readr::col_double()
+                              )) %>% 
         filter(stringr::str_length(stringi::stri_enc_toutf8(CCAA)) == 2)
     
     es.data <- es.raw %>% 
         dplyr::mutate(date = stringr::str_replace(FECHA, '([0-9]+)/([0-9]+)/([0-9]+)', '\\3-\\2-\\1') %>% anytime::anydate() + 1,
                       confirmed = CASOS,
+                      pcr = `PCR+`,
+                      testac = `TestAc+`,
                       death = Fallecidos,
                       recovered = Recuperados,
                       icu = UCI,
                       hospitalized = Hospitalizados) %>% 
-        dplyr::select(state = CCAA, date, confirmed, death, recovered, icu, hospitalized) %>% 
+        dplyr::select(state = CCAA, date, confirmed, pcr, testac, death, recovered, icu, hospitalized) %>% 
         dplyr::mutate_if(~any(is.na(.x)), ~dplyr::if_else(is.na(.x), 0, .x)) %>% # missing values
+        dplyr::mutate(confirmed = confirmed + pcr + testac) %>% 
+        dplyr::select(-pcr, -testac) %>% 
         reshape2::melt(id.vars = c('state', 'date'), variable.name = 'type', value.name = 'cases') %>% 
         dplyr::arrange(desc(date)) %>% 
         dplyr::group_by(state, type) %>% 
