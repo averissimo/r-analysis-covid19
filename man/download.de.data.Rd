@@ -4,14 +4,11 @@
 \alias{download.de.data}
 \title{Download Germany data (DE)}
 \usage{
-download.de.data(use.averissimo = TRUE)
+download.de.data(by.federal.state = FALSE)
 }
 \value{
 data frame with latest data
 }
 \description{
 Download Germany data (DE)
-}
-\examples{
-download.de.data(FALSE)
 }

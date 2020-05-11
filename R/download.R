@@ -1,4 +1,69 @@
+download.us.data.states <- function() {
+    json_data <- httr::GET('https://covidtracking.com/api/v1/states/daily.json') %>% 
+        httr::content('text', encoding = 'UTF-8') %>% 
+        rjson::fromJSON()
+    
+    current <- httr::GET('https://covidtracking.com/api/v1/states/current.json') %>% 
+        httr::content('text', encoding = 'UTF-8') %>% 
+        rjson::fromJSON()
+    
+    us.data.raw <- tibble::tibble()
+    for (ix in seq_along(json_data)) {
+        for (ix.name in names(json_data[[ix]])) {
+            if (is.null(json_data[[ix]][[ix.name]])) {
+                json_data[[ix]][[ix.name]] <- NA
+            }
+        }
+        us.data.raw <- us.data.raw %>% 
+            dplyr::bind_rows(json_data[[ix]])
+    }
+    
+    us.data.raw <- us.data.raw %>% 
+        dplyr::select(date, state, positive, death)
+    
+    us.current.raw <- tibble::tibble()
+    for (ix in seq_along(current)) {
+        for (ix.name in names(current[[ix]])) {
+            if (is.null(current[[ix]][[ix.name]])) {
+                current[[ix]][[ix.name]] <- NA
+            }
+        }
+        us.current.raw <- us.current.raw %>% 
+            dplyr::bind_rows(current[[ix]])
+    }
+    
+    us.current.raw <- us.current.raw %>% 
+        dplyr::select(state, positive, death) %>% 
+        dplyr::mutate(date = Sys.Date() %>% format('%Y%m%d') %>% as.integer())
+    
+    us.data <- dplyr::bind_rows(us.current.raw, us.data.raw) %>% 
+        dplyr::group_by(state) %>% 
+        dplyr::arrange(desc(date)) %>% 
+        dplyr::select(date, state, confirmed = positive, death) %>% 
+        dplyr::mutate(death = zoo::rollapply(death, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE),
+                      confirmed = zoo::rollapply(confirmed, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE),
+                      date = anytime::anydate(as.character(date))) %>% 
+        reshape2::melt(id.vars = c('state', 'date'), variable.name = 'type', value.name = 'cases') %>% 
+        dplyr::filter(!is.na(cases)) %>% 
+        tibble::tibble() %>% 
+        dplyr::group_by(state, type) %>% 
+        dplyr::arrange(date) %>% 
+        dplyr::mutate(cumul = cumsum(cases),
+                      state.code = state) %>% 
+        dplyr::ungroup() %>% 
+        dplyr::select(-state)
+    
+    us.data.all <- dplyr::left_join(us.data, usa_pop)
+    
+    source.date <- format(max(us.data.all %>% dplyr::filter(cases > 0) %>% dplyr::pull(date) %>% max), '%Y/%m/%d')
+    return(list(data = us.data.all, source = '{source.date} (USA covidtracking.com)' %>% glue::glue()))
+}
+
 download.us.data <- function(by.state = FALSE) {
+    flog.info('by.state %s', by.state)
+    if (by.state) {
+        return(download.us.data.states())
+    }
     json_data <- httr::GET('https://covidtracking.com/api/us/daily') %>% 
         httr::content('text') %>% 
         rjson::fromJSON()
