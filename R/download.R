@@ -325,14 +325,16 @@ download.es.data <- function(by.state = FALSE) {
 #' @return a list with data and source string
 #' @export
 download.it.data <- function(by.state = TRUE) {
-    eu.raw <- readr::read_csv('https://github.com/pcm-dpc/COVID-19/raw/master/dati-regioni/dpc-covid19-ita-regioni.csv')
+    eu.raw <- readr::read_csv('https://github.com/pcm-dpc/COVID-19/raw/master/dati-regioni/dpc-covid19-ita-regioni.csv',
+                              col_types = readr::cols(
+                                  `casi_testati` = readr::col_double()))
 
     it.nuts.codici <- it.nuts.codici %>%
         dplyr::filter(nuts_2 != 'ITH1')
 
     eu.data <- eu.raw %>%
         dplyr::mutate(codice_regione = as.double(codice_regione)) %>%
-        left_join(it.nuts.codici, by = 'codice_regione') %>%
+        dplyr::left_join(it.nuts.codici, by = 'codice_regione') %>%
         dplyr::mutate(state = eurostat::label_eurostat(nuts_2, dic = 'geo'),
                date =  anytime::anydate(data)) %>%
         dplyr::select(state,
