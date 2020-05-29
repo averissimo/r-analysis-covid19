@@ -122,11 +122,8 @@ download.us.data <- function(by.state = FALSE) {
         dplyr::select(state,
                date,
                death = deathIncrease,
-               confirmed = positiveIncrease,
-               recovered,
-               hospitalized = hospitalizedCumulative) %>% 
+               confirmed = positiveIncrease) %>% 
         dplyr::arrange(desc(date)) %>% 
-        dplyr::mutate(hospitalized = zoo::rollapply(hospitalized, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE)) %>% 
         reshape2::melt(id.vars = c('state', 'date'), variable.name = 'type', value.name = 'cases') %>% 
         dplyr::filter(!is.na(cases)) %>% 
         tibble::tibble() %>% 
@@ -270,11 +267,8 @@ download.es.data <- function(by.state = FALSE) {
                       confirmed = CASOS,
                       pcr = `PCR+`,
                       testac = `TestAc+`,
-                      death = Fallecidos,
-                      recovered = Recuperados,
-                      icu = UCI,
-                      hospitalized = Hospitalizados) %>% 
-        dplyr::select(state = CCAA, date, confirmed, pcr, testac, death, recovered, icu, hospitalized) %>% 
+                      death = Fallecidos) %>% 
+        dplyr::select(state = CCAA, date, confirmed, pcr, testac, death) %>% 
         dplyr::mutate_if(~any(is.na(.x)), ~dplyr::if_else(is.na(.x), 0, .x)) %>% # missing values
         dplyr::mutate(confirmed = confirmed + pcr + testac) %>% 
         dplyr::select(-pcr, -testac) %>% 
