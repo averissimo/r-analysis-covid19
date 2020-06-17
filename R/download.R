@@ -101,7 +101,7 @@ download.us.data <- function(by.state = FALSE) {
                 negativeIncrease = zoo::rollapply(negative, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE),
                 totalTestResultsIncrease = zoo::rollapply(totalTestResults, 2, function(ix) { if(length(ix) <= 1) { return(ix) } else { ix[1] - sum(ix[-1]) } }, fill = c(0, 0, 0), align = 'left', partial = TRUE),
             ) %>% 
-            select(-notes, -lastModified) %>% 
+            select(-lastModified) %>% 
             filter(date == max(date))
         
         us.data.raw <- us.data.raw %>% 

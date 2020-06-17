@@ -23,7 +23,7 @@ rmarkdown::render('index.Rmd')
 ```{r, include=FALSE, eval=FALSE}
 rmarkdown::clean_site()
 rmarkdown::render_site(quiet = TRUE)
-#rmarkdown::render_site()
+rmarkdown::render_site()
 ```
 
 ```{r, eval=FALSE, include=FALSE}
