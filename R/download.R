@@ -393,20 +393,20 @@ download.pt.data <- function() {
     eu.data <- eu.data.raw$cdc.eu %>%
         dplyr::mutate(date = anytime::anydate(glue::glue('{year}/{month}/{day}')) - 1,
                state = countriesAndTerritories) %>%
-        dplyr::select(state, date, cases, deaths, popData2018, state.code = countryterritoryCode) %>%
+        dplyr::select(state, date, cases, deaths, popData2019, state.code = countryterritoryCode) %>%
         dplyr::mutate(state = iconv(state, to = 'UTF-8')) %>%
         dplyr::arrange(date) %>%
-        reshape2::melt(id.vars = c('state', 'state.code', 'popData2018', 'date'),
+        reshape2::melt(id.vars = c('state', 'state.code', 'popData2019', 'date'),
              variable.name = 'type',
              value.name = 'cases') %>%
         dplyr::mutate(type = dplyr::if_else(type == 'cases', 'confirmed', 'death')) %>%
-        dplyr::group_by(state, state.code, type, date, popData2018) %>%
+        dplyr::group_by(state, state.code, type, date, popData2019) %>%
         dplyr::summarise(cases = sum(cases)) %>%
         dplyr::group_by(state, type) %>%
         dplyr::mutate(cumul = cumsum(cases)) %>%
         dplyr::ungroup() %>%
         dplyr::mutate(state = gsub('_', ' ', state)) %>%
-        dplyr::select(state, date, type, cases, cumul, population = popData2018, state.code)
+        dplyr::select(state, date, type, cases, cumul, population = popData2019, state.code)
 
     source.date <- format(max(eu.data$date), '%Y/%m/%d')
     return(list(data = eu.data, source = '{source.date} (PT DGS)' %>% glue::glue()))
@@ -510,26 +510,26 @@ download.eucdc.data <- function() {
     
     cz.pop <- download.eurostat.population('CZ') %>% dplyr::pull(population) %>% sum() %>% purrr::pluck(1)
     eu.data.raw <- eu.data.raw %>% 
-        dplyr::mutate(popData2018 = dplyr::if_else(countriesAndTerritories == 'Czechia', cz.pop, popData2018),
+        dplyr::mutate(popData2019 = dplyr::if_else(countriesAndTerritories == 'Czechia', cz.pop, popData2018),
                       countryterritoryCode = dplyr::if_else(countriesAndTerritories == 'Czechia', 'CZE', countryterritoryCode))
     
     eu.data <- eu.data.raw %>%
         dplyr::mutate(date = anytime::anydate(glue::glue('{year}/{month}/{day}')) - 1,
                state = countriesAndTerritories) %>%
-        dplyr::select(state, date, cases, deaths, popData2018, state.code = countryterritoryCode) %>%
+        dplyr::select(state, date, cases, deaths, popData2019, state.code = countryterritoryCode) %>%
         dplyr::mutate(state = iconv(state, to = 'UTF-8')) %>%
         dplyr::arrange(date) %>%
-        reshape2::melt(id.vars = c('state', 'state.code', 'popData2018', 'date'),
+        reshape2::melt(id.vars = c('state', 'state.code', 'popData2019', 'date'),
              variable.name = 'type',
              value.name = 'cases') %>%
         dplyr::mutate(type = dplyr::if_else(type == 'cases', 'confirmed', 'death')) %>%
-        dplyr::group_by(state, state.code, type, date, popData2018) %>%
+        dplyr::group_by(state, state.code, type, date, popData2019) %>%
         dplyr::summarise(cases = sum(cases)) %>%
         dplyr::group_by(state, type) %>%
         dplyr::mutate(cumul = cumsum(cases)) %>%
         dplyr::ungroup() %>%
         dplyr::mutate(state = gsub('_', ' ', state)) %>%
-        dplyr::select(state, date, type, cases, cumul, population = popData2018, state.code) %>% 
+        dplyr::select(state, date, type, cases, cumul, population = popData2019, state.code) %>% 
         dplyr::mutate(state = eu.convert.names(state)) %>% 
         mutate(state = if_else(state == 'United States of America', 'USA', state))
 
