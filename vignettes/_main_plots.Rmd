@@ -411,11 +411,11 @@ Latest data from `r source.by`
 
 #### *per 100k population*
 
-Each data point is an average of new cases from the previous 4 days *(per 100k population)*.
+Each data point is an average of new cases from the previous 7 days *(per 100k population)*.
 
 ```{r}
 suppressWarnings({
-  p <- last.week.cumulative(last.week.dat, 'confirmed', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE) %>% ggplotly()
+  p <- last.week.cumulative(last.week.dat, 'confirmed', 7, countries, log2.flag = FALSE, per.100k.flag = TRUE) %>% ggplotly()
 })
 
 d <- plotly_data(p) %>%  
@@ -450,7 +450,7 @@ d.tmp
 
 #### *per 100k population Log10* scale
 
-Each data point is an average of new cases from the previous 4 days.
+Each data point is an average of new cases from the previous 7 days.
 
 ```{r}
 d.tmp %>% 
@@ -459,11 +459,11 @@ d.tmp %>%
 
 #### Total
 
-Each data point is an average of new cases from the previous 4 days.
+Each data point is an average of new cases from the previous 7 days.
 
 ```{r}
 suppressWarnings({
-  p <- last.week.cumulative(last.week.dat, 'confirmed', 4, countries, log2.flag = FALSE, per.100k.flag = FALSE) %>% ggplotly()
+  p <- last.week.cumulative(last.week.dat, 'confirmed', 7, countries, log2.flag = FALSE, per.100k.flag = FALSE) %>% ggplotly()
 })
 
 d <- plotly_data(p) %>%  
@@ -496,7 +496,7 @@ d.tmp
 
 #### *Log10* scale
 
-Each data point is an average of new cases from the previous 4 days.
+Each data point is an average of new cases from the previous 7 days.
 
 ```{r}
 d.tmp %>% 
@@ -509,12 +509,12 @@ Latest data from `r source.by`
 
 #### *per 100k population*
 
-Each data point is an average of new cases from the previous 4 days *(per 100k population)*.
+Each data point is an average of new cases from the previous 7 days *(per 100k population)*.
 
 
 ```{r}
 suppressWarnings({
-  p <- last.week.cumulative(last.week.dat, 'death', 4, countries, log2.flag = FALSE, per.100k.flag = TRUE) %>% ggplotly()
+  p <- last.week.cumulative(last.week.dat, 'death', 7, countries, log2.flag = FALSE, per.100k.flag = TRUE) %>% ggplotly()
 })
 
 d <- plotly_data(p) %>%  
@@ -548,7 +548,7 @@ d.tmp
 
 #### *per 100k population Log10* scale
 
-Each data point is an average of new cases from the previous 4 days.
+Each data point is an average of new cases from the previous 7 days.
 
 ```{r}
 d.tmp %>% 
@@ -557,11 +557,11 @@ d.tmp %>%
 
 #### Total
 
-Each data point is an average of new cases from the previous 4 days.
+Each data point is an average of new cases from the previous 7 days.
 
 ```{r}
 suppressWarnings({
-  p <- last.week.cumulative(last.week.dat, 'death', 4, countries, log2.flag = FALSE, per.100k.flag = FALSE) %>% ggplotly()
+  p <- last.week.cumulative(last.week.dat, 'death', 7, countries, log2.flag = FALSE, per.100k.flag = FALSE) %>% ggplotly()
 })
 
 d <- plotly_data(p) %>%  
@@ -594,7 +594,7 @@ d.tmp
 
 #### *Log10* scale
 
-Each data point is an average of new cases from the previous 4 days.
+Each data point is an average of new cases from the previous 7 days.
 
 ```{r}
 d.tmp %>% 

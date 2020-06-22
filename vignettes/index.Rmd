@@ -9,7 +9,7 @@ params:
     death.start: !r 100
     confirmed.start: !r 1000
     duplicate.every: !r 2
-    last.days: !r 12
+    last.days: !r 120
 ---
 
 ```{r, child='_header.md'}
