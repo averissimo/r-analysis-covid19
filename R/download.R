@@ -516,7 +516,7 @@ download.eucdc.data <- function() {
         
     cz.pop <- download.eurostat.population('CZ') %>% dplyr::pull(population) %>% sum() %>% purrr::pluck(1)
     eu.data.raw <- eu.data.raw %>% 
-        dplyr::mutate(popData = dplyr::if_else(countriesAndTerritories == 'Czechia', cz.pop, popData2018),
+        dplyr::mutate(popData = dplyr::if_else(countriesAndTerritories == 'Czechia', cz.pop, popData),
                       countryterritoryCode = dplyr::if_else(countriesAndTerritories == 'Czechia', 'CZE', countryterritoryCode))
     
     eu.data <- eu.data.raw %>%
