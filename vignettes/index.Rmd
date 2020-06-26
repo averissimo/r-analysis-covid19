@@ -10,6 +10,7 @@ params:
     confirmed.start: !r 1000
     duplicate.every: !r 2
     last.days: !r 120
+    rolling.days: !r 7
 ---
 
 ```{r, child='_header.md'}
@@ -191,7 +192,7 @@ after.100.dat$confirmed = ommit.data(after.100.dat$all, 'confirmed', countries) 
 after.100.dat$death = ommit.data(after.100.dat$all, 'death', countries) # my.corona.after.100.death.dat
 
 last.days.dat <- filter.last.days(my.corona, params$last.days) # my.corona.last.days
-last.week.dat <- filter.last.days.cumulative(my.corona, 7) # last.week
+last.week.dat <- filter.last.days.cumulative(my.corona, params$rolling.days) # last.week
 death.vs.cases <- filter.death.vs.cases(last.week.dat) %>% filter(state %in% countries.extended) # death.vs.cases
 
 my.world = list()

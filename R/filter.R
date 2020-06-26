@@ -58,7 +58,7 @@ filter.last.days.cumulative <- function(dat, days = 4, fun = mean) {
         #left_join(populations, by = 'state') %>%
         dplyr::group_by(state, state.code) %>%
         dplyr::arrange(date) %>%
-        dplyr::filter(difftime(date, anytime::anydate(date()) - 30, units = 'days') >= 0) %>%
+        dplyr::filter(difftime(date, anytime::anydate(date()) - params$last.days, units = 'days') >= 0) %>%
         #
         dplyr::mutate(deaths.per.100k = last.week.cases.death / population * 100000,
                confirmed.per.100k = last.week.cases.confirmed / population * 100000,
