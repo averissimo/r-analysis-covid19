@@ -60,6 +60,7 @@ age.data <- dgs.pt %>%
   reshape2::melt(id.vars = c('country', 'date'), variable.name = 'type') %>% 
   group_by(country, type) %>% 
   filter(grepl('(confirmed_|death_)', type)) %>% 
+  mutate(value = if_else(!is.na(value), value, as.integer(0))) %>% 
   arrange(date) %>% 
   ungroup() %>% 
   mutate(gender = if_else(grepl('.*_m_*', type), 'men', 'women'),
@@ -175,20 +176,52 @@ for (age.ix in seq_along(ixs)) {
     filter(date == age.ix.f & value != 0) %>% 
     select(type, gender, age_type, value) %>% 
     reshape2::dcast(type + gender ~ age_type, mean, fill = 0) %>% 
+    mutate(confirmed = if('confirmed' %in% colnames(.)) confirmed else 0,
+           death = if('death' %in% colnames(.)) death else 0) %>% 
     mutate(label.confirmed = if_else(confirmed != 0, format(abs(confirmed), big.mark = ',', trim = TRUE), NA_character_),
-           label.death = if_else(death != 0, 
+           label.death = if_else(death != 0 & confirmed != 0, 
                                  paste0(format(abs(death), big.mark = ',', trim = TRUE),
                                         ' (',
                                         scales::percent(abs(death/confirmed), accuracy = 0.01, big.mark = ','),
                                         ')'), 
-                                 NA_character_))
+                                 if_else(confirmed == 0, format(abs(death), big.mark = ',', trim = TRUE), NA_character_)))
   
   label.death <- list(men = age.data.all %>% filter(gender == 'men') %>% pull(death) %>% sum %>% abs,
                       women = age.data.all %>% filter(gender == 'women') %>% pull(death) %>% sum %>% abs)
-
+  
   label.confirmed <- list(men = age.data.all %>% filter(gender == 'men') %>% pull(confirmed) %>% sum %>% abs,
                           women = age.data.all %>% filter(gender == 'women') %>% pull(confirmed) %>% sum %>% abs)
-
+  #
+  #
+  #
+  confirmed.labs <- list(title = 'Total number of Confirmed cases ({format(label.confirmed$women + label.confirmed$men, big.mark = ",", trim = TRUE)}) by age group' %>% glue,
+                         subtitle = 'predicted deaths for age groups shown in parenthesis' %>% glue,
+                         caption = '',
+                         y = 'Age group',
+                         x = 'Confirmed Cases')
+  confirmed.status <- sum(abs(age.data.all$confirmed)) != dgs.pt %>% filter(date == age.ix.f) %>% pull(confirmed) %>% sum
+  if (confirmed.status) {
+    confirmed.labs$title <- 'ERROR on DGS data for demographics'
+    confirmed.labs$subtitle <- ' for total confirmed cases ({format(label.confirmed$women + label.confirmed$men, big.mark = ",", trim = TRUE)} not {format(dgs.pt %>% filter(date == age.ix.f) %>% pull(confirmed) %>% sum, big.mark = ",", trim = TRUE)})' %>% glue
+    confirmed.labs$caption <- ''
+  }
+  #
+  death.labs <- list(title = 'Total number of Deaths ({format(label.death$women + label.death$men, big.mark = ",", trim = TRUE)}) by age group' %>% glue,
+                         subtitle = 'Percentage shows the mortality rate',
+                         caption = 'Mortality rate = \'deaths\' / \'confirmed cases\'',
+                         y = 'Age group',
+                         x = 'Deaths')
+  death.status <- sum(abs(age.data.all$death)) != dgs.pt %>% filter(date == age.ix.f) %>% pull(deaths) %>% sum
+  if (death.status) {
+    death.labs$title <- 'ERROR on DGS data for demographics'
+    confirmed.labs$subtitle <- ' for total deaths ({format(label.death$women + label.death$men, big.mark = ",", trim = TRUE)} not {format(dgs.pt %>% filter(date == age.ix.f) %>% pull(deaths) %>% sum}, big.mark = ",", trim = TRUE))' %>% glue
+    death.labs$caption <- ''
+  }
+  #
+  #
+  #
+  #
+  #
   print(age.data.all %>%
     ggplot(aes(x = confirmed, y = type, fill = gender)) +
     geom_bar(stat = 'identity') + 
@@ -199,12 +232,12 @@ for (age.ix in seq_along(ixs)) {
     expand_limits(x =c(-1 * confirmed.max, confirmed.max)) +
     scale_x_continuous('', labels = function(ix) { return(abs(ix)) }) +
     scale_y_discrete(limits = age.data$type %>% unique %>% sort) + 
-    scale_fill_viridis_d('', end = .8, labels = function(ix) { return(paste0(ix, ': ', format(label.confirmed[ix], big.mark = ',', trim = TRUE), ''))}) + 
-    labs(title = 'Total number of Confirmed cases ({format(label.confirmed$women + label.confirmed$women, big.mark = ",", trim = TRUE)}) by age group' %>% glue,
-         y = 'Age group',
-         subtitle = '',
-         caption = '',
-         x = 'Confirmed Cases') +
+    scale_fill_viridis_d('', end = .8, labels = function(ix) { if (confirmed.status) return(ix) else return(paste0(ix, ': ', format(label.confirmed[ix], big.mark = ',', trim = TRUE), ''))}) + 
+    labs(title = confirmed.labs$title,
+         subtitle = confirmed.labs$subtitle,
+         caption = confirmed.labs$captions,
+         y = confirmed.labs$y,
+         x = confirmed.labs$x) +
     theme_minimal() + 
     theme(legend.position = 'bottom'))
   print(age.data.all %>%
@@ -216,12 +249,12 @@ for (age.ix in seq_along(ixs)) {
                               na.rm = TRUE) +
     expand_limits(x =c(-1 * death.max, death.max)) +
     scale_x_continuous('', labels = function(ix) { return(abs(ix)) }) +
-    scale_fill_viridis_d('', end = .8, labels = function(ix) { return(paste0(ix, ': ', format(label.death[ix], big.mark = ',', trim = TRUE), ''))}) + 
-    labs(title = 'Total number of Deaths ({format(label.death$women + label.death$women, big.mark = ",", trim = TRUE)}) by age group' %>% glue,
-         subtitle = 'Percentage shows the mortality rate',
-         caption = 'Mortality rate = \'deaths\' / \'confirmed cases\'',
-         y = 'Age group',
-         x = 'Deaths') +
+    scale_fill_viridis_d('', end = .8, labels = function(ix) { if (death.status) return(ix) else return(paste0(ix, ': ', format(label.death[ix], big.mark = ',', trim = TRUE), ''))}) + 
+    labs(title = death.labs$title,
+         subtitle = death.labs$subtitle,
+         caption = death.labs$caption,
+         y = death.labs$x,
+         x = death.labs$y) +
     theme_minimal() + 
     theme(legend.position = 'bottom'))
   cat('\n')
@@ -237,13 +270,15 @@ age.data.all <- age.data %>%
   filter(date == max(date) & value != 0) %>% 
   select(type, gender, age_type, value) %>% 
   reshape2::dcast(type + gender ~ age_type, mean, fill = 0) %>% 
+  mutate(confirmed = if('confirmed' %in% colnames(.)) confirmed else 0,
+         death = if('death' %in% colnames(.)) death else 0) %>% 
   mutate(label.confirmed = if_else(confirmed != 0, format(abs(confirmed), big.mark = ',', trim = TRUE), NA_character_),
-         label.death = if_else(death != 0, 
+         label.death = if_else(death != 0 & confirmed != 0, 
                                paste0(format(abs(death), big.mark = ',', trim = TRUE),
                                       ' (',
                                       scales::percent(abs(death/confirmed), accuracy = 0.01, big.mark = ','),
                                       ')'), 
-                               NA_character_))
+                               if_else(confirmed == 0, format(abs(death), big.mark = ',', trim = TRUE), NA_character_)))
 ```
 
 
@@ -264,13 +299,16 @@ dat.predicted <- tibble()
 
 for (age.ix in seq_along(ixs)) {
   age.ix.f <- ixs[age.ix]
-  
+  if (age.ix.f == '2020-07-02') 
+    break
   age.data.all.new <- age.data.all.new.tmp %>% 
     filter(date == age.ix.f & value != 0) %>% 
     ungroup() %>% 
     select(type, gender, age_type, value) %>% 
     group_by(type, gender, age_type) %>% 
     reshape2::dcast(type + gender ~ age_type, mean, fill = 0) %>% 
+    mutate(confirmed = if('confirmed' %in% colnames(.)) confirmed else 0,
+           death = if('death' %in% colnames(.)) death else 0) %>% 
     mutate(label.confirmed = if_else(confirmed != 0, format(abs(confirmed), big.mark = ',', trim = TRUE), NA_character_),
            label.death = if_else(death != 0, 
                                  if_else(is.na(confirmed) | confirmed == 0, format(abs(death), big.mark = ',', trim = TRUE),
@@ -311,6 +349,40 @@ for (age.ix in seq_along(ixs)) {
   cat('## {age.ix.f}' %>% glue)
   cat('\n')
   cat('\n')
+  #
+  #
+  #
+  #
+  #
+  #
+  confirmed.labs <- list(title = 'New {format(label.confirmed$women + label.confirmed$men, big.mark = ",", trim = TRUE)} confirmed cases from {format(age.ix.f, "%B %d")}' %>% glue,
+                         subtitle = 'predicted deaths for age groups shown in parenthesis' %>% glue,
+                         caption = 'Prediction based on current \'mortality rate\' ({sum(age.data.all.new$predicted.death) %>% round(digits = 1)} deaths for {format(age.ix.f, "%B %d")})' %>% glue,
+                         y = 'Age group',
+                         x = 'Confirmed Cases')
+  confirmed.status <- sum(abs(age.data.all.new$confirmed)) != covid19.pt %>% filter(dateRep == strftime(anydate(age.ix.f)+1, '%d/%m/%Y')) %>% pull(cases) %>% sum
+  if (confirmed.status) {
+    confirmed.labs$title <- 'ERROR on DGS data for demographics'
+    confirmed.labs$subtitle <- ' for new confirmed cases ({format(label.confirmed$women + label.confirmed$men, big.mark = ",", trim = TRUE)} not {format(covid19.pt %>% filter(dateRep == strftime(anydate(age.ix.f)+1, \'%d/%m/%Y\')) %>% pull(cases) %>% sum, big.mark = ",", trim = TRUE)})' %>% glue
+    confirmed.labs$caption <- ''
+  }
+  #
+  death.labs <- list(title = 'New {format(label.death$women + label.death$men, big.mark = ",", trim = TRUE)} deaths from {format(age.ix.f, "%B %d")}' %>% glue,
+                         subtitle = '',
+                         caption = '',
+                         y = 'Age group',
+                         x = 'Deaths')
+  death.status <- sum(abs(age.data.all.new$death)) != covid19.pt %>% filter(dateRep == strftime(anydate(age.ix.f)+1, '%d/%m/%Y')) %>% pull(deaths) %>% sum
+  if (death.status) {
+    death.labs$title <- 'ERROR on DGS data for demographics'
+    death.labs$subtitle <- ' for new deaths ({format(label.death$women + label.death$men, big.mark = ",", trim = TRUE)} not {format(covid19.pt %>% filter(dateRep == strftime(anydate(age.ix.f)+1, \'%d/%m/%Y\')) %>% pull(deaths) %>% sum, big.mark = ",", trim = TRUE)})' %>% glue
+    death.labs$caption <- ''
+  }
+  #
+  #
+  #
+  #
+  #
   print(age.data.all.new %>%
     ggplot(aes(x = confirmed, y = type, fill = gender)) +
     geom_bar(stat = 'identity') + 
@@ -321,12 +393,12 @@ for (age.ix in seq_along(ixs)) {
     expand_limits(x =c(-1 * confirmed.max, confirmed.max)) +
     scale_x_continuous('', labels = function(ix) { return(abs(ix)) }) +
     scale_y_discrete(limits = age.data$type %>% unique %>% sort) + 
-    scale_fill_viridis_d('', end = .8, labels = function(ix) { return(paste0(ix, ': ', format(label.confirmed[ix], big.mark = ',', trim = TRUE), ' (', format(label.predicted[ix], big.mark = ',', trim = TRUE), ')'))}) + 
-    labs(title = 'New {format(label.confirmed$women + label.confirmed$men, big.mark = ",", trim = TRUE)} confirmed cases from {format(age.ix.f, "%B %d")}' %>% glue,
-           subtitle = 'predicted deaths for age groups shown in parenthesis' %>% glue,
-         caption = 'Prediction based on current \'mortality rate\' ({sum(age.data.all.new$predicted.death) %>% round(digits = 1)} deaths for {format(age.ix.f, "%B %d")})' %>% glue,
-         y = 'Age group',
-         x = 'Confirmed Cases') +
+    scale_fill_viridis_d('', end = .8, labels = function(ix) { if (confirmed.status) return(ix) else return(paste0(ix, ': ', format(label.confirmed[ix], big.mark = ',', trim = TRUE), ' (', format(label.predicted[ix], big.mark = ',', trim = TRUE), ')'))}) + 
+    labs(title = confirmed.labs$title,
+         subtitle = confirmed.labs$subtitle,
+         caption = confirmed.labs$captions,
+         y = confirmed.labs$y,
+         x = confirmed.labs$x) +
     theme_minimal() + 
     theme(legend.position = 'bottom'))
   print(age.data.all.new %>%
@@ -338,12 +410,13 @@ for (age.ix in seq_along(ixs)) {
                               na.rm = TRUE) +
     expand_limits(x =c(-1 * death.max, death.max)) +
     scale_x_continuous('', labels = function(ix) { return(abs(ix)) }) +
-    scale_fill_viridis_d('', end = .8, labels = function(ix) { return(paste0(ix, ': ', format(label.death[ix], big.mark = ',', trim = TRUE), ''))}) + 
-    labs(title = 'New {format(label.death$women + label.death$women, big.mark = ",", trim = TRUE)} deaths from {format(age.ix.f, "%B %d")}' %>% glue,
-         subtitle = '',
-         caption = '',
-         y = 'Age group',
-         x = 'Deaths') +
+    scale_y_discrete(limits = age.data$type %>% unique %>% sort) + 
+    scale_fill_viridis_d('', end = .8, labels = function(ix) { if (death.status) return(ix) else return(paste0(ix, ': ', format(label.death[ix], big.mark = ',', trim = TRUE), ''))}) + 
+    labs(title = death.labs$title,
+         subtitle = death.labs$subtitle,
+         caption = death.labs$caption,
+         y = death.labs$x,
+         x = death.labs$y) +
     theme_minimal() + 
     theme(legend.position = 'bottom'))
   cat('\n')
