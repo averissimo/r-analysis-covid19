@@ -403,7 +403,7 @@ d %>% plot_ly() %>%
   highlight(on = 'plotly_click', off = 'plotly_doubleclick', persistent = FALSE)
 ```
 
-## Rolling averages of last 4 days {.tabset .tabset-fade .tabset-pills}
+## Rolling averages of last 7 days {.tabset .tabset-fade .tabset-pills}
 
 ### Average Cases {.tabset .tabset-fade .tabset-pills}
 
