@@ -160,7 +160,7 @@ region.all         <- 'World'
 
 countries          <- c('Italy', 'Spain','Germany', 'Portugal', 'USA', 'France', 'Belgium', 'Russia',
                         'Switzerland', 'Sweden', 'United Kingdom', 'Netherlands',
-                        'Denmark') %>% sort
+                        'Denmark', 'Czech Republic', 'Austria', 'Slovenia', 'Brazil', 'India', 'Israel') %>% sort
 
 countries.highlight <- c('Portugal', 'Germany', 'Spain', 'Italy', 'France', 'USA', 'Switzerland', 'Belgium')
 
