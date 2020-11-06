@@ -1,0 +1,147 @@
+---
+title: "Portugal Mortality data"
+output: 
+  github_document:
+    dev: svg
+  html_document:
+    toc: true
+    toc_depth: 2
+    dev: 'svg'
+---
+
+```{r, eval=FALSE, include=FALSE}
+rmarkdown::render('mortality.Rmd', output_file = 'mortality.md')
+rmarkdown::render('mortality.Rmd', output_file = 'mortality.html')
+```
+
+```{r, eval=FALSE, include=FALSE}
+rmarkdown::clean_site()
+rmarkdown::render_site(quiet = TRUE)
+```
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+devtools::load_all()
+library(pdftools)
+library(rvest)
+library(dplyr)
+library(tibble)
+library(DT)
+library(anytime)
+library(glue)
+library(reshape2)
+library(zoo)
+library(xml2)
+library(ggplot2)
+library(ggrepel)
+library(plotly)
+
+Sys.setlocale('LC_TIME', 'en_GB.UTF-8')
+```
+
+## Code  {.tabset .tabset-fade .tabset-pills}
+
+Code used to run this report
+
+```{r}
+# Download from DGS
+json <- download.evm() %>% rjson::fromJSON()
+
+# Process into multiple columns
+dat <- sapply(1 + seq_along(json$x$data[-1]), function(ix) {
+  my.year <- json$x$data[[ix]]
+  my.year[sapply(my.year, is.null)] <- NA
+  tibble::tibble(!!as.name(2009 + ix - 2) := unlist(my.year, recursive=FALSE))
+})
+
+# Merge data
+mortality <- dplyr::bind_cols(day = json$x$data[[1]], dat) %>% 
+  mutate(day = factor(day, levels = day))
+
+# Add some statistics (mean, sd, max, min)
+mortality.with.stats <- mortality %>% 
+  replace(is.na(.), NA) %>%
+  dplyr::rowwise() %>% 
+  mutate(meanPre2020 = mean(c_across(cols = -c("2020", 'day')), na.rm = TRUE),
+         mean = mean(c_across(cols = -c("meanPre2020", 'day')), na.rm = TRUE),
+         sdPre2020 = sd(c_across(cols = -c("2020","meanPre2020", "mean", 'day')), na.rm = TRUE),
+         sd = sd(c_across(cols = -c("meanPre2020", "mean", "sdPre2020", 'day')), na.rm = TRUE)) %>% 
+  mutate(maxPre2020 = max(c_across(cols = colnames(.)[colnames(mortality) != 2020][grepl('^[0-9]+$', colnames(.))]), na.rm = TRUE),
+         max = max(c_across(cols = colnames(.)[grepl('^[0-9]+$', colnames(.))]), na.rm = TRUE),
+         minPre2020 = min(c_across(cols = colnames(.)[colnames(mortality) != 2020][grepl('^[0-9]+$', colnames(.))]), na.rm = TRUE),
+         min = min(c_across(cols = colnames(.)[grepl('^[0-9]+$', colnames(.))]), na.rm = TRUE)) %>% 
+  dplyr::ungroup()
+```
+
+## Year vs. 2020 {.tabset .tabset-fade .tabset-pills}
+
+Yearly comparison against 2020
+
+### 2019 vs. 2020
+
+```{r}
+show.year.mortality(mortality.with.stats, seq(2018, 2020))
+```
+
+### 2018 vs. 2020
+
+```{r}
+show.year.mortality(mortality.with.stats, c(2018, 2020))
+```
+
+### 2017 vs. 2020
+
+```{r}
+show.year.mortality(mortality.with.stats, c(2017, 2020))
+```
+
+### 2016 vs. 2020
+
+```{r}
+show.year.mortality(mortality.with.stats, c(2016, 2020))
+```
+
+### 2015 vs. 2020
+
+```{r}
+show.year.mortality(mortality.with.stats, c(2015, 2020))
+```
+
+### 2014 vs. 2020
+
+```{r}
+show.year.mortality(mortality.with.stats, c(2014, 2020))
+```
+
+### 2013 vs. 2020
+
+```{r}
+show.year.mortality(mortality.with.stats, c(2013, 2020))
+```
+
+### 2012 vs. 2020
+
+```{r}
+show.year.mortality(mortality.with.stats, c(2012, 2020))
+```
+
+### 2011 vs. 2020
+
+```{r}
+show.year.mortality(mortality.with.stats, c(2011, 2020))
+```
+
+### 2010 vs. 2020
+
+```{r}
+show.year.mortality(mortality.with.stats, c(2010, 2020))
+```
+
+### 2009 vs. 2020
+
+```{r}
+show.year.mortality(mortality.with.stats, c(2009, 2020))
+```
