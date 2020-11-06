@@ -1,11 +1,7 @@
 ---
 title: "Portugal Mortality data"
 output: 
-  github_document:
-    dev: svg
   html_document:
-    toc: true
-    toc_depth: 2
     dev: 'svg'
 ---
 
@@ -22,7 +18,10 @@ rmarkdown::render_site(quiet = TRUE)
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  echo = FALSE,
+  comment = "#>",
+  fig.height = 10,
+  fig.width = 10
 )
 devtools::load_all()
 library(pdftools)
@@ -42,11 +41,16 @@ library(plotly)
 Sys.setlocale('LC_TIME', 'en_GB.UTF-8')
 ```
 
-## Code  {.tabset .tabset-fade .tabset-pills}
+## Description & Code {.tabset .tabset-fade .tabset-pills}
 
-Code used to run this report
+This analysis retrieves data directly from the Portuguese Health ministry death certificate site ([SICO](https://evm.min-saude.pt/)) and makes an yearly comparison.
 
-```{r}
+### Hide source code
+
+
+### Show source code
+
+```{r, echo=TRUE}
 # Download from DGS
 json <- download.evm() %>% rjson::fromJSON()
 
@@ -76,72 +80,80 @@ mortality.with.stats <- mortality %>%
   dplyr::ungroup()
 ```
 
+```{r sample_plot, eval=FALSE, echo=TRUE}
+show.year.mortality(mortality.with.stats, seq(2019, 2020))
+```
+
+
 ## Year vs. 2020 {.tabset .tabset-fade .tabset-pills}
 
 Yearly comparison against 2020
 
 ### 2019 vs. 2020
 
-```{r}
-show.year.mortality(mortality.with.stats, seq(2018, 2020))
+```{r y2019}
+show.year.mortality(mortality.with.stats, seq(2019, 2020))
 ```
 
 ### 2018 vs. 2020
 
-```{r}
+```{r y2018}
 show.year.mortality(mortality.with.stats, c(2018, 2020))
 ```
 
 ### 2017 vs. 2020
 
-```{r}
+```{r y2017}
 show.year.mortality(mortality.with.stats, c(2017, 2020))
 ```
 
 ### 2016 vs. 2020
 
-```{r}
+```{r y2016}
 show.year.mortality(mortality.with.stats, c(2016, 2020))
 ```
 
 ### 2015 vs. 2020
 
-```{r}
+```{r y2015}
 show.year.mortality(mortality.with.stats, c(2015, 2020))
 ```
 
 ### 2014 vs. 2020
 
-```{r}
+```{r y2014}
 show.year.mortality(mortality.with.stats, c(2014, 2020))
 ```
 
 ### 2013 vs. 2020
 
-```{r}
+```{r y2013}
 show.year.mortality(mortality.with.stats, c(2013, 2020))
 ```
 
 ### 2012 vs. 2020
 
-```{r}
+```{r y2012}
 show.year.mortality(mortality.with.stats, c(2012, 2020))
 ```
 
 ### 2011 vs. 2020
 
-```{r}
+```{r y2011}
 show.year.mortality(mortality.with.stats, c(2011, 2020))
 ```
 
 ### 2010 vs. 2020
 
-```{r}
+```{r y2010}
 show.year.mortality(mortality.with.stats, c(2010, 2020))
 ```
 
 ### 2009 vs. 2020
 
-```{r}
+```{r y2009}
 show.year.mortality(mortality.with.stats, c(2009, 2020))
+```
+
+```{r, child='_header.md'}
 ```

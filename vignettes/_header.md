@@ -17,8 +17,12 @@ The source code is at [averissimo/r-analysis-covid19](https://github.com/averiss
 
 ## Age group analysis
 
-* [Portugal](https://averissimo.github.io/covid19-analysis/portugal.html)
+* [Portugal](https://github.com/averissimo/covid19.pt.data)
 * [Germany](https://averissimo.github.io/covid19.de.data/) *(by state and district)*
+
+## Mortality trend
+
+* [Portugal](https://averissimo.github.io/covid19-analysis/mortality.html) 
 
 # Data
 
