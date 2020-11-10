@@ -17,10 +17,33 @@ download.evm <- function() {
   return(json_text)
 }
 
+show.mortality.comp <- function(dat, is.percentage = FALSE) {
+  dat.tmp <- dat %>% 
+    reshape2::melt(id.vars = 'year')
+  if (is.percentage) {
+    dat.tmp <- dat.tmp %>% 
+      mutate(label = if_else(is.na(value), NA_character_, paste0(format(value * 100, digits= 4, big.mark = ' ', na.encode = FALSE), '%')))
+  } else {
+    dat.tmp <- dat.tmp %>% 
+      mutate(label = if_else(is.na(value), NA_character_, format(value, big.mark = ' ', digits = 4, trim = TRUE, na.encode = FALSE))) 
+  }
+  
+  return(dat.tmp %>% 
+    ggplot() + 
+    geom_tile(aes(y = year, x = variable, fill = value), color = '#777777') +
+    geom_text(aes(y = year, x = variable, label = label), angle = 0, size = 3, na.rm = TRUE) +
+    scale_fill_gradient2(low = "green", high = "red", mid = 'white', midpoint = 1, na.value = '#00000020') +
+    labs(title = '', subtitle = 'Larger number means more deaths') + 
+    scale_x_discrete(position = "top") +
+    xlab('Year') +
+    ylab('Year') +
+    theme_minimal() +
+    theme(legend.position = 'none'))
+}
 
 #' @examples 
 #' show.year.mortality(mortality.with.stats, seq(2019, 2020))
-  show.year.mortality <- function(dat, year = NULL) {
+show.year.mortality <- function(dat, year = NULL) {
   my.plot <- dat %>%
     melt(id = c('day', 'mean', 'meanPre2020', 'sd', 'sdPre2020', 'max', 'maxPre2020', 'min', 'minPre2020')) %>%
     filter(is.null(year) | variable %in% year) %>%

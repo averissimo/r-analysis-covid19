@@ -155,5 +155,109 @@ show.year.mortality(mortality.with.stats, c(2010, 2020))
 show.year.mortality(mortality.with.stats, c(2009, 2020))
 ```
 
+
+## _'March-15 -> Now'_ yearly comparison {.tabset .tabset-fade .tabset-pills}
+
+```{r}
+yearly.stats <- mortality[c(rep(0, which(mortality$day == 'Mar-15') - 1), seq(from = which(mortality$day == 'Mar-15'), nrow(mortality)) > 0) & as.vector(!is.na(mortality[,'2020'])),] %>% 
+  rowwise() %>% 
+  replace(is.na(.), NA) %>%
+  #mutate(maxPre2020    = max(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
+  #       minPre2020    = min(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
+  #       meanPre2020   = mean(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
+  #       medianPre2020 = median(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE)) %>% 
+  reshape2::melt(id.vars = 'day') %>% 
+  dplyr::group_by(variable) %>% 
+  dplyr::summarise(mean = mean(value, na.rm = TRUE), 
+            sd = sd(value, na.rm = TRUE),
+            sum = sum(value, na.rm = TRUE),
+            median = median(value, na.rm = TRUE),
+            max = max(value, na.rm = TRUE),
+            min = min(value, na.rm = TRUE),
+            .groups = 'rowwise')
+```
+
+
+### Total numbers
+
+```{r}
+yearly.comp <- sapply(seq(nrow(yearly.stats)), function(ix) { yearly.stats$sum - yearly.stats$sum[ix]}) %>%
+  data.frame()
+yearly.comp[upper.tri(yearly.comp)] <- NA
+colnames(yearly.comp) <- yearly.stats$variable
+yearly.comp <- bind_cols(year = yearly.stats$variable, yearly.comp)
+
+show.mortality.comp(yearly.comp) +
+  labs(title = 'Absolute comparison between years')
+```
+
+### Relative numbers _(in percentage)_
+
+```{r}
+yearly.comp.rel <- sapply(seq(nrow(yearly.stats)), function(ix) { yearly.stats$sum / yearly.stats$sum[ix]}) %>%
+  data.frame()
+yearly.comp.rel[upper.tri(yearly.comp.rel)] <- NA
+colnames(yearly.comp.rel) <- yearly.stats$variable
+yearly.comp.rel <- bind_cols(year = yearly.stats$variable, yearly.comp.rel)
+
+show.mortality.comp(yearly.comp.rel, is.percentage = TRUE) +
+  labs(title = 'Relative comparison between years')
+```
+
+## _'March-15 -> Now'_ yearly comparisons with 2009-2019 stats {.tabset .tabset-fade .tabset-pills}
+
+```{r}
+yearly.stats.2 <- mortality[c(rep(0, which(mortality$day == 'Mar-15') - 1), seq(from = which(mortality$day == 'Mar-15'), nrow(mortality)) > 0) & as.vector(!is.na(mortality[,'2020'])),] %>% 
+  rowwise() %>% 
+  replace(is.na(.), NA) %>%
+  mutate(maxPre2020    = max(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
+         minPre2020    = min(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
+         meanPre2020   = mean(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
+         meanPlusStDevPre2020   = mean(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE) + sd(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
+         meanMinusStDevPre2020   = mean(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE) - sd(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
+         medianPre2020 = median(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE)) %>% 
+  reshape2::melt(id.vars = 'day') %>% 
+  dplyr::group_by(variable) %>% 
+  dplyr::summarise(mean = mean(value, na.rm = TRUE), 
+            sd = sd(value, na.rm = TRUE),
+            sum = sum(value, na.rm = TRUE),
+            median = median(value, na.rm = TRUE),
+            max = max(value, na.rm = TRUE),
+            min = min(value, na.rm = TRUE),
+            .groups = 'rowwise') %>% 
+  filter(grepl('202[0-9]$', variable)) %>% 
+  mutate(variable = factor(variable, levels = c( 'medianPre2020', 'minPre2020', 'meanMinusStDevPre2020', 'meanPre2020', 'meanPlusStDevPre2020', 'maxPre2020', '2020'))) %>% 
+  arrange(variable)
+```
+
+### Total numbers
+
+```{r}
+yearly.comp.2 <- sapply(seq(nrow(yearly.stats.2)), function(ix) { yearly.stats.2$sum - yearly.stats.2$sum[ix]}) %>%
+  data.frame()
+yearly.comp.2[upper.tri(yearly.comp.2)] <- NA
+colnames(yearly.comp.2) <- yearly.stats.2$variable
+yearly.comp.2 <- bind_cols(year = yearly.stats.2$variable, yearly.comp.2)
+
+
+show.mortality.comp(yearly.comp.2) +
+  labs(title = 'Absolute comparison between pseudo-years', caption = 'Max/min/mean/median are calculated day by day in period 2009-2019 (for example, Max is the worse case scenario from that period)') + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 0))
+```
+
+### Relative numbers _(in percentage)_
+
+```{r}
+yearly.comp.rel.2 <- sapply(seq(nrow(yearly.stats.2)), function(ix) { yearly.stats.2$sum / yearly.stats.2$sum[ix]}) %>%
+  data.frame()
+yearly.comp.rel.2[upper.tri(yearly.comp.rel.2)] <- NA
+colnames(yearly.comp.rel.2) <- yearly.stats.2$variable
+yearly.comp.rel.2 <- bind_cols(year = yearly.stats.2$variable, yearly.comp.rel.2)
+
+show.mortality.comp(yearly.comp.rel.2, is.percentage = TRUE) +
+  labs(title = 'Relative comparison between pseudo-years', caption = 'Max/min/mean/median are calculated day by day in period 2009-2019 (for example, Max is the worse case scenario from that period)') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 0))
+```
+
 ```{r, child='_header.md'}
 ```
