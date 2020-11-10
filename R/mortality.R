@@ -46,13 +46,17 @@ show.mortality.comp <- function(dat, is.percentage = FALSE) {
 show.year.mortality <- function(dat, year = NULL) {
   my.plot <- dat %>%
     melt(id = c('day', 'mean', 'meanPre2020', 'sd', 'sdPre2020', 'max', 'maxPre2020', 'min', 'minPre2020')) %>%
+    mutate(sdMinus = mean - sd,
+           sd = mean + sd,
+           sdPre2020Minus = meanPre2020 - sdPre2020,
+           sdPre2020 = meanPre2020 + sdPre2020) %>% 
     filter(is.null(year) | variable %in% year) %>%
     ggplot() +
     geom_crossbar(aes(x = day, y = meanPre2020, ymin=minPre2020, ymax=maxPre2020, fill = 'Min/Max from 2009-19'), alpha = 0, size = .1, width = 1) +
     geom_crossbar(aes(x = day, y = meanPre2020, ymin=minPre2020, ymax=maxPre2020, color = 'Min/Max from 2009-19', fill = 'Min/Max from 2009-19'), alpha = 1, size = .1, width = 1, show.legend = FALSE) +
     #
-    geom_crossbar(aes(x = day, y = meanPre2020, ymin=meanPre2020 - sdPre2020, ymax=meanPre2020 + sdPre2020, fill = '2009-19'), alpha = 0, size = .1, width = 1) +
-    geom_crossbar(aes(x = day, y = meanPre2020, ymin=meanPre2020 - sdPre2020, ymax=meanPre2020 + sdPre2020, color = '2009-19', fill = '2009-19'), alpha = .4, size = .1, width = 1, show.legend = FALSE) +
+    geom_crossbar(aes(x = day, y = meanPre2020, ymin=sdPre2020Minus, ymax=sdPre2020, fill = '2009-19'), alpha = 0, size = .1, width = 1) +
+    geom_crossbar(aes(x = day, y = meanPre2020, ymin=sdPre2020Minus, ymax=sdPre2020, color = '2009-19', fill = '2009-19'), alpha = .4, size = .1, width = 1, show.legend = FALSE) +
     #
     geom_smooth(aes(x = day, y = value, color = 'Smooth regression from 2009-19', group = NA), span = 0.1, method = 'loess', formula = y ~ x, na.rm = TRUE, se = FALSE) +
     geom_smooth(aes(x = day, y = meanPre2020, color = 'Smooth regression from 2009-19', group = NA), span = 0.1, method = 'loess', formula = y ~ x, na.rm = TRUE, show.legend = FALSE) +
@@ -62,7 +66,7 @@ show.year.mortality <- function(dat, year = NULL) {
     geom_smooth(aes(x = day, y = value, group = variable, color = 'Smooth regression from Year'), span = 0.1, method = 'loess', formula = y ~ x, na.rm = TRUE, se = FALSE) +
     geom_smooth(aes(x = day, y = value, group = variable, color = 'Smooth regression from Year'), span = 0.1, method = 'loess', formula = y ~ x, na.rm = TRUE, show.legend = FALSE) +
     #
-    geom_blank(data = data.frame(x = rep(5, 5), y = 0.5, 
+    geom_blank(data = data.frame(x = rep(5, 5), y = 300, 
                                  group = c("Min/Max from 2009-19", "2009-19", "Smooth regression from 2009-19", "Year", "Smooth regression from Year")), 
                aes(y = y, color = group, fill = group),
                show.legend = FALSE) +
