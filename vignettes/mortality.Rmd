@@ -58,7 +58,12 @@ json <- download.evm() %>% rjson::fromJSON()
 dat <- sapply(1 + seq_along(json$x$data[-1]), function(ix) {
   my.year <- json$x$data[[ix]]
   my.year[sapply(my.year, is.null)] <- NA
-  tibble::tibble(!!as.name(2009 + ix - 2) := unlist(my.year, recursive=FALSE))
+  tmp <- tibble::tibble(!!as.name(2009 + ix - 2) := unlist(my.year, recursive=FALSE))
+  # current day info may not be finalized
+  if (2009 + ix - 2 == format(Sys.Date(), "%Y")) {
+    tmp[which(is.na(tmp[,1]) %>% as.vector)[1] - 1, 1] <- NA
+  }
+  return(tmp)
 })
 
 # Merge data
