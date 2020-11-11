@@ -1,3 +1,19 @@
+download.causas.externas <- function() {
+  url <- 'https://evm.min-saude.pt/table?t=externas&s=0'
+  
+  #Reading the HTML code from the website
+  webpage <- xml2::read_html(url)
+  
+  json_text <- rvest::html_nodes(webpage, 'script') %>%
+    rvest::html_text()
+
+  year_text <- rvest::html_nodes(webpage, 'ul.nav li') %>%
+    rvest::html_text() %>% 
+    stringr::str_trim()
+  
+  return(list(json = json_text, year = year_text))
+}
+
 #' Download report
 #'
 #' @param index index of report to extract (1 is the latest)

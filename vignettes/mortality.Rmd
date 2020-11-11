@@ -264,5 +264,139 @@ show.mortality.comp(yearly.comp.rel.2, is.percentage = TRUE) +
   theme(axis.text.x = element_text(angle = 45, hjust = 0))
 ```
 
+## External causes of death  {.tabset .tabset-fade .tabset-pills}
+
+Accidents, suicides and others. It excludes natural causes or diseases.
+
+```{r}
+external.raw <- download.causas.externas()
+
+json.ext <- external.raw$json %>% 
+  purrr::map(function(ix) {rjson::fromJSON(ix)})
+
+external.causes <- lapply(seq_along(external.raw$year), function(ix.year) {
+  # Process into multiple columns
+  json.tmp <- json.ext[[ix.year]]
+  dat <- sapply(1 + seq_along(json.tmp$x$data[-1]), function(ix) {
+    my.colnames <- xml2::read_xml(json.tmp$x$container) %>% 
+      rvest::html_nodes('th') %>%
+      gsub(' ?</?th> ?', '', .)
+    
+    my.year <- json.tmp$x$data[[ix]]
+    my.year[sapply(my.year, is.null)] <- NA
+    tmp <- tibble::tibble(!!as.name(my.colnames[ix]) := unlist(my.year, recursive=FALSE))
+    return(tmp)
+  })
+  dat$year <- rep(external.raw$year[ix.year], length(dat[[1]]))
+  
+  # Merge data
+  return(dplyr::bind_cols(day = json.tmp$x$data[[1]], dat) %>% 
+    mutate(day = factor(day, levels = json[[1]]$data[[1]])))
+}) %>% 
+  bind_rows %>% 
+  dplyr::relocate(year, .before = day) %>% 
+  mutate(year = factor(year))
+```
+### Period of COVID-19
+
+```{r}
+external.causes %>% 
+  filter(day %in% levels(external.causes$day)[levels(external.causes$day) %in% (external.causes %>% filter(year == '2020') %>% pull(day))]) %>% 
+  filter(day %in% levels(external.causes$day)[seq(from = which(levels(external.causes$day) == 'Mar-15'), to = length(levels(external.causes$day)))]) %>% 
+  group_by(year) %>% 
+  summarise(across(where(is.numeric), ~ sum(.x , na.rm = TRUE)), .groups = 'keep') %>% 
+  reshape2::melt(id = 'year') %>% 
+  ggplot(aes(y = year, x = variable)) +
+  geom_tile(aes(fill = value)) +
+  geom_text(aes(label = value), color = 'white') +
+  scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
+  scale_x_discrete(position = "top") +
+  labs(title = 'External causes of death from \'March 15 to Now\'', subtitle = 'All years show the same period', caption = 'Accidents, suicides and others. It excludes natural causes or diseases') + 
+  xlab('External cause of death') +
+  ylab('Year') +
+  theme_minimal() +
+  theme(legend.position = 'none')
+```
+
+### Full year (`r format(Sys.Date(), '%Y')` is still incomplete)
+
+```{r}
+external.causes %>% 
+  group_by(year) %>% 
+  summarise(across(where(is.numeric), ~ sum(.x , na.rm = TRUE)), .groups = 'keep') %>% 
+  reshape2::melt(id = 'year') %>% 
+  ggplot(aes(y = year, x = variable)) +
+  geom_tile(aes(fill = value)) +
+  geom_text(aes(label = value), color = 'white') +
+  scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
+  scale_x_discrete(position = "top") +
+  labs(title = 'External causes of death', subtitle = 'All years show the same period', caption = 'Accidents, suicides and others. It excludes natural causes or diseases') + 
+  xlab('External cause of death') +
+  ylab('Year') +
+  theme_minimal() +
+  theme(legend.position = 'none')
+```
+
+```{r, eval=FALSE, include=FALSE}
+mortality.pois <- mortality %>% 
+  reshape2::melt(id.vars = c('day'), variable.name = 'year') %>% 
+  filter(!is.na(value)) %>% 
+  mutate(year = as.numeric(as.character(year))) %>% 
+  #filter(year >= 2015) %>% 
+  mutate(group = if_else(year >= 2020, as.character(year), 'pre2020')) %>% 
+  group_by(group, day) %>% 
+  dplyr::arrange(day, group)
+
+mortality.pois.transf <- mortality.pois  %>% 
+  summarise(lambda = mean(value, na.rm = TRUE), .groups = 'keep') %>% 
+  mutate(ic95 = qpois(.95, lambda = lambda, lower.tail = TRUE),
+         ic99 = qpois(.99, lambda = lambda, lower.tail = TRUE)) %>% 
+  dplyr::group_by(group) %>% 
+  mutate(lambda.5 = zoo::rollapply(lambda, width = 7, FUN = function(x) {mean(x,na.rm=TRUE)}, partial = TRUE, fill = NA, align = 'left'),
+         ic95.5 = qpois(.95, lambda = lambda.5, lower.tail = TRUE),
+         ic99.5 = qpois(.99, lambda = lambda.5, lower.tail = TRUE)) %>% 
+  #
+  reshape2::melt(id.vars = c('group', 'day')) %>% 
+  mutate(new.group = paste0(group, '-', variable)) %>% 
+  filter(new.group %in% c('2020-lambda.5', 'pre2020-lambda', 'pre2020-lambda.5', 'pre2020-ic95.5', 'pre2020-ic99.5')) %>% 
+  mutate(ymin = min(value)) %>% 
+  arrange(day, group)
+  
+mortality.pois.transf %>% 
+  ggplot(aes(x = day, group = new.group, color = new.group)) +
+  geom_ribbon(aes(y = value, fill= new.group, ymin = ymin - abs(ymin * .05), ymax = value), alpha = .4, position = 'identity', 
+              data = mortality.pois.transf %>% filter(new.group %in% c('pre2020-lambda.5','pre2020-ic99.5','pre2020-ic95.5')),
+              show.legend = FALSE) +
+  geom_line(aes(y = value, color = new.group)) +
+  geom_line(aes(y = value, color = new.group), data = mortality.pois.transf %>% filter(group == '2020'), size = 1.5) +
+  #geom_line(aes(y = lambda.5, color = new.grou~p), data = mortality.pois.transf %>% filter(group == 'pre2020')) +
+  #geom_line(aes(y = ic95.5), color = 'purple', data = mortality.pois.transf %>% filter(group == 'pre2020')) +
+  #geom_line(aes(y = ic99.5), color = 'orange', data = mortality.pois.transf %>% filter(group == 'pre2020')) +
+  #geom_line(aes(y = lambda.5), data = mortality.pois.transf %>% filter(group == '2020')) +
+  scale_x_discrete(breaks = function(ix) {
+      ix[c(FALSE, TRUE, TRUE, TRUE, TRUE)] <- FALSE
+      return(ix)
+    }) +
+  scale_color_discrete("", labels = c('2020','Base line for 2015-19','Confidence interval 95% 2015-19','Confidence interval 99% 2015-19')) +
+  labs(title = '2020 vs Baseline using Poisson distribution', subtitle = 'Data calculated with centered average of 7 days') +
+  theme_minimal() +
+  theme(legend.key = element_rect(fill = "white", colour = "white"), legend.position = 'top', axis.text.x = element_text(angle = 45, hjust = 1, size = 5))
+  
+```
+
+```{r, eval=FALSE, include=FALSE}
+external.causes %>% 
+  ggplot() +
+  #geom_line(aes(x = day, group = year, color = year)) +
+  geom_smooth(aes(x = day, y = `Eventual suicídio`, color = year, group = year), span = 0.1, method = 'loess', formula = y ~ x, na.rm = TRUE, se = FALSE) +
+  scale_x_discrete(breaks = function(ix) {
+      ix[c(FALSE, TRUE, TRUE, TRUE, TRUE)] <- FALSE
+      return(ix)
+    }) +
+  theme_minimal() +
+  theme(legend.key = element_rect(fill = "white", colour = "white"), legend.position = 'top', axis.text.x = element_text(angle = 45, hjust = 1, size = 5))
+```
+
+
 ```{r, child='_header.md'}
 ```
