@@ -41,6 +41,8 @@ library(plotly)
 Sys.setlocale('LC_TIME', 'en_GB.UTF-8')
 ```
 
+Updated at `r format(Sys.time(), '%A, %d %B %Y (%d %Y-%m-%d %H:%m %Z)')`
+
 ## Description & Code {.tabset .tabset-fade .tabset-pills}
 
 This analysis retrieves data directly from the Portuguese Health ministry death certificate site ([SICO](https://evm.min-saude.pt/)) and makes an yearly comparison.
