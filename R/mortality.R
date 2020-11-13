@@ -1,17 +1,26 @@
-download.causas.externas <- function() {
-  url <- 'https://evm.min-saude.pt/table?t=externas&s=0'
+download.age.groups <- function() {
+  return(download.generic('/table?t=idades&s=0'))
+}
+
+download.generic <- function(url) {
+  
+  url <- paste0('https://evm.min-saude.pt', url)
   
   #Reading the HTML code from the website
   webpage <- xml2::read_html(url)
   
   json_text <- rvest::html_nodes(webpage, 'script') %>%
     rvest::html_text()
-
+  
   year_text <- rvest::html_nodes(webpage, 'ul.nav li') %>%
     rvest::html_text() %>% 
     stringr::str_trim()
   
   return(list(json = json_text, year = year_text))
+}
+
+download.causas.externas <- function() {
+  return(download.generic('/table?t=externas&s=0'))
 }
 
 #' Download report

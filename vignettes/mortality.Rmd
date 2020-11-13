@@ -293,7 +293,7 @@ external.causes <- lapply(seq_along(external.raw$year), function(ix.year) {
   
   # Merge data
   return(dplyr::bind_cols(day = json.tmp$x$data[[1]], dat) %>% 
-    mutate(day = factor(day, levels = json[[1]]$data[[1]])))
+    mutate(day = factor(day, levels = json.ext[[1]]$x$data[[1]])))
 }) %>% 
   bind_rows %>% 
   dplyr::relocate(year, .before = day) %>% 
@@ -386,8 +386,101 @@ mortality.pois.transf %>%
   
 ```
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Mortality by age groups  {.tabset .tabset-fade .tabset-pills}
+
+```{r}
+age.group.raw <- download.age.groups()
+
+json.age.group <- age.group.raw$json %>% 
+  purrr::map(function(ix) {rjson::fromJSON(ix)})
+
+age.group <- lapply(seq_along(age.group.raw$year), function(ix.year) {
+  # Process into multiple columns
+  json.tmp <- json.age.group[[ix.year]]
+  dat <- sapply(1 + seq_along(json.tmp$x$data[-1]), function(ix) {
+    my.colnames <- xml2::read_xml(json.tmp$x$container) %>% 
+      rvest::html_nodes('th') %>%
+      gsub(' ?</?th> ?', '', .)
+    
+    my.year <- json.tmp$x$data[[ix]]
+    my.year[sapply(my.year, is.null)] <- NA
+    tmp <- tibble::tibble(!!as.name(my.colnames[ix]) := unlist(my.year, recursive=FALSE))
+    return(tmp)
+  })
+  dat$year <- rep(age.group.raw$year[ix.year], length(dat[[1]]))
+  
+  # Merge data
+  return(dplyr::bind_cols(day = json.tmp$x$data[[1]], dat) %>% 
+    mutate(day = factor(day, levels = json.age.group[[1]]$x$data[[1]])))
+}) %>% 
+  bind_rows %>% 
+  dplyr::relocate(year, .before = day) %>% 
+  mutate(year = factor(year))
+```
+### Period of COVID-19
+
+```{r}
+age.group %>% 
+  filter(day %in% levels(age.group$day)[levels(age.group$day) %in% (age.group %>% filter(year == '2020') %>% pull(day))]) %>% 
+  filter(day %in% levels(age.group$day)[seq(from = which(levels(age.group$day) == 'Mar-15'), to = length(levels(age.group$day)))]) %>% 
+  group_by(year) %>% 
+  summarise(across(where(is.numeric), ~ sum(.x , na.rm = TRUE)), .groups = 'keep') %>% 
+  reshape2::melt(id = 'year') %>% 
+  ggplot(aes(y = year, x = variable)) +
+  geom_tile(aes(fill = value)) +
+  geom_text(aes(label = value), color = 'white') +
+  scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
+  scale_x_discrete(position = "top") +
+  labs(title = 'Mortality by age group from \'March 15 to Now\'', subtitle = 'All years show the same period') + 
+  xlab('Age group') +
+  ylab('Year') +
+  theme_minimal() +
+  theme(legend.position = 'none')
+```
+
+### Full year (`r format(Sys.Date(), '%Y')` is still incomplete)
+
+```{r}
+age.group %>% 
+  group_by(year) %>% 
+  summarise(across(where(is.numeric), ~ sum(.x , na.rm = TRUE)), .groups = 'keep') %>% 
+  reshape2::melt(id = 'year') %>% 
+  ggplot(aes(y = year, x = variable)) +
+  geom_tile(aes(fill = value)) +
+  geom_text(aes(label = value), color = 'white') +
+  scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
+  scale_x_discrete(position = "top") +
+  labs(title = 'Mortality by age group', subtitle = 'All years show the same period (last year may be incomplete)') + 
+  xlab('Age group') +
+  ylab('Year') +
+  theme_minimal() +
+  theme(legend.position = 'none')
+```
+
+
+
+
 ```{r, eval=FALSE, include=FALSE}
-external.causes %>% 
+age.group %>% 
   ggplot() +
   #geom_line(aes(x = day, group = year, color = year)) +
   geom_smooth(aes(x = day, y = `Eventual suicídio`, color = year, group = year), span = 0.1, method = 'loess', formula = y ~ x, na.rm = TRUE, se = FALSE) +
