@@ -3,6 +3,7 @@ title: "Portugal Mortality data"
 output: 
   html_document:
     dev: 'svg'
+    toc: true
 ---
 
 ```{r, eval=FALSE, include=FALSE}
@@ -195,7 +196,7 @@ colnames(yearly.comp) <- yearly.stats$variable
 yearly.comp <- bind_cols(year = yearly.stats$variable, yearly.comp)
 
 show.mortality.comp(yearly.comp) +
-  labs(title = 'Absolute comparison between years')
+  labs(title = "Absolute comparison between years (March-15 to {format(Sys.Date(), '%B-%d')})" %>% glue::glue())
 ```
 
 ### Relative numbers _(in percentage)_
@@ -208,10 +209,10 @@ colnames(yearly.comp.rel) <- yearly.stats$variable
 yearly.comp.rel <- bind_cols(year = yearly.stats$variable, yearly.comp.rel)
 
 show.mortality.comp(yearly.comp.rel, is.percentage = TRUE) +
-  labs(title = 'Relative comparison between years')
+  labs(title = "Relative comparison between years (March-15 to {format(Sys.Date(), '%B-%d')})" %>% glue::glue())
 ```
 
-## _'March-15 -> Now'_ yearly comparisons with 2009-2019 stats {.tabset .tabset-fade .tabset-pills}
+## _'March-15 -> `r format(Sys.Date(), '%B-%d')`'_ yearly comparisons with 2009-2019 stats {.tabset .tabset-fade .tabset-pills}
 
 ```{r}
 yearly.stats.2 <- mortality[c(rep(0, which(mortality$day == 'Mar-15') - 1), seq(from = which(mortality$day == 'Mar-15'), nrow(mortality)) > 0) & as.vector(!is.na(mortality[,'2020'])),] %>% 
@@ -299,6 +300,7 @@ external.causes <- lapply(seq_along(external.raw$year), function(ix.year) {
   dplyr::relocate(year, .before = day) %>% 
   mutate(year = factor(year))
 ```
+
 ### Period of COVID-19
 
 ```{r}
@@ -313,7 +315,7 @@ external.causes %>%
   geom_text(aes(label = value), color = 'white') +
   scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
   scale_x_discrete(position = "top") +
-  labs(title = 'External causes of death from \'March 15 to Now\'', subtitle = 'All years show the same period', caption = "Accidents, suicides and others. It excludes natural causes or diseases\nData retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) + 
+  labs(title = "External causes of death from \'March 15 to {format(Sys.Date(), '%B %d')}'" %>% glue::glue(), subtitle = 'All years show the same period', caption = "Accidents, suicides and others. It excludes natural causes or diseases\nData retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) + 
   xlab('External cause of death') +
   ylab('Year') +
   theme_minimal() +
@@ -450,7 +452,7 @@ age.group %>%
   geom_text(aes(label = value), color = 'white') +
   scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
   scale_x_discrete(position = "top") +
-  labs(title = 'Mortality by age group from \'March 15 to Now\'', subtitle = 'All years show the same period', caption = "Data retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) + 
+  labs(title = "Mortality by age group from \'March 15 to {format(Sys.Date(), '%B %d')}'" %>% glue::glue(), subtitle = 'All years show the same period', caption = "Data retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) + 
   xlab('Age group') +
   ylab('Year') +
   theme_minimal() +
