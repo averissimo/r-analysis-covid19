@@ -212,7 +212,7 @@ external.causes.plot.covid <- external.causes %>%
   geom_text(aes(label = value), color = 'white') +
   scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
   scale_x_discrete(position = "top") +
-  labs(title = "External causes of death from \'March 15 to {format(Sys.Date(), '%B %d')}'" %>% glue::glue(), subtitle = 'All years show the same period', caption = "Accidents, suicides and others. It excludes natural causes or diseases\nData retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) + 
+  labs(title = "External causes of death from \'March 15 to {format(Sys.Date(), '%B %d')}'" %>% glue::glue(), subtitle = 'All years show the same period', caption = "Accidents, suicides and others. It excludes natural causes or diseases\nData retrieved on {format(Sys.Date(), '%B %d, %Y')}" %>% glue::glue()) + 
   xlab('External cause of death') +
   ylab('Year') +
   theme_minimal() +
@@ -227,7 +227,7 @@ external.causes.plot.full.year <- external.causes %>%
   geom_text(aes(label = value), color = 'white') +
   scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
   scale_x_discrete(position = "top") +
-  labs(title = 'External causes of death', subtitle = 'All years show the same period', caption = "Accidents, suicides and others. It excludes natural causes or diseases\nData retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) + 
+  labs(title = 'External causes of death', subtitle = 'All years show the same period', caption = "Accidents, suicides and others. It excludes natural causes or diseases\nData retrieved on {format(Sys.Date(), '%B %d, %Y')}" %>% glue::glue()) + 
   xlab('External cause of death') +
   ylab('Year') +
   theme_minimal() +
@@ -280,7 +280,7 @@ age.group.plot.covid <- age.group %>%
   geom_text(aes(label = value), color = 'white') +
   scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
   scale_x_discrete(position = "top") +
-  labs(title = "Mortality by age group from \'March 15 to {format(Sys.Date(), '%B %d')}'" %>% glue::glue(), subtitle = 'All years show the same period', caption = "Data retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) + 
+  labs(title = "Mortality by age group from \'March 15 to {format(Sys.Date(), '%B %d')}'" %>% glue::glue(), subtitle = 'All years show the same period', caption = "Data retrieved on {format(Sys.Date(), '%B %d, %Y')}" %>% glue::glue()) + 
   xlab('Age group') +
   ylab('Year') +
   theme_minimal() +
@@ -295,7 +295,7 @@ age.group.plot.full.year <- age.group %>%
   geom_text(aes(label = value), color = 'white') +
   scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
   scale_x_discrete(position = "top") +
-  labs(title = 'Mortality by age group', subtitle = 'All years show the same period (last year may be incomplete)', caption = "Data retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) +  
+  labs(title = 'Mortality by age group', subtitle = 'All years show the same period (last year may be incomplete)', caption = "Data retrieved on {format(Sys.Date(), '%B %d, %Y')}" %>% glue::glue()) +  
   xlab('Age group') +
   ylab('Year') +
   theme_minimal() +
@@ -402,7 +402,7 @@ yearly.comp.2 <- bind_cols(year = yearly.stats.2$variable, yearly.comp.2)
 
 
 show.mortality.comp(yearly.comp.2) +
-  labs(title = 'Absolute comparison between pseudo-years', caption = "Max/min/mean/median are calculated day by day in period 2009-2019 (for example, Max is the worse case scenario from that period)\nData retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) + 
+  labs(title = 'Absolute comparison between pseudo-years', caption = "Max/min/mean/median are calculated day by day in period 2009-2019 (for example, Max is the worse case scenario from that period)\nData retrieved on {format(Sys.Date(), '%B %d, %Y')}" %>% glue::glue()) + 
   theme(axis.text.x = element_text(angle = 45, hjust = 0))
 ```
 
@@ -410,7 +410,7 @@ show.mortality.comp(yearly.comp.2) +
 
 ```{r}
 show.mortality.comp(yearly.comp.rel.2, is.percentage = TRUE) +
-  labs(title = 'Relative comparison between pseudo-years', caption = "Max/min/mean/median are calculated day by day in period 2009-2019 (for example, Max is the worse case scenario from that period)\nData retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) + 
+  labs(title = 'Relative comparison between pseudo-years', caption = "Max/min/mean/median are calculated day by day in period 2009-2019 (for example, Max is the worse case scenario from that period)\nData retrieved on {format(Sys.Date(), '%B %d, %Y')}" %>% glue::glue()) + 
   theme(axis.text.x = element_text(angle = 45, hjust = 0))
 ```
 

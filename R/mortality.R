@@ -58,7 +58,7 @@ show.mortality.comp <- function(dat, is.percentage = FALSE) {
     geom_tile(aes(y = year, x = variable, fill = value), color = '#777777') +
     geom_text(aes(y = year, x = variable, label = label), angle = 0, size = 3, na.rm = TRUE) +
     scale_fill_gradient2(low = "green", high = "red", mid = 'white', midpoint = 1, na.value = '#00000020') +
-    labs(title = '', subtitle = 'Larger number means more deaths', caption = "Data retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) + 
+    labs(title = '', subtitle = 'Larger number means more deaths', caption = "Data retrieved on {format(Sys.Date(), '%B %d, %Y')}" %>% glue::glue()) + 
     scale_x_discrete(position = "top") +
     xlab('Year') +
     ylab('Year') +
@@ -95,7 +95,7 @@ show.year.mortality <- function(dat, year = NULL) {
       ix[c(FALSE, TRUE, TRUE, TRUE, TRUE)] <- FALSE
       return(ix)
     }) +
-    labs(title = 'Mortality over days of the year', caption = "Data retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) +
+    labs(title = 'Mortality over days of the year', caption = "Data retrieved on {format(Sys.Date(), '%B %d, %Y')}" %>% glue::glue()) +
     xlab('Day of the year') +
     ylab('Number of deaths') +
     scale_color_manual("", values = c("darkgreen", "darkgray", "green", "red", 'darkred'), breaks=c("2009-19", "Min/Max from 2009-19", "Smooth regression from 2009-19", "Year", "Smooth regression from Year")) +
