@@ -50,8 +50,9 @@ This analysis retrieves data directly from the Portuguese Health ministry death 
 
 ### Hide source code
 
-
 ### Show source code
+
+#### Day analysis for every year
 
 ```{r, echo=TRUE}
 # Download from DGS
@@ -88,10 +89,218 @@ mortality.with.stats <- mortality %>%
   dplyr::ungroup()
 ```
 
+Sample plot
+
 ```{r sample_plot, eval=FALSE, echo=TRUE}
 show.year.mortality(mortality.with.stats, seq(2019, 2020))
 ```
 
+#### Yearly stats from 2009-2020
+
+```{r, echo=TRUE}
+yearly.stats <- mortality[c(rep(0, which(mortality$day == 'Mar-15') - 1), seq(from = which(mortality$day == 'Mar-15'), nrow(mortality)) > 0) & as.vector(!is.na(mortality[,'2020'])),] %>% 
+  rowwise() %>% 
+  replace(is.na(.), NA) %>%
+  #mutate(maxPre2020    = max(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
+  #       minPre2020    = min(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
+  #       meanPre2020   = mean(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
+  #       medianPre2020 = median(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE)) %>% 
+  reshape2::melt(id.vars = 'day') %>% 
+  dplyr::group_by(variable) %>% 
+  dplyr::summarise(mean = mean(value, na.rm = TRUE), 
+            sd = sd(value, na.rm = TRUE),
+            sum = sum(value, na.rm = TRUE),
+            median = median(value, na.rm = TRUE),
+            max = max(value, na.rm = TRUE),
+            min = min(value, na.rm = TRUE),
+            .groups = 'rowwise')
+```
+
+```{r, echo=TRUE}
+yearly.comp <- sapply(seq(nrow(yearly.stats)), function(ix) { yearly.stats$sum - yearly.stats$sum[ix]}) %>%
+  data.frame()
+yearly.comp[upper.tri(yearly.comp)] <- NA
+colnames(yearly.comp) <- yearly.stats$variable
+yearly.comp <- bind_cols(year = yearly.stats$variable, yearly.comp)
+```
+
+```{r, echo=TRUE}
+yearly.comp.rel <- sapply(seq(nrow(yearly.stats)), function(ix) { yearly.stats$sum / yearly.stats$sum[ix]}) %>%
+  data.frame()
+yearly.comp.rel[upper.tri(yearly.comp.rel)] <- NA
+colnames(yearly.comp.rel) <- yearly.stats$variable
+yearly.comp.rel <- bind_cols(year = yearly.stats$variable, yearly.comp.rel)
+```
+
+#### Yearly stats calculated _(max, min, mean, median and mean +/- StDev)_
+
+```{r, echo=TRUE}
+yearly.stats.2 <- mortality[c(rep(0, which(mortality$day == 'Mar-15') - 1), seq(from = which(mortality$day == 'Mar-15'), nrow(mortality)) > 0) & as.vector(!is.na(mortality[,'2020'])),] %>% 
+  rowwise() %>% 
+  replace(is.na(.), NA) %>%
+  mutate(maxPre2020    = max(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
+         minPre2020    = min(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
+         meanPre2020   = mean(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
+         meanPlusStDevPre2020   = mean(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE) + sd(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
+         meanMinusStDevPre2020   = mean(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE) - sd(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
+         medianPre2020 = median(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE)) %>% 
+  reshape2::melt(id.vars = 'day') %>% 
+  dplyr::group_by(variable) %>% 
+  dplyr::summarise(mean = mean(value, na.rm = TRUE), 
+            sd = sd(value, na.rm = TRUE),
+            sum = sum(value, na.rm = TRUE),
+            median = median(value, na.rm = TRUE),
+            max = max(value, na.rm = TRUE),
+            min = min(value, na.rm = TRUE),
+            .groups = 'rowwise') %>% 
+  filter(grepl('202[0-9]$', variable)) %>% 
+  mutate(variable = factor(variable, levels = c( 'medianPre2020', 'minPre2020', 'meanMinusStDevPre2020', 'meanPre2020', 'meanPlusStDevPre2020', 'maxPre2020', '2020'))) %>% 
+  arrange(variable)
+```
+
+```{r, echo=TRUE}
+yearly.comp.rel.2 <- sapply(seq(nrow(yearly.stats.2)), function(ix) { yearly.stats.2$sum / yearly.stats.2$sum[ix]}) %>%
+  data.frame()
+yearly.comp.rel.2[upper.tri(yearly.comp.rel.2)] <- NA
+colnames(yearly.comp.rel.2) <- yearly.stats.2$variable
+yearly.comp.rel.2 <- bind_cols(year = yearly.stats.2$variable, yearly.comp.rel.2)
+```
+
+#### External causes data
+
+```{r, echo=TRUE}
+external.raw <- download.causas.externas()
+
+json.ext <- external.raw$json %>% 
+  purrr::map(function(ix) {rjson::fromJSON(ix)})
+
+external.causes <- lapply(seq_along(external.raw$year), function(ix.year) {
+  # Process into multiple columns
+  json.tmp <- json.ext[[ix.year]]
+  dat <- sapply(1 + seq_along(json.tmp$x$data[-1]), function(ix) {
+    my.colnames <- xml2::read_xml(json.tmp$x$container) %>% 
+      rvest::html_nodes('th') %>%
+      gsub(' ?</?th> ?', '', .)
+    
+    my.year <- json.tmp$x$data[[ix]]
+    my.year[sapply(my.year, is.null)] <- NA
+    tmp <- tibble::tibble(!!as.name(my.colnames[ix]) := unlist(my.year, recursive=FALSE))
+    return(tmp)
+  })
+  dat$year <- rep(external.raw$year[ix.year], length(dat[[1]]))
+  
+  # Merge data
+  return(dplyr::bind_cols(day = json.tmp$x$data[[1]], dat) %>% 
+    mutate(day = factor(day, levels = json.ext[[1]]$x$data[[1]])))
+}) %>% 
+  bind_rows %>% 
+  dplyr::relocate(year, .before = day) %>% 
+  mutate(year = factor(year))
+```
+
+#### External causes plots
+
+```{r, echo=TRUE}
+external.causes.plot.covid <- external.causes %>% 
+  filter(day %in% levels(external.causes$day)[levels(external.causes$day) %in% (external.causes %>% filter(year == '2020') %>% pull(day))]) %>% 
+  filter(day %in% levels(external.causes$day)[seq(from = which(levels(external.causes$day) == 'Mar-15'), to = length(levels(external.causes$day)))]) %>% 
+  group_by(year) %>% 
+  summarise(across(where(is.numeric), ~ sum(.x , na.rm = TRUE)), .groups = 'keep') %>% 
+  reshape2::melt(id = 'year') %>% 
+  ggplot(aes(y = year, x = variable)) +
+  geom_tile(aes(fill = value)) +
+  geom_text(aes(label = value), color = 'white') +
+  scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
+  scale_x_discrete(position = "top") +
+  labs(title = "External causes of death from \'March 15 to {format(Sys.Date(), '%B %d')}'" %>% glue::glue(), subtitle = 'All years show the same period', caption = "Accidents, suicides and others. It excludes natural causes or diseases\nData retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) + 
+  xlab('External cause of death') +
+  ylab('Year') +
+  theme_minimal() +
+  theme(legend.position = 'none')
+
+external.causes.plot.full.year <- external.causes %>% 
+  group_by(year) %>% 
+  summarise(across(where(is.numeric), ~ sum(.x , na.rm = TRUE)), .groups = 'keep') %>% 
+  reshape2::melt(id = 'year') %>% 
+  ggplot(aes(y = year, x = variable)) +
+  geom_tile(aes(fill = value)) +
+  geom_text(aes(label = value), color = 'white') +
+  scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
+  scale_x_discrete(position = "top") +
+  labs(title = 'External causes of death', subtitle = 'All years show the same period', caption = "Accidents, suicides and others. It excludes natural causes or diseases\nData retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) + 
+  xlab('External cause of death') +
+  ylab('Year') +
+  theme_minimal() +
+  theme(legend.position = 'none')
+```
+
+#### Age group data
+
+```{r, echo=TRUE}
+age.group.raw <- download.age.groups()
+
+json.age.group <- age.group.raw$json %>% 
+  purrr::map(function(ix) {rjson::fromJSON(ix)})
+
+age.group <- lapply(seq_along(age.group.raw$year), function(ix.year) {
+  # Process into multiple columns
+  json.tmp <- json.age.group[[ix.year]]
+  dat <- sapply(1 + seq_along(json.tmp$x$data[-1]), function(ix) {
+    my.colnames <- xml2::read_xml(json.tmp$x$container) %>% 
+      rvest::html_nodes('th') %>%
+      gsub(' ?</?th> ?', '', .)
+    
+    my.year <- json.tmp$x$data[[ix]]
+    my.year[sapply(my.year, is.null)] <- NA
+    tmp <- tibble::tibble(!!as.name(my.colnames[ix]) := unlist(my.year, recursive=FALSE))
+    return(tmp)
+  })
+  dat$year <- rep(age.group.raw$year[ix.year], length(dat[[1]]))
+  
+  # Merge data
+  return(dplyr::bind_cols(day = json.tmp$x$data[[1]], dat) %>% 
+    mutate(day = factor(day, levels = json.age.group[[1]]$x$data[[1]])))
+}) %>% 
+  bind_rows %>% 
+  dplyr::relocate(year, .before = day) %>% 
+  mutate(year = factor(year))
+```
+
+#### Plots for age group
+
+```{r, echo=TRUE}
+age.group.plot.covid <- age.group %>% 
+  filter(day %in% levels(age.group$day)[levels(age.group$day) %in% (age.group %>% filter(year == '2020') %>% pull(day))]) %>% 
+  filter(day %in% levels(age.group$day)[seq(from = which(levels(age.group$day) == 'Mar-15'), to = length(levels(age.group$day)))]) %>% 
+  group_by(year) %>% 
+  summarise(across(where(is.numeric), ~ sum(.x , na.rm = TRUE)), .groups = 'keep') %>% 
+  reshape2::melt(id = 'year') %>% 
+  ggplot(aes(y = year, x = variable)) +
+  geom_tile(aes(fill = value)) +
+  geom_text(aes(label = value), color = 'white') +
+  scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
+  scale_x_discrete(position = "top") +
+  labs(title = "Mortality by age group from \'March 15 to {format(Sys.Date(), '%B %d')}'" %>% glue::glue(), subtitle = 'All years show the same period', caption = "Data retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) + 
+  xlab('Age group') +
+  ylab('Year') +
+  theme_minimal() +
+  theme(legend.position = 'none')
+
+age.group.plot.full.year <- age.group %>% 
+  group_by(year) %>% 
+  summarise(across(where(is.numeric), ~ sum(.x , na.rm = TRUE)), .groups = 'keep') %>% 
+  reshape2::melt(id = 'year') %>% 
+  ggplot(aes(y = year, x = variable)) +
+  geom_tile(aes(fill = value)) +
+  geom_text(aes(label = value), color = 'white') +
+  scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
+  scale_x_discrete(position = "top") +
+  labs(title = 'Mortality by age group', subtitle = 'All years show the same period (last year may be incomplete)', caption = "Data retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) +  
+  xlab('Age group') +
+  ylab('Year') +
+  theme_minimal() +
+  theme(legend.position = 'none')
+```
 
 ## Year vs. 2020 {.tabset .tabset-fade .tabset-pills}
 
@@ -166,35 +375,9 @@ show.year.mortality(mortality.with.stats, c(2009, 2020))
 
 ## _'March-15 -> `r format(Sys.Date(), '%B-%d')`'_ yearly comparison {.tabset .tabset-fade .tabset-pills}
 
-```{r}
-yearly.stats <- mortality[c(rep(0, which(mortality$day == 'Mar-15') - 1), seq(from = which(mortality$day == 'Mar-15'), nrow(mortality)) > 0) & as.vector(!is.na(mortality[,'2020'])),] %>% 
-  rowwise() %>% 
-  replace(is.na(.), NA) %>%
-  #mutate(maxPre2020    = max(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
-  #       minPre2020    = min(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
-  #       meanPre2020   = mean(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
-  #       medianPre2020 = median(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE)) %>% 
-  reshape2::melt(id.vars = 'day') %>% 
-  dplyr::group_by(variable) %>% 
-  dplyr::summarise(mean = mean(value, na.rm = TRUE), 
-            sd = sd(value, na.rm = TRUE),
-            sum = sum(value, na.rm = TRUE),
-            median = median(value, na.rm = TRUE),
-            max = max(value, na.rm = TRUE),
-            min = min(value, na.rm = TRUE),
-            .groups = 'rowwise')
-```
-
-
 ### Total numbers
 
 ```{r}
-yearly.comp <- sapply(seq(nrow(yearly.stats)), function(ix) { yearly.stats$sum - yearly.stats$sum[ix]}) %>%
-  data.frame()
-yearly.comp[upper.tri(yearly.comp)] <- NA
-colnames(yearly.comp) <- yearly.stats$variable
-yearly.comp <- bind_cols(year = yearly.stats$variable, yearly.comp)
-
 show.mortality.comp(yearly.comp) +
   labs(title = "Absolute comparison between years (March-15 to {format(Sys.Date(), '%B-%d')})" %>% glue::glue())
 ```
@@ -202,41 +385,11 @@ show.mortality.comp(yearly.comp) +
 ### Relative numbers _(in percentage)_
 
 ```{r}
-yearly.comp.rel <- sapply(seq(nrow(yearly.stats)), function(ix) { yearly.stats$sum / yearly.stats$sum[ix]}) %>%
-  data.frame()
-yearly.comp.rel[upper.tri(yearly.comp.rel)] <- NA
-colnames(yearly.comp.rel) <- yearly.stats$variable
-yearly.comp.rel <- bind_cols(year = yearly.stats$variable, yearly.comp.rel)
-
 show.mortality.comp(yearly.comp.rel, is.percentage = TRUE) +
   labs(title = "Relative comparison between years (March-15 to {format(Sys.Date(), '%B-%d')})" %>% glue::glue())
 ```
 
 ## _'March-15 -> `r format(Sys.Date(), '%B-%d')`'_ yearly comparisons with 2009-2019 stats {.tabset .tabset-fade .tabset-pills}
-
-```{r}
-yearly.stats.2 <- mortality[c(rep(0, which(mortality$day == 'Mar-15') - 1), seq(from = which(mortality$day == 'Mar-15'), nrow(mortality)) > 0) & as.vector(!is.na(mortality[,'2020'])),] %>% 
-  rowwise() %>% 
-  replace(is.na(.), NA) %>%
-  mutate(maxPre2020    = max(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
-         minPre2020    = min(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
-         meanPre2020   = mean(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
-         meanPlusStDevPre2020   = mean(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE) + sd(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
-         meanMinusStDevPre2020   = mean(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE) - sd(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE),
-         medianPre2020 = median(c_across(colnames(.)[!grepl('(^2020)',colnames(.)) & grepl('^[0-9]+$',colnames(.))]), na.rm = TRUE)) %>% 
-  reshape2::melt(id.vars = 'day') %>% 
-  dplyr::group_by(variable) %>% 
-  dplyr::summarise(mean = mean(value, na.rm = TRUE), 
-            sd = sd(value, na.rm = TRUE),
-            sum = sum(value, na.rm = TRUE),
-            median = median(value, na.rm = TRUE),
-            max = max(value, na.rm = TRUE),
-            min = min(value, na.rm = TRUE),
-            .groups = 'rowwise') %>% 
-  filter(grepl('202[0-9]$', variable)) %>% 
-  mutate(variable = factor(variable, levels = c( 'medianPre2020', 'minPre2020', 'meanMinusStDevPre2020', 'meanPre2020', 'meanPlusStDevPre2020', 'maxPre2020', '2020'))) %>% 
-  arrange(variable)
-```
 
 ### Total numbers
 
@@ -256,12 +409,6 @@ show.mortality.comp(yearly.comp.2) +
 ### Relative numbers _(in percentage)_
 
 ```{r}
-yearly.comp.rel.2 <- sapply(seq(nrow(yearly.stats.2)), function(ix) { yearly.stats.2$sum / yearly.stats.2$sum[ix]}) %>%
-  data.frame()
-yearly.comp.rel.2[upper.tri(yearly.comp.rel.2)] <- NA
-colnames(yearly.comp.rel.2) <- yearly.stats.2$variable
-yearly.comp.rel.2 <- bind_cols(year = yearly.stats.2$variable, yearly.comp.rel.2)
-
 show.mortality.comp(yearly.comp.rel.2, is.percentage = TRUE) +
   labs(title = 'Relative comparison between pseudo-years', caption = "Max/min/mean/median are calculated day by day in period 2009-2019 (for example, Max is the worse case scenario from that period)\nData retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) + 
   theme(axis.text.x = element_text(angle = 45, hjust = 0))
@@ -271,74 +418,16 @@ show.mortality.comp(yearly.comp.rel.2, is.percentage = TRUE) +
 
 Accidents, suicides and others. It excludes natural causes or diseases.
 
-```{r}
-external.raw <- download.causas.externas()
-
-json.ext <- external.raw$json %>% 
-  purrr::map(function(ix) {rjson::fromJSON(ix)})
-
-external.causes <- lapply(seq_along(external.raw$year), function(ix.year) {
-  # Process into multiple columns
-  json.tmp <- json.ext[[ix.year]]
-  dat <- sapply(1 + seq_along(json.tmp$x$data[-1]), function(ix) {
-    my.colnames <- xml2::read_xml(json.tmp$x$container) %>% 
-      rvest::html_nodes('th') %>%
-      gsub(' ?</?th> ?', '', .)
-    
-    my.year <- json.tmp$x$data[[ix]]
-    my.year[sapply(my.year, is.null)] <- NA
-    tmp <- tibble::tibble(!!as.name(my.colnames[ix]) := unlist(my.year, recursive=FALSE))
-    return(tmp)
-  })
-  dat$year <- rep(external.raw$year[ix.year], length(dat[[1]]))
-  
-  # Merge data
-  return(dplyr::bind_cols(day = json.tmp$x$data[[1]], dat) %>% 
-    mutate(day = factor(day, levels = json.ext[[1]]$x$data[[1]])))
-}) %>% 
-  bind_rows %>% 
-  dplyr::relocate(year, .before = day) %>% 
-  mutate(year = factor(year))
-```
-
 ### Period of COVID-19
 
 ```{r}
-external.causes %>% 
-  filter(day %in% levels(external.causes$day)[levels(external.causes$day) %in% (external.causes %>% filter(year == '2020') %>% pull(day))]) %>% 
-  filter(day %in% levels(external.causes$day)[seq(from = which(levels(external.causes$day) == 'Mar-15'), to = length(levels(external.causes$day)))]) %>% 
-  group_by(year) %>% 
-  summarise(across(where(is.numeric), ~ sum(.x , na.rm = TRUE)), .groups = 'keep') %>% 
-  reshape2::melt(id = 'year') %>% 
-  ggplot(aes(y = year, x = variable)) +
-  geom_tile(aes(fill = value)) +
-  geom_text(aes(label = value), color = 'white') +
-  scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
-  scale_x_discrete(position = "top") +
-  labs(title = "External causes of death from \'March 15 to {format(Sys.Date(), '%B %d')}'" %>% glue::glue(), subtitle = 'All years show the same period', caption = "Accidents, suicides and others. It excludes natural causes or diseases\nData retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) + 
-  xlab('External cause of death') +
-  ylab('Year') +
-  theme_minimal() +
-  theme(legend.position = 'none')
+external.causes.plot.covid
 ```
 
 ### Full year (`r format(Sys.Date(), '%Y')` is still incomplete)
 
 ```{r}
-external.causes %>% 
-  group_by(year) %>% 
-  summarise(across(where(is.numeric), ~ sum(.x , na.rm = TRUE)), .groups = 'keep') %>% 
-  reshape2::melt(id = 'year') %>% 
-  ggplot(aes(y = year, x = variable)) +
-  geom_tile(aes(fill = value)) +
-  geom_text(aes(label = value), color = 'white') +
-  scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
-  scale_x_discrete(position = "top") +
-  labs(title = 'External causes of death', subtitle = 'All years show the same period', caption = "Accidents, suicides and others. It excludes natural causes or diseases\nData retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) + 
-  xlab('External cause of death') +
-  ylab('Year') +
-  theme_minimal() +
-  theme(legend.position = 'none')
+external.causes.plot.full.year
 ```
 
 ```{r, eval=FALSE, include=FALSE}
@@ -409,73 +498,16 @@ mortality.pois.transf %>%
 
 ## Mortality by age groups  {.tabset .tabset-fade .tabset-pills}
 
-```{r}
-age.group.raw <- download.age.groups()
-
-json.age.group <- age.group.raw$json %>% 
-  purrr::map(function(ix) {rjson::fromJSON(ix)})
-
-age.group <- lapply(seq_along(age.group.raw$year), function(ix.year) {
-  # Process into multiple columns
-  json.tmp <- json.age.group[[ix.year]]
-  dat <- sapply(1 + seq_along(json.tmp$x$data[-1]), function(ix) {
-    my.colnames <- xml2::read_xml(json.tmp$x$container) %>% 
-      rvest::html_nodes('th') %>%
-      gsub(' ?</?th> ?', '', .)
-    
-    my.year <- json.tmp$x$data[[ix]]
-    my.year[sapply(my.year, is.null)] <- NA
-    tmp <- tibble::tibble(!!as.name(my.colnames[ix]) := unlist(my.year, recursive=FALSE))
-    return(tmp)
-  })
-  dat$year <- rep(age.group.raw$year[ix.year], length(dat[[1]]))
-  
-  # Merge data
-  return(dplyr::bind_cols(day = json.tmp$x$data[[1]], dat) %>% 
-    mutate(day = factor(day, levels = json.age.group[[1]]$x$data[[1]])))
-}) %>% 
-  bind_rows %>% 
-  dplyr::relocate(year, .before = day) %>% 
-  mutate(year = factor(year))
-```
 ### Period of COVID-19
 
 ```{r}
-age.group %>% 
-  filter(day %in% levels(age.group$day)[levels(age.group$day) %in% (age.group %>% filter(year == '2020') %>% pull(day))]) %>% 
-  filter(day %in% levels(age.group$day)[seq(from = which(levels(age.group$day) == 'Mar-15'), to = length(levels(age.group$day)))]) %>% 
-  group_by(year) %>% 
-  summarise(across(where(is.numeric), ~ sum(.x , na.rm = TRUE)), .groups = 'keep') %>% 
-  reshape2::melt(id = 'year') %>% 
-  ggplot(aes(y = year, x = variable)) +
-  geom_tile(aes(fill = value)) +
-  geom_text(aes(label = value), color = 'white') +
-  scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
-  scale_x_discrete(position = "top") +
-  labs(title = "Mortality by age group from \'March 15 to {format(Sys.Date(), '%B %d')}'" %>% glue::glue(), subtitle = 'All years show the same period', caption = "Data retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) + 
-  xlab('Age group') +
-  ylab('Year') +
-  theme_minimal() +
-  theme(legend.position = 'none')
+age.group.plot.covid
 ```
 
 ### Full year (`r format(Sys.Date(), '%Y')` is still incomplete)
 
 ```{r}
-age.group %>% 
-  group_by(year) %>% 
-  summarise(across(where(is.numeric), ~ sum(.x , na.rm = TRUE)), .groups = 'keep') %>% 
-  reshape2::melt(id = 'year') %>% 
-  ggplot(aes(y = year, x = variable)) +
-  geom_tile(aes(fill = value)) +
-  geom_text(aes(label = value), color = 'white') +
-  scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
-  scale_x_discrete(position = "top") +
-  labs(title = 'Mortality by age group', subtitle = 'All years show the same period (last year may be incomplete)', caption = "Data retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) +  
-  xlab('Age group') +
-  ylab('Year') +
-  theme_minimal() +
-  theme(legend.position = 'none')
+age.group.plot.full.year
 ```
 
 
