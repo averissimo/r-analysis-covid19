@@ -42,7 +42,7 @@ library(plotly)
 Sys.setlocale('LC_TIME', 'en_GB.UTF-8')
 ```
 
-Updated on `r format(Sys.time(), '%A, %d %B %Y (%d %Y-%m-%d %H:%m %Z)')`
+Updated on    `r format(Sys.time(), '%A, %d %B %Y (%d %Y-%m-%d %H:%m %Z)')`
 
 ## Description & Code {.tabset .tabset-fade .tabset-pills}
 

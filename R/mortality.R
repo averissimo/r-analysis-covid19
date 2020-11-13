@@ -95,7 +95,9 @@ show.year.mortality <- function(dat, year = NULL) {
       ix[c(FALSE, TRUE, TRUE, TRUE, TRUE)] <- FALSE
       return(ix)
     }) +
-    labs(caption = "Data retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) +
+    labs(title = 'Mortality over days of the year', caption = "Data retrieved on {format(Sys.Date(), '%B,%d %Y')}" %>% glue::glue()) +
+    xlab('Day of the year') +
+    ylab('Number of deaths') +
     scale_color_manual("", values = c("darkgreen", "darkgray", "green", "red", 'darkred'), breaks=c("2009-19", "Min/Max from 2009-19", "Smooth regression from 2009-19", "Year", "Smooth regression from Year")) +
     scale_fill_manual("Legend_no", values = c("darkgreen", "darkgray", "green", "red", 'darkred'), guide=FALSE, breaks=c("2009-19", "Min/Max from 2009-19", "Smooth regression from 2009-19", "Year", "Smooth regression from Year")) +
     facet_wrap( ~ variable, ncol = 1) +
