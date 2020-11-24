@@ -341,10 +341,14 @@ age.group <- lapply(seq_along(age.group.raw$year), function(ix.year) {
 age.group.plot.covid <- age.group %>% 
   filter(day %in% levels(age.group$day)[levels(age.group$day) %in% (age.group %>% filter(year == '2020') %>% pull(day))]) %>% 
   filter(day %in% levels(age.group$day)[seq(from = which(levels(age.group$day) == 'Mar-15'), to = length(levels(age.group$day)))]) %>% 
+  rowwise() %>% 
+  mutate(total = sum(c_across(-c('year', 'day')))) %>% 
+  ungroup() %>% 
   group_by(year) %>% 
   summarise(across(where(is.numeric), ~ sum(.x , na.rm = TRUE)), .groups = 'keep') %>% 
-  reshape2::melt(id = 'year') %>% 
-  ggplot(aes(y = year, x = variable)) +
+  reshape2::melt(id = c('year', 'total')) %>% 
+  mutate(label = factor(paste0(year, '\n(', format(total, big.mark = ' '),')'))) %>% 
+  ggplot(aes(y = label, x = variable)) +
   geom_tile(aes(fill = value)) +
   geom_text(aes(label = value), color = 'white') +
   scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
@@ -356,10 +360,14 @@ age.group.plot.covid <- age.group %>%
   theme(legend.position = 'none')
 
 age.group.plot.full.year <- age.group %>% 
+  rowwise() %>% 
+  mutate(total = sum(c_across(-c('year', 'day')))) %>% 
+  ungroup() %>% 
   group_by(year) %>% 
   summarise(across(where(is.numeric), ~ sum(.x , na.rm = TRUE)), .groups = 'keep') %>% 
-  reshape2::melt(id = 'year') %>% 
-  ggplot(aes(y = year, x = variable)) +
+  reshape2::melt(id = c('year', 'total')) %>% 
+  mutate(label = factor(paste0(year, '\n(', format(total, big.mark = ' '),')'))) %>% 
+  ggplot(aes(y = label, x = variable)) +
   geom_tile(aes(fill = value)) +
   geom_text(aes(label = value), color = 'white') +
   scale_fill_gradient(low = "orange", high = "red", na.value = '#00000020') +
