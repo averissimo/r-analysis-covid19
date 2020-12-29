@@ -69,24 +69,24 @@ ggplot2::theme_set(
 
 
 ```{r, message=FALSE, warning=FALSE, include=FALSE}
-eucdc.dat  <- download.eucdc.data()
+#eucdc.dat  <- download.eucdc.data()
 jh.dat     <- download.john.hopkins()
 
-if (max(jh.dat$data$date) > max(eucdc.dat$data$date)) {
-  world.dat <- jh.dat  
+#if (max(jh.dat$data$date) > max(eucdc.dat$data$date)) {
+world.dat <- jh.dat  
   
 #  state.ix <- eucdc.dat$data$state %>% unique()
 #  state.ix[!state.ix %in% (jh.dat$data$state %>% unique())]  
-} else {
-  world.dat <- eucdc.dat
+#} else {
+#  world.dat <- eucdc.dat
   
 #  state.ix <- jh.dat$data$state %>% unique()
 #  state.ix[!state.ix %in% (eucdc.dat$data$state %>% unique())]  
-}
+#}
 
 it.dat.raw <- download.it.data(by.state = FALSE)
 pt.dat.raw <- download.pt.data()
-de.dat.raw <- download.de.data()
+#de.dat.raw <- download.de.data()
 es.dat.raw <- download.es.data()
 us.dat.raw <- download.us.data()
 
@@ -109,18 +109,20 @@ latest <- function(target, dat, one.dat) {
 }
 
 latest('Spain', world.dat, es.dat.raw)
-latest('Portugal', world.dat, pt.dat.raw)
-latest('Germany', world.dat, de.dat.raw)
+#latest('Portugal', world.dat, pt.dat.raw)
 latest('Italy', world.dat, it.dat.raw)
 latest('USA', world.dat, us.dat.raw)
+
+#latest('Germany', world.dat, de.dat.raw)
 
 
 world.dat.norm <- world.dat
 world.dat.norm <- replace.country.data(world.dat.norm, es.dat.raw, 'Spain')
-world.dat.norm <- replace.country.data(world.dat.norm, pt.dat.raw, 'Portugal')
+#world.dat.norm <- replace.country.data(world.dat.norm, pt.dat.raw, 'Portugal')
 world.dat.norm <- replace.country.data(world.dat.norm, it.dat.raw, 'Italy')
-world.dat.norm <- replace.country.data(world.dat.norm, de.dat.raw, 'Germany')
 world.dat.norm <- replace.country.data(world.dat.norm, us.dat.raw, 'USA')
+
+#world.dat.norm <- replace.country.data(world.dat.norm, de.dat.raw, 'Germany')
 
 # Keep only confirmed and death numbers
 world.dat.norm$data <- world.dat.norm$data %>% filter(type %in% c('confirmed', 'death'))

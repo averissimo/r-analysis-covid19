@@ -505,6 +505,7 @@ download.john.hopkins <- function() {
 #' @return a list with data and source string
 #' @export
 download.eucdc.data <- function() {
+    stop('EU discontinued daily data')
     eu.data.raw <- readr::read_csv('https://opendata.ecdc.europa.eu/covid19/casedistribution/csv')
 
     if (ncol(eu.data.raw) == 1) {
@@ -520,7 +521,7 @@ download.eucdc.data <- function() {
                       countryterritoryCode = dplyr::if_else(countriesAndTerritories == 'Czechia', 'CZE', countryterritoryCode))
     
     eu.data <- eu.data.raw %>%
-        dplyr::mutate(date = anytime::anydate(glue::glue('{year}/{month}/{day}')) - 1,
+        dplyr::mutate(date = anytime::anydate(dateRep),
                state = countriesAndTerritories) %>%
         dplyr::select(state, date, cases, deaths, popData, state.code = countryterritoryCode) %>%
         dplyr::mutate(state = iconv(state, to = 'UTF-8')) %>%
