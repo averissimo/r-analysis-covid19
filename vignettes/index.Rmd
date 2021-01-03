@@ -134,7 +134,7 @@ flog.info('Post normalization')
 
 #latest('Portugal', world.dat.norm, pt.dat.raw)
 #latest('Germany', world.dat.norm, de.dat.raw)
-latest('Italy', world.dat.norm, it.dat.raw)
+#latest('Italy', world.dat.norm, it.dat.raw)
 
 last.date        <- source.by
 last.date.string <- paste0('Latest date from ', last.date)
