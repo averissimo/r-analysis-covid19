@@ -84,11 +84,11 @@ world.dat <- jh.dat
 #  state.ix[!state.ix %in% (eucdc.dat$data$state %>% unique())]  
 #}
 
-it.dat.raw <- download.it.data(by.state = FALSE)
-pt.dat.raw <- download.pt.data()
+#it.dat.raw <- download.it.data(by.state = FALSE)
+#pt.dat.raw <- download.pt.data()
 #de.dat.raw <- download.de.data()
-es.dat.raw <- download.es.data()
-us.dat.raw <- download.us.data()
+#es.dat.raw <- download.es.data()
+#us.dat.raw <- download.us.data()
 
 latest <- function(target, dat, one.dat) { 
   flog.info('%s', target)
@@ -108,19 +108,19 @@ latest <- function(target, dat, one.dat) {
   internal.fun(one.dat)
 }
 
-latest('Spain', world.dat, es.dat.raw)
+#latest('Spain', world.dat, es.dat.raw)
 #latest('Portugal', world.dat, pt.dat.raw)
-latest('Italy', world.dat, it.dat.raw)
-latest('USA', world.dat, us.dat.raw)
+#latest('Italy', world.dat, it.dat.raw)
+#latest('USA', world.dat, us.dat.raw)
 
 #latest('Germany', world.dat, de.dat.raw)
 
 
 world.dat.norm <- world.dat
-world.dat.norm <- replace.country.data(world.dat.norm, es.dat.raw, 'Spain')
+#world.dat.norm <- replace.country.data(world.dat.norm, es.dat.raw, 'Spain')
 #world.dat.norm <- replace.country.data(world.dat.norm, pt.dat.raw, 'Portugal')
-world.dat.norm <- replace.country.data(world.dat.norm, it.dat.raw, 'Italy')
-world.dat.norm <- replace.country.data(world.dat.norm, us.dat.raw, 'USA')
+#world.dat.norm <- replace.country.data(world.dat.norm, it.dat.raw, 'Italy')
+#world.dat.norm <- replace.country.data(world.dat.norm, us.dat.raw, 'USA')
 
 #world.dat.norm <- replace.country.data(world.dat.norm, de.dat.raw, 'Germany')
 
