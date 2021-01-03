@@ -91,7 +91,7 @@ ommit.start <- function(dat, case.type, start_of, filter.states = c(), log2.flag
                          size = plot.options('label.size'),
                          segment.size = plot.options('segment.size'),
                          alpha = plot.options('label.alpha'),
-                         segment.alpha = plot.options('segment.alha'),
+                         segment.alpha = plot.options('segment.alpha'),
                          segment.colour = plot.options('segment.color'),
                          min.segment.length = plot.options('min.segment.length'),
                          force = plot.options('label.force'), seed = plot.options('seed')) +
@@ -182,7 +182,7 @@ last.days <- function(dat, case.type, days, filter.states = c(), log2.flag = FAL
                              size = plot.options('label.size'),
                              segment.size = plot.options('segment.size'),
                              alpha = plot.options('label.alpha'),
-                             segment.alpha = plot.options('segment.alha'),
+                             segment.alpha = plot.options('segment.alpha'),
                              segment.colour = plot.options('segment.color'),
                              min.segment.length = plot.options('min.segment.length'),
                              force = plot.options('label.force'), seed = plot.options('seed')) +
@@ -290,7 +290,7 @@ last.week.cumulative <- function(dat, case.type, days, filter.states = c(), log2
                                      size = plot.options('label.size'),
                                      segment.size = plot.options('segment.size'),
                                      alpha = plot.options('label.alpha'),
-                                     segment.alpha = plot.options('segment.alha'),
+                                     segment.alpha = plot.options('segment.alpha'),
                                      segment.colour = plot.options('segment.color'),
                                      min.segment.length = plot.options('min.segment.length'),
                                      force = plot.options('label.force'), seed = plot.options('seed')) +
@@ -320,7 +320,7 @@ death.vs.cases.plot <- function(dat, state.filter = c(), always.include = c(), e
                                       size = plot.options('label.size'),
                                       segment.size = plot.options('segment.size'),
                                       alpha = plot.options('label.alpha'),
-                                      segment.alpha = plot.options('segment.alha'),
+                                      segment.alpha = plot.options('segment.alpha'),
                                       segment.colour = plot.options('segment.color'),
                                       min.segment.length = plot.options('min.segment.length'),
                                       force = plot.options('label.force'), seed = plot.options('seed')) +
@@ -369,7 +369,7 @@ plot.what.vs.cases <- function(data,
                                always.include = c(),
                                what = 'Hospital beds') {
     my.tbl <- data %>%
-        dplyr::filter(length(always.include) == 0 | state %in% (c(always.include, state.filter) %>% unique))
+        dplyr::filter(length(state.filter) == 0 | state %in% (c(always.include, state.filter) %>% unique))
     return(
         my.tbl %>%
             ggplot2::ggplot(ggplot2::aes(x = cases.confirmed, y = value, color = state)) +
@@ -383,7 +383,7 @@ plot.what.vs.cases <- function(data,
                              size = plot.options('label.size'),
                              segment.size = plot.options('segment.size'),
                              alpha = plot.options('label.alpha'),
-                             segment.alpha = plot.options('segment.alha'),
+                             segment.alpha = plot.options('segment.alpha'),
                              segment.colour = plot.options('segment.color'),
                              min.segment.length = plot.options('min.segment.length'),
                              force = plot.options('label.force'), seed = plot.options('seed')) +

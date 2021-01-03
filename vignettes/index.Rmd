@@ -424,7 +424,7 @@ plot.physicians.vs.cases <- function(...) { plot.what.vs.cases(..., data = physi
 ## EU
 
 ```{r}
-plot.physicians.vs.cases(countries.eu)
+plot.physicians.vs.cases(state.filter = countries.eu)
 ```
 
 ## Non-EU Europe
