@@ -98,11 +98,11 @@ pois.levels <- c('2021-lambda.5',
                  'pre2020-lambda.5', 
                  'pre2020-ic95.5', 
                  'pre2020-ic99.5')
-pois.labels <- c('2021 (smooth regression)',  # this is new
-                 '2020 (smooth regression)',  # this is new
+pois.labels <- c('2020 (smooth regression)',  # this is new
+                 '2021 (smooth regression)',  # this is new
                  #
-                 '2021',
                  '2020',
+                 '2021',
                  'Confidence interval 95% 2015-19',
                  'Confidence interval 99% 2015-19',
                  'Base line for 2015-19 (non-averaged)',
