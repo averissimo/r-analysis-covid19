@@ -99,9 +99,9 @@ pois.levels <- c('2021-lambda.5',
                  'pre2020-ic95.5', 
                  'pre2020-ic99.5')
 pois.labels <- c('2020 (smooth regression)',  # this is new
-                 '2021 (smooth regression)',  # this is new
                  #
                  '2020',
+                 '2021 (smooth regression)',  # this is new
                  '2021',
                  'Confidence interval 95% 2015-19',
                  'Confidence interval 99% 2015-19',
@@ -143,7 +143,7 @@ mortality.plot.poisson <- mortality.pois.transf %>%
   geom_line(aes(y = value, color = new.group)) +
   geom_line(aes(y = value, color = new.group), data = mortality.pois.transf %>% filter(group == '2021'), size = 1.5) +
   geom_line(aes(y = value, color = new.group), data = mortality.pois.transf %>% filter(group == '2020'), size = 1.5) +
-  geom_smooth(aes(y = value, color = '2021 (smooth regression)'), alpha = .4, data = mortality.pois.transf %>% filter(group == '2021'), span = 0.1, method = 'loess', formula = y ~ x, na.rm = TRUE, show.legend = FALSE, se = FALSE) +
+  geom_smooth(aes(y = value, color = '2021 (smooth regression)'), alpha = .4, data = mortality.pois.transf %>% filter(group == '2021'), span = 1, method = 'loess', formula = y ~ x, na.rm = TRUE, show.legend = FALSE, se = FALSE) +
   geom_smooth(aes(y = value, color = '2020 (smooth regression)'), alpha = .4, data = mortality.pois.transf %>% filter(group == '2020'), span = 0.1, method = 'loess', formula = y ~ x, na.rm = TRUE, show.legend = FALSE, se = FALSE) +
   #geom_line(aes(y = lambda.5, color = new.grou~p), data = mortality.pois.transf %>% filter(group == 'pre2020')) +
   #geom_line(aes(y = ic95.5), color = 'purple', data = mortality.pois.transf %>% filter(group == 'pre2020')) +
