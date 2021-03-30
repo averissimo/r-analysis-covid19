@@ -55,7 +55,7 @@ library(eurostat)
 ```
 
 ```{r, include=FALSE}
-BiocManager::install('averissimo/covid19.pt.data', ask = FALSE)
+#BiocManager::install('averissimo/covid19.pt.data', ask = FALSE)
 devtools::load_all()
 
 .Last.value <- Sys.setlocale('LC_TIME', 'en_GB.UTF-8')
